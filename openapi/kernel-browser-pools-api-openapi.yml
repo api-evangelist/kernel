@@ -1,0 +1,1223 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Browser Pools API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Browser Pools
+  description: Create and manage browser pools for acquiring and releasing browsers.
+paths:
+  /browser_pools:
+    post:
+      operationId: postBrowserPools
+      tags:
+      - Browser Pools
+      summary: Create a browser pool
+      description: 'Create a new browser pool with the specified configuration and size.
+
+        Pooled browsers load their profile read-only: any save_changes on the profile is ignored
+
+        (not rejected), so pooled browsers never persist changes back to the profile.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserPoolCreateRequest'
+      responses:
+        '201':
+          description: Browser pool created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browserPool = await client.browserPools.create({ size: 10 });\n\nconsole.log(browserPool.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser_pool = client.browser_pools.create(\n    size=10,\n)\nprint(browser_pool.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowserPool, err := client.BrowserPools.New(context.TODO(), kernel.BrowserPoolNewParams{\n\t\tSize: 10,\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browserPool.ID)\n}\n"
+    get:
+      operationId: getBrowserPools
+      tags:
+      - Browser Pools
+      summary: List browser pools
+      description: List browser pools in the resolved project.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Limit the number of browser pools to return.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Offset the number of browser pools to return.
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: query
+        in: query
+        required: false
+        description: Case-insensitive substring match against browser pool name. IDs match by exact value.
+        schema:
+          type: string
+      - name: name
+        in: query
+        required: false
+        description: Exact-match filter on browser pool name using the database collation. In production, matching is case- and accent-insensitive. During the default-project migration, unscoped requests prefer a concrete default-project browser pool over a legacy unscoped browser pool with the same name.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: List of browser pools
+          headers:
+            X-Limit:
+              description: Limit the number of browser pools to return.
+              schema:
+                type: integer
+                minimum: 1
+                maximum: 100
+                default: 20
+            X-Offset:
+              description: The offset of browser pools to return.
+              schema:
+                type: integer
+                minimum: 0
+                default: 0
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+                nullable: true
+            X-Has-More:
+              description: Whether there are more browser pools to fetch.
+              schema:
+                type: boolean
+                default: false
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BrowserPool'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const browserPool of client.browserPools.list()) {\n  console.log(browserPool.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.browser_pools.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.BrowserPools.List(context.TODO(), kernel.BrowserPoolListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /browser_pools/{id_or_name}:
+    get:
+      operationId: getBrowserPoolsByIdOrName
+      tags:
+      - Browser Pools
+      summary: Get browser pool details
+      description: Retrieve details for a single browser pool by its ID or name.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      responses:
+        '200':
+          description: Browser pool details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserPool'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browserPool = await client.browserPools.retrieve('id_or_name');\n\nconsole.log(browserPool.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser_pool = client.browser_pools.retrieve(\n    \"id_or_name\",\n)\nprint(browser_pool.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowserPool, err := client.BrowserPools.Get(context.TODO(), \"id_or_name\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browserPool.ID)\n}\n"
+    patch:
+      operationId: updateBrowserPoolsByIdOrName
+      tags:
+      - Browser Pools
+      summary: Update a browser pool
+      description: 'Updates the configuration used to create browsers in the pool.
+
+        As with creation, save_changes on the pool profile is ignored (not rejected); pooled
+
+        browsers never persist changes back to the profile.
+
+        To clear the profile reference, send `profile: { "id": "" }`. Clearing the profile
+
+        also disables `refresh_on_profile_update`.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserPoolUpdateRequest'
+      responses:
+        '200':
+          description: Browser pool details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browserPool = await client.browserPools.update('id_or_name');\n\nconsole.log(browserPool.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser_pool = client.browser_pools.update(\n    id_or_name=\"id_or_name\",\n)\nprint(browser_pool.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowserPool, err := client.BrowserPools.Update(\n\t\tcontext.TODO(),\n\t\t\"id_or_name\",\n\t\tkernel.BrowserPoolUpdateParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browserPool.ID)\n}\n"
+    delete:
+      operationId: deleteBrowserPoolsByIdOrName
+      tags:
+      - Browser Pools
+      summary: Delete a browser pool
+      description: Delete a browser pool and all browsers in it. By default, deletion is blocked if browsers are currently leased. Use force=true to terminate leased browsers.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserPoolDeleteRequest'
+      responses:
+        '204':
+          description: Browser pool deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browserPools.delete('id_or_name');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browser_pools.delete(\n    id_or_name=\"id_or_name\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.BrowserPools.Delete(\n\t\tcontext.TODO(),\n\t\t\"id_or_name\",\n\t\tkernel.BrowserPoolDeleteParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browser_pools/{id_or_name}/acquire:
+    post:
+      operationId: acquireFromBrowserPoolByIdOrName
+      tags:
+      - Browser Pools
+      summary: Acquire a browser from the pool
+      description: 'Long-polling endpoint to acquire a browser from the pool. Returns immediately when a browser
+
+        is available, or returns 204 No Content when the poll times out. The client should retry
+
+        the request to continue waiting for a browser. The acquired browser will use the pool''s
+
+        timeout_seconds for its idle timeout.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserPoolAcquireRequest'
+      responses:
+        '200':
+          description: Browser acquired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Browser'
+        '204':
+          description: Poll timed out, no browser available. Retry the request to continue waiting.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browserPools.acquire('id_or_name');\n\nconsole.log(response.session_id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browser_pools.acquire(\n    id_or_name=\"id_or_name\",\n)\nprint(response.session_id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.BrowserPools.Acquire(\n\t\tcontext.TODO(),\n\t\t\"id_or_name\",\n\t\tkernel.BrowserPoolAcquireParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.SessionID)\n}\n"
+  /browser_pools/{id_or_name}/release:
+    post:
+      operationId: releaseToBrowserPoolByIdOrName
+      tags:
+      - Browser Pools
+      summary: Release a browser back to the pool
+      description: Release a browser back to the pool, optionally recreating the browser instance.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserPoolReleaseRequest'
+      responses:
+        '204':
+          description: Browser released successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browserPools.release('id_or_name', { session_id: 'ts8iy3sg25ibheguyni2lg9t' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browser_pools.release(\n    id_or_name=\"id_or_name\",\n    session_id=\"ts8iy3sg25ibheguyni2lg9t\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.BrowserPools.Release(\n\t\tcontext.TODO(),\n\t\t\"id_or_name\",\n\t\tkernel.BrowserPoolReleaseParams{\n\t\t\tSessionID: \"ts8iy3sg25ibheguyni2lg9t\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browser_pools/{id_or_name}/flush:
+    post:
+      operationId: flushBrowserPoolByIdOrName
+      tags:
+      - Browser Pools
+      summary: Flush all idle browsers in the pool
+      description: Destroys all idle browsers in the pool; leased browsers are not affected.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id_or_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser pool ID or name
+      responses:
+        '204':
+          description: Pool flushed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browserPools.flush('id_or_name');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browser_pools.flush(\n    \"id_or_name\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.BrowserPools.Flush(context.TODO(), \"id_or_name\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+components:
+  schemas:
+    BrowserPoolUpdateRequest:
+      type: object
+      description: 'Parameters for updating a browser pool. Omitted fields leave existing values unchanged.
+
+        '
+      properties:
+        size:
+          type: integer
+          description: 'If provided, replaces the number of browsers to maintain in the pool. The maximum
+
+            size is determined by your organization''s pooled sessions limit (the sum of all
+
+            pool sizes cannot exceed your limit).
+
+            '
+          minimum: 1
+          example: 10
+        name:
+          type: string
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          description: 'If provided, replaces the pool name. Empty string is a no-op; the pool name cannot
+
+            be cleared or reset to empty once assigned.
+
+            '
+          example: my-pool
+        fill_rate_per_minute:
+          type: integer
+          description: 'If provided, replaces the percentage of the pool to fill per minute. The cap is 25
+
+            for most organizations but can be raised per-organization, so only the lower bound
+
+            is enforced here.
+
+            '
+          minimum: 0
+        timeout_seconds:
+          type: integer
+          description: If provided, replaces the default idle timeout in seconds for browsers acquired from this pool before they are destroyed. Minimum 10, maximum 259200 (72 hours).
+          minimum: 10
+          maximum: 259200
+        stealth:
+          type: boolean
+          description: If provided, replaces whether browsers launch in stealth mode.
+          example: true
+        headless:
+          type: boolean
+          description: If provided, replaces whether browsers launch using a headless image.
+          example: false
+        profile:
+          allOf:
+          - $ref: '#/components/schemas/BrowserPoolProfile'
+          description: 'If provided, replaces the previously-selected profile. To clear the profile reference,
+
+            send `{ "id": "" }` or `{ "name": "" }`. An empty object (no id or name) is rejected
+
+            as 400.
+
+            '
+        refresh_on_profile_update:
+          type: boolean
+          description: 'If provided, replaces whether idle browsers are flushed when the profile the pool uses
+
+            is updated. When the pool''s profile reference is changed (including newly attached) and
+
+            this field is omitted, it defaults to true. Re-sending the same profile reference leaves
+
+            this setting unchanged. Clearing the profile also disables this setting. Requires a
+
+            profile to be set on the pool.
+
+            '
+          example: true
+        extensions:
+          type: array
+          description: 'If provided, replaces the extension list. Empty array clears all previously-selected
+
+            extensions. Omit this field to leave extensions unchanged.
+
+            '
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/BrowserExtension'
+        proxy_id:
+          type: string
+          description: Empty string clears the previously-selected proxy. Omit this field to leave the proxy unchanged.
+        viewport:
+          allOf:
+          - $ref: '#/components/schemas/BrowserViewport'
+          description: 'If provided, replaces the viewport with the new width/height/refresh_rate. Because
+
+            width and height are required and must be positive, the viewport cannot be cleared;
+
+            omit this field to leave it unchanged.
+
+            '
+        kiosk_mode:
+          type: boolean
+          description: If provided, replaces whether browsers launch in kiosk mode.
+          example: true
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'If provided, replaces the custom Chrome enterprise policy overrides applied to all browsers in this pool. Empty object clears any previously-set policy. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/ The serialized JSON payload is capped at 5 MiB.
+
+            '
+        start_url:
+          type: string
+          maxLength: 2048
+          description: 'If provided, replaces the URL to navigate to when a new browser is warmed into the pool.
+
+            Empty string clears the previously-set URL. Omit this field to leave it unchanged.
+
+            '
+          example: https://example.com
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
+          nullable: true
+          description: 'If provided, updates the pool''s telemetry configuration. Omit, set to null, or set to an empty object ({}) to leave the existing configuration unchanged. Set enabled to true to enable capture using the default set. Set enabled to false to clear the pool''s telemetry. Provide browser category settings for per-category updates, merged onto the pool''s current configuration. Only applied to browsers warmed after the update; browsers already in the pool keep their configuration until discarded.
+
+            '
+        discard_all_idle:
+          type: boolean
+          description: 'Whether to discard all idle browsers and rebuild them immediately with the new configuration. Defaults to false. Only browsers that are idle when the update runs are rebuilt. A browser that is in use during the update keeps its original configuration, and if it is later released with `reuse: true` it returns to the pool with that stale configuration until it is discarded (by this flag on a later update, or by flushing the pool).'
+          example: false
+          default: false
+    BrowserTelemetryCategoriesConfig:
+      type: object
+      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
+      properties:
+        console:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Console output (log, warn, error) and uncaught exceptions. CDP category; off by default.
+        page:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
+        interaction:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: User interaction events including clicks, keydowns, and scroll-settled events. CDP category; off by default.
+        network:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: HTTP request and response metadata including URL, method, status code, and timing. Request post data is forwarded as-is from CDP. Text response bodies are truncated at 8 KB for structured types (JSON, XML, form data) and 4 KB for other text types. Binary responses (images, fonts, media) are excluded. CDP category; off by default.
+        control:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Agent-driven actions against the browser, such as inbound calls to the in-VM API. On by default.
+        connection:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
+        system:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
+        screenshot:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Periodic base64-encoded viewport screenshots. High volume; off by default and must be opted into.
+        captcha:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Captcha solve attempt outcomes. On by default.
+    BrowserPoolCreateRequest:
+      type: object
+      description: 'Parameters for creating a browser pool. All browsers in the pool will be created with the same configuration.
+
+        '
+      properties:
+        size:
+          type: integer
+          description: 'Number of browsers to maintain in the pool. The maximum size is determined by your
+
+            organization''s pooled sessions limit (the sum of all pool sizes cannot exceed your limit).
+
+            '
+          minimum: 1
+          example: 10
+        name:
+          type: string
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          description: Optional name for the browser pool. Must be unique within the project.
+          example: my-pool
+        fill_rate_per_minute:
+          type: integer
+          description: Percentage of the pool to fill per minute. Defaults to 25. The cap is 25 for most organizations but can be raised per-organization, so only the lower bound is enforced here.
+          minimum: 0
+          default: 25
+        timeout_seconds:
+          type: integer
+          description: Default idle timeout in seconds for browsers acquired from this pool before they are destroyed. Defaults to 600 seconds. Minimum 10, maximum 259200 (72 hours).
+          minimum: 10
+          maximum: 259200
+          default: 600
+        stealth:
+          type: boolean
+          description: If true, launches the browser in stealth mode to reduce detection by anti-bot mechanisms. Defaults to false.
+          default: false
+          example: true
+        headless:
+          type: boolean
+          description: If true, launches the browser using a headless image. Defaults to false.
+          default: false
+          example: false
+        profile:
+          allOf:
+          - $ref: '#/components/schemas/BrowserPoolProfile'
+          description: Profile selection for browsers in the pool.
+        refresh_on_profile_update:
+          type: boolean
+          description: 'When true, flush idle browsers when the profile the pool uses is updated, so pool browsers
+
+            pick up the latest profile data. When a profile is provided during creation, this defaults
+
+            to true. Requires a profile to be set on the pool.
+
+            '
+          example: true
+          default: false
+        extensions:
+          type: array
+          description: List of browser extensions to load into the session. Provide each by id or name.
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/BrowserExtension'
+        proxy_id:
+          type: string
+          description: Optional proxy to associate to the browser session. Must reference a proxy in the same project as the browser session.
+        viewport:
+          allOf:
+          - $ref: '#/components/schemas/BrowserViewport'
+          description: Browser viewport used for newly-warmed browsers in this pool.
+        kiosk_mode:
+          type: boolean
+          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view. Defaults to false.
+          default: false
+          example: true
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides applied to all browsers in this pool. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/ The serialized JSON payload is capped at 5 MiB.
+
+            '
+        start_url:
+          type: string
+          maxLength: 2048
+          description: 'Optional URL to navigate to when a new browser is warmed into the pool. Best-effort:
+
+            failures to navigate do not fail pool fill. Only applied to newly-warmed browsers;
+
+            browsers reused via release/acquire keep whatever URL the previous lease left them on.
+
+            Accepts any URL Chromium can resolve, including chrome:// pages.
+
+            '
+          example: https://example.com
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
+          nullable: true
+          description: 'Telemetry configuration applied to browsers warmed into this pool. Set enabled to true to start capture using the default set, or provide browser category settings. If omitted, null, set to an empty object ({}), set to enabled: false without browser category settings, or all four CDP categories are explicitly disabled, no telemetry is configured on the pool. Only applied to newly-warmed browsers.
+
+            '
+      required:
+      - size
+    BrowserTelemetryRequestConfig:
+      type: object
+      description: Telemetry request configuration for a browser session.
+      properties:
+        enabled:
+          type: boolean
+          description: Request shortcut for browser telemetry capture. True enables capture; with no browser category settings it captures the default set (control, connection, system, captcha), and any browser category settings are layered onto that default set. On update, enabled=true resolves the config fresh from the default set plus any provided categories, replacing the session's current selection rather than merging onto it; omit enabled to merge categories onto the current selection instead. False stops capture on update and starts no capture on create. enabled=false cannot be combined with browser category settings.
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category capture flags. The operational categories (control, connection, system, captcha) are captured whenever telemetry is enabled; set one to enabled=false to opt out. The CDP categories (console, network, page, interaction) and screenshot are off by default; set enabled=true to opt in. On create, provided categories layer onto the default set. On update, provided categories merge onto the session's current config; when no telemetry is active this falls back to the default set (matching create). If browser is omitted or empty, the default set is used. A browser config that disables every category stops capture on update and starts no capture on create.
+    Browser:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: When the browser session was created.
+        cdp_ws_url:
+          type: string
+          description: Websocket URL for Chrome DevTools Protocol connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/cdp?jwt=eyJ0eXAi...
+        webdriver_ws_url:
+          type: string
+          description: Websocket URL for WebDriver BiDi connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/webdriver/session?jwt=eyJ0eXAi...
+        browser_live_view_url:
+          type: string
+          description: Remote URL for live viewing the browser session. Only available for non-headless browsers.
+          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/live?jwt=eyJ0eXAi...
+        base_url:
+          type: string
+          description: Metro-API HTTP base URL for this browser session.
+          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/kernel
+        headless:
+          type: boolean
+          description: Whether the browser session is running in headless mode.
+          example: false
+        stealth:
+          type: boolean
+          description: Whether the browser session is running in stealth mode.
+          example: false
+        gpu:
+          type: boolean
+          description: Whether GPU acceleration is enabled for the browser session (only supported for headful sessions).
+          example: false
+        session_id:
+          type: string
+          description: Unique identifier for the browser session
+          example: htzv5orfit78e1m2biiifpbv
+        name:
+          type: string
+          description: Human-readable name of the browser session, if one was set at creation.
+          example: checkout-flow-1
+        timeout_seconds:
+          type: integer
+          description: The number of seconds of inactivity before the browser session is terminated.
+        profile:
+          $ref: '#/components/schemas/Profile'
+        proxy_id:
+          type: string
+          description: ID of the proxy associated with this browser session, if any.
+        pool:
+          $ref: '#/components/schemas/BrowserPoolRef'
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+        kiosk_mode:
+          type: boolean
+          description: Whether the browser session is running in kiosk mode.
+          example: false
+        start_url:
+          type: string
+          description: URL the session was asked to navigate to on creation, if any. Recorded for debugging. Navigation is fire-and-forget — the URL is dispatched to the browser without waiting for it to load, and any errors (DNS failure, bad status, timeout) are silently dropped. Captures what was requested, not what the browser actually loaded.
+          example: https://example.com
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides that were applied to this browser session, if any. Echoed back for verification. Keys are Chrome enterprise policy names.
+
+            '
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: User-defined key-value tags that were set on this browser session, if any. Echoed back when present.
+        deleted_at:
+          type: string
+          format: date-time
+          description: When the browser session was soft-deleted. Only present for deleted sessions.
+        usage:
+          $ref: '#/components/schemas/BrowserUsage'
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryConfig'
+          nullable: true
+          description: Active telemetry configuration for the session, if any.
+      required:
+      - created_at
+      - cdp_ws_url
+      - webdriver_ws_url
+      - session_id
+      - stealth
+      - headless
+      - timeout_seconds
+    BrowserPoolReleaseRequest:
+      type: object
+      description: Request body for releasing a browser back to the pool.
+      properties:
+        session_id:
+          type: string
+          description: Browser session ID to release back to the pool
+          example: ts8iy3sg25ibheguyni2lg9t
+        reuse:
+          type: boolean
+          description: 'Whether to reuse the browser instance or destroy it and create a new one. Defaults to true. A reused browser keeps the configuration it was created with, so it does not pick up pool configuration changes made while it was in use. Release with `reuse: false`, or flush the pool afterward, to rebuild it with the current configuration.'
+          default: true
+          example: false
+      required:
+      - session_id
+    BrowserPoolAcquireRequest:
+      type: object
+      description: Request body for acquiring a browser from the pool.
+      properties:
+        acquire_timeout_seconds:
+          type: integer
+          description: Maximum number of seconds to wait for a browser to be available. Defaults to the calculated time it would take to fill the pool at the currently configured fill rate.
+        name:
+          type: string
+          description: 'Optional human-readable name for the acquired browser session, used to find it later in the dashboard. Must be unique among active sessions within the pool''s project. Applies to this lease only and is cleared when the browser is released back to the pool.
+
+            '
+          minLength: 1
+          maxLength: 255
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          example: checkout-flow-1
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: 'Optional user-defined key-value tags for the acquired browser session, used to find and group sessions later. Applies to this lease only and are cleared when the browser is released back to the pool. Up to 50 pairs.
+
+            '
+        start_url:
+          type: string
+          description: 'Optional URL to navigate the acquired browser to. Overrides the pool''s start_url for this acquire only. Best-effort: failures to navigate do not fail the acquire.'
+          example: https://example.com
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
+          nullable: true
+          description: 'Telemetry override for the acquired browser, applied to this lease only. Merges onto the browser''s current (pool-inherited) telemetry using the same per-category semantics as PATCH /browsers: provided categories override the current configuration, omitted categories are inherited. Set enabled to true to resolve the config fresh from the default set, or enabled to false to stop capture. When the browser is released back to the pool with reuse, its telemetry is reset to the pool''s baseline, so the override does not carry over to the next lease.
+
+            '
+      required: []
+    Profile:
+      type: object
+      description: Browser profile metadata.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the profile
+        name:
+          type: string
+          nullable: true
+          description: Optional, easier-to-reference name for the profile
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last updated
+        last_used_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last used
+      required:
+      - id
+      - created_at
+    BrowserUsage:
+      type: object
+      description: Session usage metrics.
+      properties:
+        uptime_ms:
+          type: integer
+          description: Time in milliseconds the session was actively running.
+      required:
+      - uptime_ms
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    BrowserViewport:
+      type: object
+      description: 'Initial browser window size in pixels with optional refresh rate.
+
+        If omitted, image defaults apply (1920x1080@25).
+
+        For GPU images, the default is 1920x1080@60.
+
+        Arbitrary viewport dimensions and refresh rates are accepted.
+
+        Known-good presets include:
+
+        2560x1440@10, 1920x1080@25, 1920x1200@25, 1440x900@25, 1280x800@60, 1024x768@60, 1200x800@60, 768x1024@60, 390x844@60.
+
+        For GPU images, recommended presets use one of these resolutions with refresh rates 60, 30, 25, or 10:
+
+        800x600, 960x720, 1024x576, 1024x768, 1152x648, 1200x800, 1280x720, 1368x768, 1440x900, 1600x900, 1920x1080, 1920x1200, 390x844, 360x250, 768x1024, 800x1600.
+
+        Viewports outside this list may exhibit unstable live view or recording behavior.
+
+        If refresh_rate is not provided, it will be automatically determined based on the resolution
+
+        (higher resolutions use lower refresh rates to keep bandwidth reasonable).
+
+        '
+      properties:
+        width:
+          type: integer
+          description: Browser window width in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 1280
+        height:
+          type: integer
+          description: Browser window height in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 800
+        refresh_rate:
+          type: integer
+          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
+          minimum: 1
+          example: 60
+      required:
+      - width
+      - height
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    BrowserTelemetryConfig:
+      type: object
+      description: Active telemetry configuration for a browser session.
+      properties:
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category enable/disable flags.
+    BrowserExtension:
+      type: object
+      description: 'Extension selection for the browser session. Provide either id or name of an extension uploaded to Kernel.
+
+        '
+      properties:
+        id:
+          type: string
+          description: Extension ID to load for this browser session
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          description: Extension name to load for this browser session (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+    BrowserPoolProfile:
+      type: object
+      description: 'Profile configuration for browsers in a pool. Provide either id or name. Profiles must
+
+        be created beforehand. Unlike single browser sessions, pools load the profile read-only
+
+        and never persist changes back to it, so save_changes is omitted here. Any save_changes
+
+        value sent on a pool profile is silently ignored rather than rejected.
+
+        '
+      properties:
+        id:
+          type: string
+          description: Profile ID to load for browsers in this pool
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          description: Profile name to load for browsers in this pool (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+    BrowserPoolDeleteRequest:
+      type: object
+      description: 'Parameters for deleting a browser pool.
+
+        '
+      properties:
+        force:
+          type: boolean
+          default: false
+          description: If true, force delete even if browsers are currently leased. Leased browsers will be terminated.
+      required: []
+    Tags:
+      type: object
+      maxProperties: 50
+      description: User-defined key-value tags.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+      additionalProperties:
+        type: string
+        minLength: 0
+        maxLength: 256
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+      example:
+        team: backend
+        env: staging
+    BrowserPool:
+      type: object
+      description: A browser pool containing multiple identically configured browsers.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the browser pool
+          example: iv25ujqf37x3j07dwoffegqr
+        name:
+          type: string
+          description: Browser pool name, if set
+          example: my-pool
+        available_count:
+          type: integer
+          description: Number of browsers currently available in the pool
+          example: 85
+        acquired_count:
+          type: integer
+          description: Number of browsers currently acquired from the pool
+          example: 15
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the browser pool was created
+        browser_pool_config:
+          $ref: '#/components/schemas/BrowserPoolConfig'
+          description: Configuration used to create all browsers in this pool
+        profile_id:
+          type: string
+          description: Resolved profile ID the pool is attached to. Omitted when no profile is attached. Authoritative for programmatic consumers; the profile inside `browser_pool_config` reflects the configured selector (echoed as sent on create).
+          example: iv25ujqf37x3j07dwoffegqr
+        extension_ids:
+          type: array
+          description: Resolved extension IDs attached to the pool, in configured load order. Empty when no extensions are attached. Authoritative for programmatic consumers; the extensions inside `browser_pool_config` reflect the configured selector (echoed as sent on create).
+          items:
+            type: string
+      required:
+      - id
+      - available_count
+      - acquired_count
+      - created_at
+      - browser_pool_config
+      - extension_ids
+    BrowserPoolRef:
+      type: object
+      description: Browser pool this session was acquired from, if any.
+      properties:
+        id:
+          type: string
+          description: Browser pool ID
+        name:
+          type: string
+          description: Browser pool name, if set
+      required:
+      - id
+    BrowserPoolConfig:
+      type: object
+      description: 'Effective browser pool configuration returned by the API.
+
+        '
+      properties:
+        size:
+          type: integer
+          description: 'Number of browsers maintained in the pool. The maximum size is determined by your
+
+            organization''s pooled sessions limit (the sum of all pool sizes cannot exceed your limit).
+
+            '
+          minimum: 1
+          example: 10
+        name:
+          type: string
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          description: Optional name for the browser pool. Must be unique within the project.
+          example: my-pool
+        fill_rate_per_minute:
+          type: integer
+          description: Percentage of the pool to fill per minute. The cap is 25 for most organizations but can be raised per-organization, so only the lower bound is enforced here.
+          minimum: 0
+        timeout_seconds:
+          type: integer
+          description: Default idle timeout in seconds for browsers acquired from this pool before they are destroyed. Minimum 10, maximum 259200 (72 hours).
+          minimum: 10
+          maximum: 259200
+        stealth:
+          type: boolean
+          description: If true, launches the browser in stealth mode to reduce detection by anti-bot mechanisms.
+          example: true
+        headless:
+          type: boolean
+          description: If true, launches the browser using a headless image.
+          example: false
+        profile:
+          allOf:
+          - $ref: '#/components/schemas/BrowserPoolProfile'
+          description: Profile selection for browsers in the pool.
+        refresh_on_profile_update:
+          type: boolean
+          description: 'When true, flush idle browsers when the profile the pool uses is updated, so pool browsers
+
+            pick up the latest profile data. When a profile is provided during creation, this defaults
+
+            to true. Requires a profile to be set on the pool.
+
+            '
+          example: true
+        extensions:
+          type: array
+          description: List of browser extensions to load into the session. Provide each by id or name.
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/BrowserExtension'
+        proxy_id:
+          type: string
+          description: Optional proxy associated to the browser session. References a proxy in the same project as the browser session.
+        viewport:
+          allOf:
+          - $ref: '#/components/schemas/BrowserViewport'
+          description: Browser viewport used for newly-warmed browsers in this pool.
+        kiosk_mode:
+          type: boolean
+          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view.
+          example: true
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides applied to all browsers in this pool. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/ The serialized JSON payload is capped at 5 MiB.
+
+            '
+        start_url:
+          type: string
+          maxLength: 2048
+          description: 'Optional URL to navigate to when a new browser is warmed into the pool. Best-effort:
+
+            failures to navigate do not fail pool fill. Only applied to newly-warmed browsers;
+
+            browsers reused via release/acquire keep whatever URL the previous lease left them on.
+
+            Accepts any URL Chromium can resolve, including chrome:// pages.
+
+            '
+          example: https://example.com
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryConfig'
+          nullable: true
+          description: Active telemetry configuration applied to browsers warmed into this pool, if any.
+      required:
+      - size
+    BrowserTelemetryCategoryConfig:
+      type: object
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

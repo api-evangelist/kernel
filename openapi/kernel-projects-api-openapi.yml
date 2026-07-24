@@ -1,0 +1,788 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Projects API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Projects
+  description: Create and manage projects for resource isolation within an organization.
+paths:
+  /projects:
+    post:
+      operationId: postProjects
+      tags:
+      - Projects
+      summary: Create a project
+      description: 'Deprecated: use `POST /org/projects` instead. This route will be removed on 2026-11-24.
+
+
+        Create a new project within the authenticated organization.
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      operationId: getProjects
+      tags:
+      - Projects
+      summary: List projects
+      description: 'Deprecated: use `GET /org/projects` instead. This route will be removed on 2026-11-24.
+
+
+        List projects for the authenticated organization.
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+        description: Number of results to skip
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Case-insensitive substring match against project name
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Exact-match filter on project name using the database collation. In production, matching is case- and accent-insensitive.
+      responses:
+        '200':
+          description: List of projects
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+              description: Whether there are more results
+            X-Next-Offset:
+              schema:
+                type: integer
+              description: The offset where the next page starts. 0 when there are no more results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /projects/{id}:
+    get:
+      operationId: getProjectsId
+      tags:
+      - Projects
+      summary: Get a project
+      description: 'Deprecated: use `GET /org/projects/{id}` instead. This route will be removed on 2026-11-24.
+
+
+        Get a project by ID.
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      operationId: patchProjectsId
+      tags:
+      - Projects
+      summary: Update a project
+      description: 'Deprecated: use `PATCH /org/projects/{id}` instead. This route will be removed on 2026-11-24.
+
+
+        Update a project''s name or status.
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      operationId: deleteProjectsId
+      tags:
+      - Projects
+      summary: Delete a project
+      description: 'Deprecated: use `DELETE /org/projects/{id}` instead. This route will be removed on 2026-11-24.
+
+
+        Soft-delete a project. The project must be empty (no active resources).
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      responses:
+        '204':
+          description: Project deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /projects/{id}/limits:
+    get:
+      operationId: getProjectLimits
+      tags:
+      - Projects
+      summary: Get project limits
+      description: 'Deprecated: use `GET /org/projects/{id}/limits` instead. This route will be removed on 2026-11-24.
+
+
+        Get the resource limit overrides for a project. Null values mean no project-level cap (org limit applies).
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      responses:
+        '200':
+          description: Project limits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLimits'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      operationId: patchProjectLimits
+      tags:
+      - Projects
+      summary: Update project limits
+      description: 'Deprecated: use `PATCH /org/projects/{id}/limits` instead. This route will be removed on 2026-11-24.
+
+
+        Update resource limit overrides for a project. Only fields present in the request are modified. Set a field to 0 to remove that limit cap; omit a field to leave it unchanged.
+
+        '
+      deprecated: true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectLimitsRequest'
+      responses:
+        '200':
+          description: Project limits updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLimits'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /org/projects:
+    post:
+      operationId: postOrgProjects
+      tags:
+      - Projects
+      summary: Create a project
+      description: Create a new project within the authenticated organization.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst project = await client.projects.create({ name: 'staging' });\n\nconsole.log(project.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproject = client.projects.create(\n    name=\"staging\",\n)\nprint(project.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproject, err := client.Projects.New(context.TODO(), kernel.ProjectNewParams{\n\t\tCreateProjectRequest: kernel.CreateProjectRequestParam{\n\t\t\tName: \"staging\",\n\t\t},\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", project.ID)\n}\n"
+    get:
+      operationId: getOrgProjects
+      tags:
+      - Projects
+      summary: List projects
+      description: List projects for the authenticated organization.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+        description: Number of results to skip
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Case-insensitive substring match against project name
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Exact-match filter on project name using the database collation. In production, matching is case- and accent-insensitive.
+      responses:
+        '200':
+          description: List of projects
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+              description: Whether there are more results
+            X-Next-Offset:
+              schema:
+                type: integer
+              description: The offset where the next page starts. 0 when there are no more results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const project of client.projects.list()) {\n  console.log(project.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.projects.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Projects.List(context.TODO(), kernel.ProjectListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /org/projects/{id}:
+    get:
+      operationId: getOrgProjectsId
+      tags:
+      - Projects
+      summary: Get a project by ID or name
+      description: Get a project by its ID or by its name. Names are unique within an organization.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID or name
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst project = await client.projects.retrieve('id');\n\nconsole.log(project.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproject = client.projects.retrieve(\n    \"id\",\n)\nprint(project.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproject, err := client.Projects.Get(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", project.ID)\n}\n"
+    patch:
+      operationId: patchOrgProjectsId
+      tags:
+      - Projects
+      summary: Update a project
+      description: Update a project's name or status.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst project = await client.projects.update('id');\n\nconsole.log(project.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproject = client.projects.update(\n    id=\"id\",\n)\nprint(project.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproject, err := client.Projects.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProjectUpdateParams{\n\t\t\tUpdateProjectRequest: kernel.UpdateProjectRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", project.ID)\n}\n"
+    delete:
+      operationId: deleteOrgProjectsId
+      tags:
+      - Projects
+      summary: Delete a project
+      description: Soft-delete a project. The project must be empty (no active resources).
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      responses:
+        '204':
+          description: Project deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.projects.delete('id');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.projects.delete(\n    \"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Projects.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /org/projects/{id}/limits:
+    get:
+      operationId: getOrgProjectLimits
+      tags:
+      - Projects
+      summary: Get project limits
+      description: Get the resource limit overrides for a project. Null values mean no project-level cap (org limit applies).
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      responses:
+        '200':
+          description: Project limits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLimits'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst projectLimits = await client.projects.limits.retrieve('id');\n\nconsole.log(projectLimits.max_concurrent_invocations);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproject_limits = client.projects.limits.retrieve(\n    \"id\",\n)\nprint(project_limits.max_concurrent_invocations)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tprojectLimits, err := client.Projects.Limits.Get(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", projectLimits.MaxConcurrentInvocations)\n}\n"
+    patch:
+      operationId: patchOrgProjectLimits
+      tags:
+      - Projects
+      summary: Update project limits
+      description: Update resource limit overrides for a project. Only fields present in the request are modified. Set a field to 0 to remove that limit cap; omit a field to leave it unchanged.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectLimitsRequest'
+      responses:
+        '200':
+          description: Project limits updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLimits'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst projectLimits = await client.projects.limits.update('id');\n\nconsole.log(projectLimits.max_concurrent_invocations);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproject_limits = client.projects.limits.update(\n    id=\"id\",\n)\nprint(project_limits.max_concurrent_invocations)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tprojectLimits, err := client.Projects.Limits.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProjectLimitUpdateParams{\n\t\t\tUpdateProjectLimitsRequest: kernel.UpdateProjectLimitsRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", projectLimits.MaxConcurrentInvocations)\n}\n"
+components:
+  responses:
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: New project name
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+          description: New project status
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ProjectLimits:
+      type: object
+      properties:
+        max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Maximum concurrent browsers for this project, covering both on-demand sessions (`browsers.create()`) and browser pool reservations. Null means no project-level cap.
+          example: 10
+        max_concurrent_invocations:
+          type: integer
+          nullable: true
+          description: Maximum concurrent app invocations for this project. Null means no project-level cap.
+          example: 20
+        max_pooled_sessions:
+          type: integer
+          nullable: true
+          deprecated: true
+          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Always null once the unified concurrency limit is enabled for your organization.'
+          example: 50
+    UpdateProjectLimitsRequest:
+      type: object
+      properties:
+        max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Maximum concurrent browsers for this project, covering both on-demand sessions and browser pool reservations. Set to 0 to remove the cap; omit to leave unchanged.
+        max_concurrent_invocations:
+          type: integer
+          nullable: true
+          description: Maximum concurrent app invocations for this project. Set to 0 to remove the cap; omit to leave unchanged.
+        max_pooled_sessions:
+          type: integer
+          nullable: true
+          deprecated: true
+          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Requests that set this field are rejected with a 400 once the unified concurrency limit is enabled for your organization.'
+    Project:
+      type: object
+      required:
+      - id
+      - name
+      - status
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique project identifier
+          example: proj_abc123
+        name:
+          type: string
+          description: Project name
+          example: production
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+          description: Project status
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          description: When the project was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the project was last updated
+    CreateProjectRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Project name (1-255 characters)
+          example: staging
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

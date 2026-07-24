@@ -1,0 +1,618 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Proxies API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Proxies
+  description: Create and manage proxy configurations for routing browser traffic.
+paths:
+  /proxies:
+    post:
+      operationId: postProxies
+      tags:
+      - Proxies
+      summary: Create a proxy
+      description: Create a new proxy configuration in the resolved project.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyCreateRequest'
+      responses:
+        '201':
+          description: Proxy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proxy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst proxy = await client.proxies.create({ type: 'datacenter' });\n\nconsole.log(proxy.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproxy = client.proxies.create(\n    type=\"datacenter\",\n)\nprint(proxy.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproxy, err := client.Proxies.New(context.TODO(), kernel.ProxyNewParams{\n\t\tType: kernel.ProxyNewParamsTypeDatacenter,\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", proxy.ID)\n}\n"
+    get:
+      operationId: getProxies
+      tags:
+      - Proxies
+      summary: List proxies
+      description: List proxies in the resolved project.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Limit the number of proxies to return.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Offset the number of proxies to return.
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: query
+        in: query
+        required: false
+        description: Case-insensitive substring match against proxy name, host, or IP address. IDs match by exact value.
+        schema:
+          type: string
+      - name: name
+        in: query
+        required: false
+        description: Exact-match filter on proxy name using the database collation. In production, matching is case- and accent-insensitive. Names are not required to be unique, so multiple proxies may match.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: List of proxies
+          headers:
+            X-Limit:
+              description: Limit the number of proxies to return.
+              schema:
+                type: integer
+                minimum: 1
+                maximum: 100
+                default: 20
+            X-Offset:
+              description: The offset of proxies to return.
+              schema:
+                type: integer
+                minimum: 0
+                default: 0
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+                nullable: true
+            X-Has-More:
+              description: Whether there are more proxies to fetch.
+              schema:
+                type: boolean
+                default: false
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Proxy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const proxyListResponse of client.proxies.list()) {\n  console.log(proxyListResponse.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.proxies.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Proxies.List(context.TODO(), kernel.ProxyListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /proxies/{id}:
+    get:
+      operationId: getProxiesById
+      tags:
+      - Proxies
+      summary: Get proxy by ID
+      description: Retrieve a proxy in the resolved project by ID.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Proxy retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proxy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst proxy = await client.proxies.retrieve('id');\n\nconsole.log(proxy.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproxy = client.proxies.retrieve(\n    \"id\",\n)\nprint(proxy.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproxy, err := client.Proxies.Get(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", proxy.ID)\n}\n"
+    patch:
+      operationId: patchProxiesById
+      tags:
+      - Proxies
+      summary: Rename proxy by ID
+      description: Update a proxy's name. Proxy names are not unique and are not ID-or-name addressable on this endpoint; duplicate names are allowed. Name-based session-create lookups can remain ambiguous until callers resolve proxies by ID or the API adds a stronger uniqueness contract.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyUpdateRequest'
+      responses:
+        '200':
+          description: Proxy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proxy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst proxy = await client.proxies.update('id', { name: 'my-renamed-proxy' });\n\nconsole.log(proxy.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nproxy = client.proxies.update(\n    id=\"id\",\n    name=\"my-renamed-proxy\",\n)\nprint(proxy.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tproxy, err := client.Proxies.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProxyUpdateParams{\n\t\t\tName: \"my-renamed-proxy\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", proxy.ID)\n}\n"
+    delete:
+      operationId: deleteProxiesById
+      tags:
+      - Proxies
+      summary: Delete proxy by ID
+      description: Soft delete a proxy. Sessions referencing it are not modified.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Proxy deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.proxies.delete('id');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.proxies.delete(\n    \"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Proxies.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /proxies/{id}/check:
+    post:
+      operationId: postProxiesByIdCheck
+      tags:
+      - Proxies
+      summary: Check proxy health
+      description: Run a health check on the proxy to verify it's working. Optionally specify a URL to test reachability against a specific target. For ISP and datacenter proxies, this reliably tests whether the target site is reachable from the proxy's stable exit IP. For residential and mobile proxies, the exit node varies between requests, so this validates proxy configuration and connectivity rather than guaranteeing site-specific reachability.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyCheckRequest'
+      responses:
+        '200':
+          description: Health check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proxy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.proxies.check('id');\n\nconsole.log(response.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.proxies.check(\n    id=\"id\",\n)\nprint(response.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Proxies.Check(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProxyCheckParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.ID)\n}\n"
+components:
+  schemas:
+    CustomProxyConfig:
+      type: object
+      title: Custom
+      description: Configuration for a custom proxy (e.g., private proxy server).
+      required:
+      - host
+      - port
+      properties:
+        host:
+          type: string
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+        port:
+          type: integer
+          description: Proxy port.
+          example: 8080
+        username:
+          type: string
+          description: Username for proxy authentication.
+          example: user123
+        has_password:
+          type: boolean
+          description: Whether the proxy has a password.
+          example: true
+    ProxyUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
+          minLength: 1
+          maxLength: 255
+          example: my-renamed-proxy
+    ResidentialProxyConfig:
+      type: object
+      title: Residential
+      description: Configuration for residential proxies.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code.
+          example: US
+        city:
+          type: string
+          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
+          example: sanfrancisco
+        state:
+          type: string
+          description: Two-letter state code.
+          example: CA
+        zip:
+          type: string
+          description: US ZIP code.
+          example: '94107'
+        asn:
+          type: string
+          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
+          example: AS15169
+        os:
+          type: string
+          description: Operating system of the residential device.
+          deprecated: true
+          x-deprecated-reason: os selection not supported by proxy provider
+          enum:
+          - windows
+          - macos
+          - android
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    MobileProxyConfig:
+      type: object
+      title: Mobile
+      description: Configuration for mobile proxies.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code
+          example: US
+        city:
+          type: string
+          description: Provider city alias. Mobile carrier routing can make observed geo vary.
+          example: brooklyn
+        state:
+          type: string
+          description: US-only state code. Mobile carrier routing can make observed geo vary.
+          example: NY
+    DatacenterProxyConfig:
+      type: object
+      title: Datacenter
+      description: Configuration for a datacenter proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
+    IspProxyConfig:
+      type: object
+      title: ISP
+      description: Configuration for an ISP proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
+    ProxyCheckRequest:
+      type: object
+      description: Optional parameters for the proxy health check.
+      properties:
+        url:
+          type: string
+          example: https://example.com
+          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
+    CreateCustomProxyConfig:
+      type: object
+      title: Custom
+      description: Configuration for a custom proxy (e.g., private proxy server).
+      required:
+      - host
+      - port
+      properties:
+        host:
+          type: string
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+        port:
+          type: integer
+          description: Proxy port.
+          example: 8080
+        username:
+          type: string
+          description: Username for proxy authentication.
+          example: user123
+        password:
+          type: string
+          description: Password for proxy authentication.
+          example: secret
+    ProxyCreateRequest:
+      type: object
+      description: Configuration for routing traffic through a proxy.
+      required:
+      - type
+      properties:
+        name:
+          type: string
+          description: Readable name of the proxy.
+        type:
+          type: string
+          description: 'Proxy type to use. In terms of quality for avoiding bot-detection, from best to worst: `mobile` > `residential` > `isp` > `datacenter`.
+
+            '
+          enum:
+          - datacenter
+          - isp
+          - residential
+          - mobile
+          - custom
+        protocol:
+          type: string
+          description: Protocol to use for the proxy connection.
+          enum:
+          - http
+          - https
+          default: https
+        bypass_hosts:
+          type: array
+          description: Hostnames that should bypass the parent proxy and connect directly.
+          items:
+            type: string
+        config:
+          description: Configuration specific to the selected proxy `type`.
+          oneOf:
+          - $ref: '#/components/schemas/DatacenterProxyConfig'
+          - $ref: '#/components/schemas/IspProxyConfig'
+          - $ref: '#/components/schemas/ResidentialProxyConfig'
+          - $ref: '#/components/schemas/MobileProxyConfig'
+          - $ref: '#/components/schemas/CreateCustomProxyConfig'
+      discriminator:
+        propertyName: type
+        mapping:
+          datacenter: '#/components/schemas/DatacenterProxyConfig'
+          isp: '#/components/schemas/IspProxyConfig'
+          residential: '#/components/schemas/ResidentialProxyConfig'
+          mobile: '#/components/schemas/MobileProxyConfig'
+          custom: '#/components/schemas/CustomProxyConfig'
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Proxy:
+      type: object
+      description: Configuration for routing traffic through a proxy.
+      required:
+      - type
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: Readable name of the proxy.
+        type:
+          type: string
+          description: 'Proxy type to use. In terms of quality for avoiding bot-detection, from best to worst: `mobile` > `residential` > `isp` > `datacenter`.
+
+            '
+          enum:
+          - datacenter
+          - isp
+          - residential
+          - mobile
+          - custom
+        protocol:
+          type: string
+          description: Protocol to use for the proxy connection.
+          enum:
+          - http
+          - https
+          default: https
+        bypass_hosts:
+          type: array
+          description: Hostnames that should bypass the parent proxy and connect directly.
+          items:
+            type: string
+        status:
+          type: string
+          description: Current health status of the proxy.
+          enum:
+          - available
+          - unavailable
+        last_checked:
+          type: string
+          format: date-time
+          description: Timestamp of the last health check performed on this proxy.
+        ip_address:
+          type: string
+          description: IP address that the proxy uses when making requests.
+          example: 192.168.1.1
+        config:
+          description: Configuration specific to the selected proxy `type`.
+          oneOf:
+          - $ref: '#/components/schemas/DatacenterProxyConfig'
+          - $ref: '#/components/schemas/IspProxyConfig'
+          - $ref: '#/components/schemas/ResidentialProxyConfig'
+          - $ref: '#/components/schemas/MobileProxyConfig'
+          - $ref: '#/components/schemas/CustomProxyConfig'
+      discriminator:
+        propertyName: type
+        mapping:
+          datacenter: '#/components/schemas/DatacenterProxyConfig'
+          isp: '#/components/schemas/IspProxyConfig'
+          residential: '#/components/schemas/ResidentialProxyConfig'
+          mobile: '#/components/schemas/MobileProxyConfig'
+          custom: '#/components/schemas/CustomProxyConfig'
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable Entity – request was valid but the operation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

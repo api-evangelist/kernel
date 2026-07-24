@@ -1,0 +1,933 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Invocations API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Invocations
+  description: Invoke actions and stream or query invocation status and events.
+paths:
+  /invocations:
+    post:
+      operationId: postInvocations
+      tags:
+      - Invocations
+      summary: Invoke an action
+      description: Invoke an action.
+      security:
+      - bearerAuth: []
+      requestBody:
+        description: Invocation parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                  description: Name of the application
+                  example: my-app
+                version:
+                  type: string
+                  description: Version of the application
+                  example: 1.0.0
+                  default: latest
+                payload:
+                  type: string
+                  description: Input data for the action, sent as a JSON string.
+                  example: '{"data":"example input"}'
+                action_name:
+                  type: string
+                  description: Name of the action to invoke
+                  example: analyze
+                async:
+                  type: boolean
+                  description: If true, invoke asynchronously. When set, the API responds 202 Accepted with status "queued".
+                  example: true
+                  default: false
+                async_timeout_seconds:
+                  type: integer
+                  description: Timeout in seconds for async invocations (min 10, max 3600). Only applies when async is true.
+                  example: 600
+                  default: 900
+                  minimum: 10
+                  maximum: 3600
+              required:
+              - app_name
+              - version
+              - action_name
+      responses:
+        '200':
+          description: Invocation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+        '202':
+          description: Invocation queued successfully (asynchronous invocation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '529':
+          $ref: '#/components/responses/CapacityExhausted'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst invocation = await client.invocations.create({\n  action_name: 'analyze',\n  app_name: 'my-app',\n  version: '1.0.0',\n});\n\nconsole.log(invocation.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ninvocation = client.invocations.create(\n    action_name=\"analyze\",\n    app_name=\"my-app\",\n    version=\"1.0.0\",\n)\nprint(invocation.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tinvocation, err := client.Invocations.New(context.TODO(), kernel.InvocationNewParams{\n\t\tActionName: \"analyze\",\n\t\tAppName:    \"my-app\",\n\t\tVersion:    \"1.0.0\",\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", invocation.ID)\n}\n"
+    get:
+      operationId: getInvocations
+      tags:
+      - Invocations
+      summary: List invocations
+      description: List invocations. Optionally filter by application name, action name, status, deployment ID, or start time.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: app_name
+        in: query
+        required: false
+        description: Filter results by application name.
+        schema:
+          type: string
+      - name: version
+        in: query
+        required: false
+        description: Filter results by application version.
+        schema:
+          type: string
+      - name: action_name
+        in: query
+        required: false
+        description: Filter results by action name.
+        schema:
+          type: string
+      - name: deployment_id
+        in: query
+        required: false
+        description: Filter results by deployment ID.
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: Filter results by invocation status.
+        schema:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+      - name: since
+        in: query
+        required: false
+        description: Show invocations that have started since the given time (RFC timestamps or durations like 5m).
+        schema:
+          type: string
+          example: '2025-06-20T12:00:00Z'
+      - name: limit
+        in: query
+        required: false
+        description: Limit the number of invocations to return.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Offset the number of invocations to return.
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: query
+        in: query
+        required: false
+        description: Search invocations by ID, app name, or action name.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A list of invocations.
+          headers:
+            X-Limit:
+              description: The limit of invocations returned.
+              schema:
+                type: integer
+            X-Offset:
+              description: The offset of invocations returned.
+              schema:
+                type: integer
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+                nullable: true
+            X-Has-More:
+              description: Whether there are more invocations to fetch.
+              schema:
+                type: boolean
+                default: false
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invocation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const invocationListResponse of client.invocations.list()) {\n  console.log(invocationListResponse.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.invocations.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Invocations.List(context.TODO(), kernel.InvocationListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /invocations/{id}:
+    get:
+      operationId: getInvocationsById
+      tags:
+      - Invocations
+      summary: Get invocation details
+      description: Get details about an invocation's status and output.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The invocation ID
+        example: rr33xuugxj9h0bkf1rdt2bet
+      responses:
+        '200':
+          description: App invocation retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invocation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst invocation = await client.invocations.retrieve('rr33xuugxj9h0bkf1rdt2bet');\n\nconsole.log(invocation.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ninvocation = client.invocations.retrieve(\n    \"rr33xuugxj9h0bkf1rdt2bet\",\n)\nprint(invocation.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tinvocation, err := client.Invocations.Get(context.TODO(), \"rr33xuugxj9h0bkf1rdt2bet\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", invocation.ID)\n}\n"
+    patch:
+      operationId: patchInvocationsById
+      tags:
+      - Invocations
+      summary: Update invocation
+      description: Update an invocation's status or output. This can be used to cancel an invocation by setting the status to "failed".
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Invocation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvocationUpdateRequest'
+      responses:
+        '200':
+          description: Invocation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invocation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst invocation = await client.invocations.update('id', { status: 'succeeded' });\n\nconsole.log(invocation.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ninvocation = client.invocations.update(\n    id=\"id\",\n    status=\"succeeded\",\n)\nprint(invocation.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tinvocation, err := client.Invocations.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.InvocationUpdateParams{\n\t\t\tStatus: kernel.InvocationUpdateParamsStatusSucceeded,\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", invocation.ID)\n}\n"
+  /invocations/{id}/browsers:
+    get:
+      operationId: getInvocationsBrowsersById
+      tags:
+      - Invocations
+      summary: List browsers for an invocation
+      description: Returns all active browser sessions created within the specified invocation.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Invocation ID
+      responses:
+        '200':
+          description: List of browsers for this invocation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - browsers
+                properties:
+                  browsers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Browser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.invocations.listBrowsers('id');\n\nconsole.log(response.browsers);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.invocations.list_browsers(\n    \"id\",\n)\nprint(response.browsers)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Invocations.ListBrowsers(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Browsers)\n}\n"
+    delete:
+      operationId: deleteInvocationsBrowsersById
+      tags:
+      - Invocations
+      summary: Delete browser sessions for an invocation
+      description: Delete all browser sessions created within the specified invocation.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Invocation ID
+      responses:
+        '204':
+          description: Browser sessions deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.invocations.deleteBrowsers('id');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.invocations.delete_browsers(\n    \"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Invocations.DeleteBrowsers(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /invocations/{id}/events:
+    get:
+      x-hidden: false
+      operationId: getInvocationsEventsById
+      tags:
+      - Invocations
+      summary: Stream invocation events via SSE
+      description: 'Establishes a Server-Sent Events (SSE) stream that delivers real-time logs and
+
+        status updates for an invocation. The stream terminates automatically
+
+        once the invocation reaches a terminal state.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: The invocation ID to follow.
+        schema:
+          type: string
+      - name: since
+        in: query
+        required: false
+        description: Show logs since the given time (RFC timestamps or durations like 5m).
+        schema:
+          type: string
+          example: '2025-06-20T12:00:00Z'
+      responses:
+        '200':
+          description: SSE stream of invocation state updates and logs.
+          headers:
+            X-SSE-Content-Type:
+              description: Media type of SSE data events (always application/json).
+              schema:
+                type: string
+                const: application/json
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/InvocationEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.invocations.follow('id');\n\nconsole.log(response);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nfor invocation in client.invocations.follow(\n    id=\"id\",\n):\n  print(invocation)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Invocations.FollowStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.InvocationFollowParams{},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+components:
+  schemas:
+    InvocationEvent:
+      oneOf:
+      - $ref: '#/components/schemas/LogEvent'
+      - $ref: '#/components/schemas/InvocationStateEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          log: '#/components/schemas/LogEvent'
+          invocation_state: '#/components/schemas/InvocationStateEvent'
+          error: '#/components/schemas/ErrorEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any invocation event.
+    BrowserTelemetryCategoriesConfig:
+      type: object
+      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
+      properties:
+        console:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Console output (log, warn, error) and uncaught exceptions. CDP category; off by default.
+        page:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
+        interaction:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: User interaction events including clicks, keydowns, and scroll-settled events. CDP category; off by default.
+        network:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: HTTP request and response metadata including URL, method, status code, and timing. Request post data is forwarded as-is from CDP. Text response bodies are truncated at 8 KB for structured types (JSON, XML, form data) and 4 KB for other text types. Binary responses (images, fonts, media) are excluded. CDP category; off by default.
+        control:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Agent-driven actions against the browser, such as inbound calls to the in-VM API. On by default.
+        connection:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
+        system:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
+        screenshot:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Periodic base64-encoded viewport screenshots. High volume; off by default and must be opted into.
+        captcha:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Captcha solve attempt outcomes. On by default.
+    Browser:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: When the browser session was created.
+        cdp_ws_url:
+          type: string
+          description: Websocket URL for Chrome DevTools Protocol connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/cdp?jwt=eyJ0eXAi...
+        webdriver_ws_url:
+          type: string
+          description: Websocket URL for WebDriver BiDi connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/webdriver/session?jwt=eyJ0eXAi...
+        browser_live_view_url:
+          type: string
+          description: Remote URL for live viewing the browser session. Only available for non-headless browsers.
+          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/live?jwt=eyJ0eXAi...
+        base_url:
+          type: string
+          description: Metro-API HTTP base URL for this browser session.
+          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/kernel
+        headless:
+          type: boolean
+          description: Whether the browser session is running in headless mode.
+          example: false
+        stealth:
+          type: boolean
+          description: Whether the browser session is running in stealth mode.
+          example: false
+        gpu:
+          type: boolean
+          description: Whether GPU acceleration is enabled for the browser session (only supported for headful sessions).
+          example: false
+        session_id:
+          type: string
+          description: Unique identifier for the browser session
+          example: htzv5orfit78e1m2biiifpbv
+        name:
+          type: string
+          description: Human-readable name of the browser session, if one was set at creation.
+          example: checkout-flow-1
+        timeout_seconds:
+          type: integer
+          description: The number of seconds of inactivity before the browser session is terminated.
+        profile:
+          $ref: '#/components/schemas/Profile'
+        proxy_id:
+          type: string
+          description: ID of the proxy associated with this browser session, if any.
+        pool:
+          $ref: '#/components/schemas/BrowserPoolRef'
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+        kiosk_mode:
+          type: boolean
+          description: Whether the browser session is running in kiosk mode.
+          example: false
+        start_url:
+          type: string
+          description: URL the session was asked to navigate to on creation, if any. Recorded for debugging. Navigation is fire-and-forget — the URL is dispatched to the browser without waiting for it to load, and any errors (DNS failure, bad status, timeout) are silently dropped. Captures what was requested, not what the browser actually loaded.
+          example: https://example.com
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides that were applied to this browser session, if any. Echoed back for verification. Keys are Chrome enterprise policy names.
+
+            '
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: User-defined key-value tags that were set on this browser session, if any. Echoed back when present.
+        deleted_at:
+          type: string
+          format: date-time
+          description: When the browser session was soft-deleted. Only present for deleted sessions.
+        usage:
+          $ref: '#/components/schemas/BrowserUsage'
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryConfig'
+          nullable: true
+          description: Active telemetry configuration for the session, if any.
+      required:
+      - created_at
+      - cdp_ws_url
+      - webdriver_ws_url
+      - session_id
+      - stealth
+      - headless
+      - timeout_seconds
+    InvokeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the invocation
+          example: rr33xuugxj9h0bkf1rdt2bet
+        action_name:
+          type: string
+          description: Name of the action invoked
+          example: analyze
+        status:
+          type: string
+          description: Status of the invocation
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          example: queued
+        status_reason:
+          type: string
+          description: Status reason
+          example: Invocation queued for execution
+        output:
+          type: string
+          description: 'The return value of the action that was invoked, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
+          example: '{"result":"success","data":"processed input"}'
+      required:
+      - id
+      - action_name
+      - status
+    LogEvent:
+      type: object
+      description: A log entry from the application.
+      required:
+      - event
+      - message
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: log
+          description: Event type identifier (always "log").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the log entry was produced.
+        message:
+          type: string
+          description: Log message text.
+    InvocationStateEvent:
+      type: object
+      description: An event representing the current state of an invocation.
+      required:
+      - event
+      - invocation
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: invocation_state
+          description: Event type identifier (always "invocation_state").
+        invocation:
+          $ref: '#/components/schemas/Invocation'
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the state was reported.
+    Profile:
+      type: object
+      description: Browser profile metadata.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the profile
+        name:
+          type: string
+          nullable: true
+          description: Optional, easier-to-reference name for the profile
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last updated
+        last_used_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last used
+      required:
+      - id
+      - created_at
+    BrowserUsage:
+      type: object
+      description: Session usage metrics.
+      properties:
+        uptime_ms:
+          type: integer
+          description: Time in milliseconds the session was actively running.
+      required:
+      - uptime_ms
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    BrowserViewport:
+      type: object
+      description: 'Initial browser window size in pixels with optional refresh rate.
+
+        If omitted, image defaults apply (1920x1080@25).
+
+        For GPU images, the default is 1920x1080@60.
+
+        Arbitrary viewport dimensions and refresh rates are accepted.
+
+        Known-good presets include:
+
+        2560x1440@10, 1920x1080@25, 1920x1200@25, 1440x900@25, 1280x800@60, 1024x768@60, 1200x800@60, 768x1024@60, 390x844@60.
+
+        For GPU images, recommended presets use one of these resolutions with refresh rates 60, 30, 25, or 10:
+
+        800x600, 960x720, 1024x576, 1024x768, 1152x648, 1200x800, 1280x720, 1368x768, 1440x900, 1600x900, 1920x1080, 1920x1200, 390x844, 360x250, 768x1024, 800x1600.
+
+        Viewports outside this list may exhibit unstable live view or recording behavior.
+
+        If refresh_rate is not provided, it will be automatically determined based on the resolution
+
+        (higher resolutions use lower refresh rates to keep bandwidth reasonable).
+
+        '
+      properties:
+        width:
+          type: integer
+          description: Browser window width in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 1280
+        height:
+          type: integer
+          description: Browser window height in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 800
+        refresh_rate:
+          type: integer
+          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
+          minimum: 1
+          example: 60
+      required:
+      - width
+      - height
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    BrowserTelemetryConfig:
+      type: object
+      description: Active telemetry configuration for a browser session.
+      properties:
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category enable/disable flags.
+    ErrorEvent:
+      type: object
+      description: An error event from the application.
+      required:
+      - event
+      - timestamp
+      - error
+      properties:
+        event:
+          type: string
+          const: error
+          description: Event type identifier (always "error").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the error occurred.
+        error:
+          $ref: '#/components/schemas/Error'
+    Invocation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the invocation
+          example: rr33xuugxj9h0bkf1rdt2bet
+        app_name:
+          type: string
+          description: Name of the application
+          example: my-app
+        version:
+          type: string
+          description: Version label for the application
+          example: 1.0.0
+        action_name:
+          type: string
+          description: Name of the action invoked
+          example: analyze
+        payload:
+          type: string
+          description: Payload provided to the invocation. This is a string that can be parsed as JSON.
+          example: '{"data":"example input"}'
+        output:
+          type: string
+          description: 'Output produced by the action, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
+          example: '{"result":"success","data":"processed input"}'
+        started_at:
+          type: string
+          format: date-time
+          description: RFC 3339 Nanoseconds timestamp when the invocation started
+          example: 2024-05-19T15:30:00.000000000Z07:00
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: RFC 3339 Nanoseconds timestamp when the invocation finished (null if still running)
+          example: 2024-05-19T15:30:05.000000000Z07:00
+        status:
+          type: string
+          description: Status of the invocation
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          example: succeeded
+        status_reason:
+          type: string
+          description: Status reason
+          example: Invocation completed successfully
+      required:
+      - id
+      - app_name
+      - version
+      - action_name
+      - started_at
+      - status
+    InvocationUpdateRequest:
+      type: object
+      description: Request body for updating an invocation.
+      properties:
+        status:
+          type: string
+          description: New status for the invocation.
+          enum:
+          - succeeded
+          - failed
+        output:
+          type: string
+          description: Updated output of the invocation rendered as JSON string.
+      required:
+      - status
+    Tags:
+      type: object
+      maxProperties: 50
+      description: User-defined key-value tags.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+      additionalProperties:
+        type: string
+        minLength: 0
+        maxLength: 256
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+      example:
+        team: backend
+        env: staging
+    BrowserPoolRef:
+      type: object
+      description: Browser pool this session was acquired from, if any.
+      properties:
+        id:
+          type: string
+          description: Browser pool ID
+        name:
+          type: string
+          description: Browser pool name, if set
+      required:
+      - id
+    BrowserTelemetryCategoryConfig:
+      type: object
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+    SSEHeartbeatEvent:
+      type: object
+      description: Heartbeat event sent periodically to keep SSE connection alive.
+      required:
+      - event
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the heartbeat was sent.
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    CapacityExhausted:
+      description: Capacity exhausted, unable to fulfill request at this time
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

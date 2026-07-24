@@ -1,0 +1,517 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: API Keys
+  description: Create and manage API keys for organization and project-scoped access.
+paths:
+  /org/api_keys:
+    post:
+      operationId: postApiKeys
+      tags:
+      - API Keys
+      summary: Create an API key
+      description: Create a new API key within the authenticated organization.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+      responses:
+        '201':
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedApiKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst createdAPIKey = await client.apiKeys.create({ name: 'staging' });\n\nconsole.log(createdAPIKey);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ncreated_api_key = client.api_keys.create(\n    name=\"staging\",\n)\nprint(created_api_key)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tcreatedAPIKey, err := client.APIKeys.New(context.TODO(), kernel.APIKeyNewParams{\n\t\tName: \"staging\",\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", createdAPIKey)\n}\n"
+    get:
+      operationId: listApiKeys
+      tags:
+      - API Keys
+      summary: List API keys
+      description: List API keys for the authenticated organization. API keys are masked.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+        description: Number of results to skip
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Case-insensitive substring match against API key name, creator, and project. API key identifiers and masked keys match by exact value or prefix.
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Exact-match filter on API key name using the database collation. In production, matching is case- and accent-insensitive. Names are not required to be unique, so multiple keys may match. When status=all or include_deleted=true is set, soft-deleted keys with the same name may also match.
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - expires_at
+          default: created_at
+        description: Field to sort API keys by.
+      - name: sort_direction
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort direction for API keys.
+      - name: status
+        in: query
+        required: false
+        description: Filter API keys by status. "active" returns keys that are not deleted (default; expired-but-not-deleted keys are still included), "deleted" returns only soft-deleted keys, "all" returns both.
+        schema:
+          type: string
+          enum:
+          - active
+          - deleted
+          - all
+          default: active
+      - name: include_deleted
+        in: query
+        required: false
+        deprecated: true
+        description: 'Deprecated: use status=all instead. When true, include deleted (soft-deleted) API keys in the results for audit purposes.'
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: List of API keys
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+              description: Whether there are more results
+            X-Next-Offset:
+              schema:
+                type: integer
+              description: The offset where the next page starts. 0 when there are no more results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const apiKey of client.apiKeys.list()) {\n  console.log(apiKey.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.api_keys.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.APIKeys.List(context.TODO(), kernel.APIKeyListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /org/api_keys/{id}:
+    get:
+      operationId: getApiKeysById
+      tags:
+      - API Keys
+      summary: Get an API key
+      description: Retrieve an API key by ID for the authenticated organization. API keys are masked.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: API key ID
+      - name: include_deleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: When true, return the API key even if it has been deleted (soft-deleted), for audit purposes. Defaults to false, which returns 404 for a deleted key.
+      responses:
+        '200':
+          description: API key details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst apiKey = await client.apiKeys.retrieve('id');\n\nconsole.log(apiKey.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\napi_key = client.api_keys.retrieve(\n    id=\"id\",\n)\nprint(api_key.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tapiKey, err := client.APIKeys.Get(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyGetParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", apiKey.ID)\n}\n"
+    patch:
+      operationId: patchApiKeysById
+      tags:
+      - API Keys
+      summary: Update an API key
+      description: Update an API key's name.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: API key ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApiKeyRequest'
+      responses:
+        '200':
+          description: API key updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst apiKey = await client.apiKeys.update('id', { name: 'new-api-name' });\n\nconsole.log(apiKey.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\napi_key = client.api_keys.update(\n    id=\"id\",\n    name=\"new-api-name\",\n)\nprint(api_key.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tapiKey, err := client.APIKeys.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyUpdateParams{\n\t\t\tName: \"new-api-name\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", apiKey.ID)\n}\n"
+    delete:
+      operationId: deleteApiKeysById
+      tags:
+      - API Keys
+      summary: Delete an API key
+      description: Delete an API key. A key cannot delete itself; use a different key to delete this one.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: API key ID
+      responses:
+        '204':
+          description: API key deleted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.apiKeys.delete('id');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.api_keys.delete(\n    \"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.APIKeys.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /org/api_keys/{id}/rotate:
+    post:
+      operationId: rotateApiKey
+      tags:
+      - API Keys
+      summary: Rotate an API key
+      description: Rotate an API key. Issues a new key that copies the name and project of the rotated key, and schedules the rotated key to expire after a grace period so in-flight callers can swap over. The new plaintext key is returned once.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: API key ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateApiKeyRequest'
+      responses:
+        '201':
+          description: New API key created from the rotation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedApiKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst createdAPIKey = await client.apiKeys.rotate('id');\n\nconsole.log(createdAPIKey);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ncreated_api_key = client.api_keys.rotate(\n    id=\"id\",\n)\nprint(created_api_key)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tcreatedAPIKey, err := client.APIKeys.Rotate(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyRotateParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", createdAPIKey)\n}\n"
+components:
+  schemas:
+    UpdateApiKeyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New API key name
+          minLength: 1
+          maxLength: 255
+          example: new-api-name
+    CreateApiKeyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Label for the API key (1-255 characters). API keys are not addressable by name.
+          minLength: 1
+          maxLength: 255
+          example: staging
+        days_to_expire:
+          type: integer
+          description: Number of days until expiry, up to 3650. Use null for never.
+          minimum: 1
+          maximum: 3650
+          example: 30
+          nullable: true
+        project_id:
+          type: string
+          description: Unique project identifier
+          example: proj_abc123
+          nullable: true
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    RotateApiKeyRequest:
+      type: object
+      properties:
+        days_to_expire:
+          type: integer
+          description: Lifetime in days for the new key, up to 3650. Omit to reuse the rotated key's original lifetime, or never-expires if it had none.
+          minimum: 1
+          maximum: 3650
+          example: 30
+          nullable: true
+        expire_in_days:
+          type: integer
+          description: Grace period in days before the rotated key expires. Use 0 to expire it immediately. Omit for the default grace period of 7 days.
+          minimum: 0
+          maximum: 3650
+          example: 7
+          nullable: true
+    ApiKeyCreator:
+      type: object
+      required:
+      - id
+      - email
+      - name
+      properties:
+        id:
+          type: string
+          description: Kernel user ID of the creator.
+          example: user-abc123
+        email:
+          type: string
+          format: email
+          description: Email address of the creator.
+          example: user@example.com
+        name:
+          type: string
+          nullable: true
+          description: Display name of the creator, if available.
+          example: Jane Doe
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    ApiKey:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - created_by
+      - expires_at
+      - deleted_at
+      - project_id
+      - project_name
+      - masked_key
+      properties:
+        id:
+          type: string
+          description: Unique API key identifier
+          example: ckv9w8q2f000001l5r3j7k9m4
+        name:
+          type: string
+          description: Label for the API key. API keys are not addressable by name; use the ID or key identifier for stable references.
+          example: production
+        created_at:
+          type: string
+          format: date-time
+          description: When the API key was created
+        created_by:
+          $ref: '#/components/schemas/ApiKeyCreator'
+        expires_at:
+          type: string
+          format: date-time
+          description: When the API key expires
+          nullable: true
+        deleted_at:
+          type: string
+          format: date-time
+          description: When the API key was deleted (soft-deleted). Null for keys that have not been deleted.
+          nullable: true
+        project_id:
+          type: string
+          description: Project identifier for project-scoped API keys. Null means org-wide.
+          example: proj_abc123
+          nullable: true
+        project_name:
+          type: string
+          description: Project name for project-scoped API keys. Null means the key is org-wide or the project name is unavailable.
+          example: Production
+          nullable: true
+        masked_key:
+          type: string
+          description: Masked version of the API key
+          example: sk_1234...abcd
+    CreatedApiKey:
+      description: API key returned immediately after creation. Includes the plaintext key once.
+      allOf:
+      - $ref: '#/components/schemas/ApiKey'
+      - type: object
+        required:
+        - key
+        properties:
+          key:
+            type: string
+            description: Plaintext API key. Only returned once when the key is created.
+            example: sk_1234abcd
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

@@ -1,0 +1,1662 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Managed Auth API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Managed Auth
+  description: Create and manage auth connections for automated credential capture and login.
+paths:
+  /auth/connections:
+    post:
+      operationId: postAuthConnections
+      tags:
+      - Managed Auth
+      summary: Create auth connection
+      description: Creates an auth connection for a profile and domain combination. If the provided profile_name does not exist, it is created automatically. Returns 409 Conflict if an auth connection already exists for the given profile and domain.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAuthCreateRequest'
+      responses:
+        '201':
+          description: Auth connection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAuth'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Auth connection already exists for this profile and domain
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                - existing_id
+                properties:
+                  code:
+                    type: string
+                    example: already_exists
+                  message:
+                    type: string
+                    example: Auth connection already exists for this profile and domain
+                  existing_id:
+                    type: string
+                    description: ID of the existing auth connection
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst managedAuth = await client.auth.connections.create({\n  domain: 'netflix.com',\n  profile_name: 'user-123',\n});\n\nconsole.log(managedAuth.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nmanaged_auth = client.auth.connections.create(\n    domain=\"netflix.com\",\n    profile_name=\"user-123\",\n)\nprint(managed_auth.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tmanagedAuth, err := client.Auth.Connections.New(context.TODO(), kernel.AuthConnectionNewParams{\n\t\tManagedAuthCreateRequest: kernel.ManagedAuthCreateRequestParam{\n\t\t\tDomain:      \"netflix.com\",\n\t\t\tProfileName: \"user-123\",\n\t\t},\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", managedAuth.ID)\n}\n"
+    get:
+      operationId: getAuthConnections
+      tags:
+      - Managed Auth
+      summary: List auth connections
+      description: List auth connections with optional filters for profile_name and domain.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: profile_name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter by profile name
+      - name: domain
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter by domain
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+        description: Maximum number of results to return
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+        description: Number of results to skip
+      - name: query
+        in: query
+        required: false
+        description: Search auth connections by ID, domain, or profile name.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: List of auth connections
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+              description: Whether there are more results
+            X-Next-Offset:
+              schema:
+                type: integer
+              description: The offset where the next page starts. 0 when there are no more results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ManagedAuth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const managedAuth of client.auth.connections.list()) {\n  console.log(managedAuth.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.auth.connections.list()\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Auth.Connections.List(context.TODO(), kernel.AuthConnectionListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /auth/connections/{id}:
+    get:
+      operationId: getAuthConnectionsById
+      tags:
+      - Managed Auth
+      summary: Get auth connection
+      description: Retrieve an auth connection by its ID. Includes current flow state if a login is in progress.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      responses:
+        '200':
+          description: Auth connection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAuth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst managedAuth = await client.auth.connections.retrieve('id');\n\nconsole.log(managedAuth.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nmanaged_auth = client.auth.connections.retrieve(\n    \"id\",\n)\nprint(managed_auth.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tmanagedAuth, err := client.Auth.Connections.Get(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", managedAuth.ID)\n}\n"
+    patch:
+      operationId: patchAuthConnectionsById
+      tags:
+      - Managed Auth
+      summary: Update auth connection
+      description: Update an auth connection's configuration. Only the fields provided will be updated.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAuthUpdateRequest'
+      responses:
+        '200':
+          description: Auth connection updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAuth'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst managedAuth = await client.auth.connections.update('id');\n\nconsole.log(managedAuth.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nmanaged_auth = client.auth.connections.update(\n    id=\"id\",\n)\nprint(managed_auth.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tmanagedAuth, err := client.Auth.Connections.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.AuthConnectionUpdateParams{\n\t\t\tManagedAuthUpdateRequest: kernel.ManagedAuthUpdateRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", managedAuth.ID)\n}\n"
+    delete:
+      operationId: deleteAuthConnectionsById
+      tags:
+      - Managed Auth
+      summary: Delete auth connection
+      description: 'Deletes an auth connection and terminates its workflow. This will:
+
+        - Delete the auth connection record
+
+        - Terminate the Temporal workflow
+
+        - Cancel any in-progress login flows
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      responses:
+        '204':
+          description: Auth connection deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.auth.connections.delete('id');"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.auth.connections.delete(\n    \"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Auth.Connections.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /auth/connections/{id}/login:
+    post:
+      operationId: postAuthConnectionsLogin
+      tags:
+      - Managed Auth
+      summary: Start login flow
+      description: Starts a login flow for the auth connection. Returns immediately with a hosted URL for the user to complete authentication, or triggers automatic re-auth if credentials are stored.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login flow started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Login flow already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst loginResponse = await client.auth.connections.login('id');\n\nconsole.log(loginResponse.id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nlogin_response = client.auth.connections.login(\n    id=\"id\",\n)\nprint(login_response.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tloginResponse, err := client.Auth.Connections.Login(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.AuthConnectionLoginParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", loginResponse.ID)\n}\n"
+  /auth/connections/{id}/submit:
+    post:
+      operationId: postAuthConnectionsSubmit
+      tags:
+      - Managed Auth
+      summary: Submit field values
+      description: Submits field values for the login form. Poll the auth connection to track progress and get results.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitFieldsRequest'
+      responses:
+        '202':
+          description: Submission accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitFieldsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst submitFieldsResponse = await client.auth.connections.submit('id');\n\nconsole.log(submitFieldsResponse.accepted);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nsubmit_fields_response = client.auth.connections.submit(\n    id=\"id\",\n)\nprint(submit_fields_response.accepted)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tsubmitFieldsResponse, err := client.Auth.Connections.Submit(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.AuthConnectionSubmitParams{\n\t\t\tSubmitFieldsRequest: kernel.SubmitFieldsRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", submitFieldsResponse.Accepted)\n}\n"
+  /auth/connections/{id}/events:
+    get:
+      operationId: getAuthConnectionsEventsById
+      tags:
+      - Managed Auth
+      summary: Stream login flow events via SSE
+      description: 'Establishes a Server-Sent Events (SSE) stream that delivers real-time
+
+        login flow state updates. The stream terminates automatically once
+
+        the flow reaches a terminal state (SUCCESS, FAILED, EXPIRED, CANCELED).
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: The auth connection ID to follow.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: SSE stream of auth connection state updates.
+          headers:
+            X-SSE-Content-Type:
+              description: Media type of SSE data events (always application/json).
+              schema:
+                type: string
+                const: application/json
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ManagedAuthEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.auth.connections.follow('id');\n\nconsole.log(response);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nfor connection in client.auth.connections.follow(\n    \"id\",\n):\n  print(connection)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Auth.Connections.FollowStreaming(context.TODO(), \"id\")\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /auth/connections/{id}/timeline:
+    get:
+      operationId: getAuthConnectionsTimelineById
+      tags:
+      - Managed Auth
+      summary: Get auth connection event timeline
+      description: 'Returns a chronological timeline of events for an auth connection —
+
+        login attempts, automatic re-auth attempts, and health checks. Events
+
+        are returned newest-first.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - login
+          - reauth
+          - health_check
+        description: Filter the timeline to a single event type.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+        description: Maximum number of events to return
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+        description: Number of events to skip
+      responses:
+        '200':
+          description: Event timeline for the auth connection
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+              description: Whether there are more results
+            X-Next-Offset:
+              schema:
+                type: integer
+              description: The offset where the next page starts. 0 when there are no more results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ManagedAuthTimelineEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const managedAuthTimelineEvent of client.auth.connections.timeline('id')) {\n  console.log(managedAuthTimelineEvent.id);\n}"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.auth.connections.timeline(\n    id=\"id\",\n)\npage = page.items[0]\nprint(page.id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Auth.Connections.Timeline(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.AuthConnectionTimelineParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+  /auth/connections/{id}/exchange:
+    post:
+      x-cli-skip: true
+      x-stainless-skip: true
+      x-hidden: true
+      operationId: postAuthConnectionsExchange
+      tags:
+      - Managed Auth
+      summary: Exchange handoff code for JWT
+      description: Validates the handoff code and returns a JWT token for subsequent requests. Used by the hosted login UI.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAuthExchangeRequest'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Auth connection ID
+      responses:
+        '200':
+          description: Exchange successful, JWT returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAuthExchangeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  schemas:
+    ManagedAuthEvent:
+      oneOf:
+      - $ref: '#/components/schemas/ManagedAuthStateEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          managed_auth_state: '#/components/schemas/ManagedAuthStateEvent'
+          error: '#/components/schemas/ErrorEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any managed auth event.
+    ManagedAuthCreateRequest:
+      type: object
+      description: Request to create an auth connection for a profile and domain
+      required:
+      - domain
+      - profile_name
+      properties:
+        domain:
+          type: string
+          description: Domain for authentication
+          example: netflix.com
+        profile_name:
+          type: string
+          description: Name of the profile to manage authentication for. If the profile does not exist, it is created automatically.
+          example: user-123
+        login_url:
+          type: string
+          format: uri
+          description: Optional login page URL to skip discovery
+          example: https://netflix.com/login
+        proxy:
+          $ref: '#/components/schemas/ProxyRef'
+        credential:
+          $ref: '#/components/schemas/CredentialReference'
+        allowed_domains:
+          type: array
+          items:
+            type: string
+          description: 'Additional domains valid for this auth flow (besides the primary domain). Useful when login pages redirect to different domains.
+
+
+            The following SSO/OAuth provider domains are automatically allowed by default and do not need to be specified:
+
+            - Google: accounts.google.com
+
+            - Microsoft/Azure AD: login.microsoftonline.com, login.live.com
+
+            - Okta: *.okta.com, *.oktapreview.com
+
+            - Auth0: *.auth0.com, *.us.auth0.com, *.eu.auth0.com, *.au.auth0.com
+
+            - Apple: appleid.apple.com
+
+            - GitHub: github.com
+
+            - Facebook/Meta: www.facebook.com
+
+            - LinkedIn: www.linkedin.com
+
+            - Amazon Cognito: *.amazoncognito.com
+
+            - OneLogin: *.onelogin.com
+
+            - Ping Identity: *.pingone.com, *.pingidentity.com
+
+            '
+          example:
+          - login.netflix.com
+          - auth.netflix.com
+        health_check_interval:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          description: 'Interval in seconds between automatic health checks. When set, the system periodically
+
+            verifies the authentication status and triggers re-authentication if needed.
+
+            Maximum is 86400 (24 hours). Default is 3600 (1 hour). The minimum depends on your plan:
+
+            Enterprise: 300 (5 minutes), Startup: 1200 (20 minutes), Hobbyist: 3600 (1 hour).
+
+            '
+          example: 3600
+        health_checks:
+          type: boolean
+          default: true
+          description: 'Whether to enable periodic health checks. When false, the system will not automatically
+
+            verify authentication status, and `auto_reauth` has no effect on the automatic flow
+
+            (since re-auth is only triggered by a failed scheduled health check). Defaults to true.
+
+            '
+          example: true
+        auto_reauth:
+          type: boolean
+          default: true
+          description: 'Whether to permit automatic re-authentication when a scheduled health check detects an
+
+            expired session. This is an opt-in flag only — it does not check whether re-auth is
+
+            actually feasible. Even when true, re-auth only runs when the system has what it needs
+
+            to perform it (for example, saved credentials for the required login fields), and only
+
+            after a scheduled health check detects an expired session — so this flag has no effect
+
+            when `health_checks` is false. When false, expired sessions are marked as `NEEDS_AUTH`
+
+            instead of attempting re-auth. Defaults to true.
+
+            '
+          example: true
+        save_credentials:
+          type: boolean
+          default: true
+          description: Whether to save credentials after every successful login. Defaults to true. One-time codes (TOTP, SMS, etc.) are not saved.
+          example: true
+        record_session:
+          type: boolean
+          default: false
+          description: Whether to record browser sessions for this connection by default. Useful for debugging. Can be overridden per-login. Defaults to false.
+          example: false
+      additionalProperties: false
+    SubmitFieldsRequest:
+      type: object
+      description: Request to submit field values, click an SSO button, select an MFA method, or select a sign-in option. Prefer canonical selected_choice_id/field_values when the API returns fields/choices; legacy fields/sso_button_selector/sso_provider/mfa_option_id/sign_in_option_id remain supported during deprecation.
+      properties:
+        field_values:
+          type: object
+          additionalProperties:
+            type: string
+          description: Canonical map of field ID to submitted value.
+          example:
+            field_email: user@example.com
+            field_password: secret
+        selected_choice_id:
+          type: string
+          description: Canonical choice ID selected by the user.
+          example: google
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of field name to value
+          example:
+            email: user@example.com
+            password: secret
+        sso_button_selector:
+          type: string
+          description: XPath selector for the SSO button to click (ODA). Use sso_provider instead for CUA.
+          example: xpath=//button[contains(text(), 'Continue with Google')]
+        sso_provider:
+          type: string
+          description: SSO provider to click, matching the provider field from pending_sso_buttons (e.g., "google", "github"). Cannot be used with sso_button_selector.
+          example: google
+        mfa_option_id:
+          type: string
+          description: The MFA method type to select (when mfa_options were returned)
+          example: sms
+        sign_in_option_id:
+          type: string
+          description: The sign-in option ID to select (when sign_in_options were returned)
+          example: work-account
+      additionalProperties: false
+    SSOButton:
+      type: object
+      description: An SSO button for signing in with an external identity provider
+      properties:
+        selector:
+          type: string
+          description: XPath selector for the button
+          example: xpath=//button[contains(text(), 'Continue with Google')]
+        provider:
+          type: string
+          description: Identity provider name
+          example: google
+        label:
+          type: string
+          description: Visible button text
+          example: Continue with Google
+      required:
+      - selector
+      - provider
+      - label
+      additionalProperties: false
+    MFAType:
+      type: string
+      enum:
+      - sms
+      - call
+      - email
+      - totp
+      - push
+      - password
+      - switch
+      description: The MFA delivery method type. Includes 'password' for auth method selection pages and 'switch' for generic method-switcher links like "Use another method" that do not name a specific method.
+      example: sms
+    ManagedAuthUpdateRequest:
+      type: object
+      description: Request to update an auth connection's configuration
+      properties:
+        login_url:
+          type: string
+          format: uri
+          description: Login page URL. Set to empty string to clear.
+          example: https://netflix.com/login
+        credential:
+          $ref: '#/components/schemas/CredentialReference'
+        allowed_domains:
+          type: array
+          items:
+            type: string
+          description: Additional domains valid for this auth flow (replaces existing list)
+          example:
+          - login.netflix.com
+          - auth.netflix.com
+        health_check_interval:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          description: Interval in seconds between automatic health checks
+          example: 3600
+        health_checks:
+          type: boolean
+          description: 'Whether periodic health checks are enabled. When set to false, the system will not
+
+            automatically verify authentication status, and `auto_reauth` has no effect on the
+
+            automatic flow (since re-auth is only triggered by a failed scheduled health check).
+
+            '
+          example: true
+        auto_reauth:
+          type: boolean
+          description: 'Whether automatic re-authentication is permitted for this connection. This is an opt-in
+
+            flag only — it does not check whether re-auth is actually feasible. Even when true,
+
+            re-auth only runs when the system has what it needs to perform it (for example, saved
+
+            credentials for the required login fields), and only after a scheduled health check
+
+            detects an expired session — so this flag has no effect when `health_checks` is false.
+
+            When false, expired sessions detected by a health check are marked as `NEEDS_AUTH`
+
+            instead of attempting re-auth.
+
+            '
+          example: true
+        save_credentials:
+          type: boolean
+          description: Whether to save credentials after every successful login
+          example: true
+        record_session:
+          type: boolean
+          description: Whether to record browser sessions for this connection by default
+          example: false
+        proxy:
+          $ref: '#/components/schemas/ProxyRef'
+      additionalProperties: false
+    LoginRequest:
+      type: object
+      description: Request to start a login flow
+      properties:
+        proxy:
+          $ref: '#/components/schemas/ProxyRef'
+        record_session:
+          type: boolean
+          description: Override the connection's default for recording this login's browser session. When omitted, the connection's record_session default is used.
+          example: true
+      additionalProperties: false
+    ProxyRef:
+      type: object
+      description: 'Proxy selection. Provide either id or name. The proxy must be in the same project as the resource referencing it.
+
+        When selecting by name, the name must match exactly one active proxy in the project. Ambiguous names return a 400; use id for stable references.
+
+        '
+      properties:
+        id:
+          type: string
+          description: Proxy ID
+        name:
+          type: string
+          description: Proxy name
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+    ManagedAuthField:
+      type: object
+      description: Canonical field awaiting user input.
+      required:
+      - id
+      - ref
+      - type
+      properties:
+        id:
+          type: string
+          description: Stable field identifier for canonical submit.
+          example: field_email
+        ref:
+          type: string
+          description: Credential reference name to store the submitted value under.
+          example: email
+        type:
+          type: string
+          enum:
+          - identifier
+          - password
+          - code
+          - totp_code
+          - totp_secret
+          - text
+          description: Managed-auth field type.
+          example: identifier
+        label:
+          type: string
+          description: Human-readable label shown to the user.
+          example: Email address
+        required:
+          type: boolean
+          description: Whether this field is required.
+          default: true
+        observed_selector:
+          type: string
+          nullable: true
+          description: Selector for the visible field, when available.
+          example: input[name="identifier"]
+      additionalProperties: false
+    SubmitFieldsResponse:
+      type: object
+      description: Response from submitting field values
+      required:
+      - accepted
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the submission was accepted for processing
+      additionalProperties: false
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ErrorEvent:
+      type: object
+      description: An error event from the application.
+      required:
+      - event
+      - timestamp
+      - error
+      properties:
+        event:
+          type: string
+          const: error
+          description: Event type identifier (always "error").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the error occurred.
+        error:
+          $ref: '#/components/schemas/Error'
+    ManagedAuthTimelineEvent:
+      type: object
+      description: A single event in an auth connection's history — a login attempt, an automatic re-auth attempt, or a health check.
+      required:
+      - type
+      - id
+      - timestamp
+      - status
+      properties:
+        type:
+          type: string
+          enum:
+          - login
+          - reauth
+          - health_check
+          description: The kind of event. "login" and "reauth" are authentication attempts; "health_check" is a periodic session-validity check.
+        id:
+          type: string
+          description: Identifier of the underlying login/reauth session or health check.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred.
+        status:
+          type: string
+          enum:
+          - IN_PROGRESS
+          - SUCCESS
+          - EXPIRED
+          - CANCELED
+          - FAILED
+          - AUTHENTICATED
+          - NEEDS_AUTH
+          description: 'Outcome of the event. For login/reauth events this is the flow status
+
+            (IN_PROGRESS, SUCCESS, EXPIRED, CANCELED, FAILED). For health_check events
+
+            it is the observed session state (AUTHENTICATED, NEEDS_AUTH).
+
+            '
+        previous_status:
+          type: string
+          enum:
+          - AUTHENTICATED
+          - NEEDS_AUTH
+          description: The session state observed before this event. Present for health_check events that recorded a prior state.
+        step:
+          type: string
+          enum:
+          - INITIALIZED
+          - DISCOVERING
+          - AWAITING_INPUT
+          - AWAITING_EXTERNAL_ACTION
+          - AWAITING_HUMAN_INTERVENTION
+          - SUBMITTING
+          - COMPLETED
+          - EXPIRED
+          description: The step the flow reached. Present for login/reauth events.
+        error_code:
+          type: string
+          description: Machine-readable error code. Present when a login/reauth event failed.
+        error_message:
+          type: string
+          description: Human-readable error message. Present when a login/reauth event failed.
+        website_error:
+          type: string
+          description: Visible error message from the website (e.g., 'Incorrect password'). Present when the website displayed an error during the attempt.
+        browser_session_id:
+          type: string
+          description: Browser session that produced the event, if one was created.
+        replay_id:
+          type: string
+          description: Replay recording ID for the event's browser session, if session recording was enabled.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the event was last updated. Present for login/reauth events.
+    ManagedAuthStateEvent:
+      type: object
+      description: An event representing the current state of a managed auth flow.
+      required:
+      - event
+      - timestamp
+      - flow_status
+      - flow_step
+      properties:
+        event:
+          type: string
+          const: managed_auth_state
+          description: Event type identifier (always "managed_auth_state").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the state was reported.
+        flow_status:
+          type: string
+          enum:
+          - IN_PROGRESS
+          - SUCCESS
+          - FAILED
+          - EXPIRED
+          - CANCELED
+          description: Current flow status.
+        flow_step:
+          type: string
+          enum:
+          - DISCOVERING
+          - AWAITING_INPUT
+          - AWAITING_EXTERNAL_ACTION
+          - SUBMITTING
+          - COMPLETED
+          description: Current step in the flow.
+        flow_type:
+          type: string
+          enum:
+          - LOGIN
+          - REAUTH
+          description: Type of the current flow.
+        fields:
+          type: array
+          description: Canonical fields awaiting input. Prefer this over discovered_fields when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthField'
+        choices:
+          type: array
+          description: Canonical choices awaiting selection. Prefer this over pending_sso_buttons, mfa_options, and sign_in_options when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthChoice'
+        discovered_fields:
+          type: array
+          description: Fields awaiting input (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/DiscoveredField'
+        mfa_options:
+          type: array
+          description: MFA method options (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/MFAOption'
+        sign_in_options:
+          type: array
+          description: Non-MFA choices presented during the auth flow, such as account selection or org pickers (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/SignInOption'
+        pending_sso_buttons:
+          type: array
+          description: SSO buttons available (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/SSOButton'
+        external_action_message:
+          type: string
+          description: Instructions for external action (present when flow_step=AWAITING_EXTERNAL_ACTION).
+        website_error:
+          type: string
+          description: Visible error message from the website (e.g., 'Incorrect password'). Present when the website displays an error during login.
+        error_message:
+          type: string
+          description: Error message (present when flow_status=FAILED).
+        error_code:
+          type: string
+          description: Machine-readable error code (present when flow_status=FAILED).
+        post_login_url:
+          type: string
+          format: uri
+          description: URL where the browser landed after successful login.
+        live_view_url:
+          type: string
+          format: uri
+          description: Browser live view URL for debugging.
+        hosted_url:
+          type: string
+          format: uri
+          description: URL to redirect user to for hosted login.
+    ManagedAuthChoice:
+      type: object
+      description: Canonical auth-flow choice awaiting user selection.
+      required:
+      - id
+      - type
+      - label
+      properties:
+        id:
+          type: string
+          description: Stable choice identifier for canonical submit.
+          example: google
+        type:
+          type: string
+          enum:
+          - mfa_method
+          - sso_provider
+          - sign_in_method
+          - auth_method
+          - identifier_method
+          - account
+          - other
+          description: Choice type.
+          example: sso_provider
+        label:
+          type: string
+          description: Human-readable choice label.
+          example: Google
+        description:
+          type: string
+          nullable: true
+          description: Additional context for the choice.
+        observed_selector:
+          type: string
+          nullable: true
+          description: Selector for the visible choice, when available.
+          example: button:has-text("Google")
+      additionalProperties: false
+    DiscoveredField:
+      type: object
+      description: A discovered form field
+      properties:
+        name:
+          type: string
+          description: Field name
+          example: email
+        type:
+          type: string
+          enum:
+          - text
+          - email
+          - password
+          - tel
+          - number
+          - url
+          - code
+          - totp
+          description: Field type
+          example: email
+        label:
+          type: string
+          description: Field label
+          example: Email address
+        placeholder:
+          type: string
+          description: Field placeholder
+          example: you@example.com
+        required:
+          type: boolean
+          description: Whether field is required
+          default: true
+          example: true
+        selector:
+          type: string
+          description: CSS selector for the field
+          example: input#email
+        linked_mfa_type:
+          $ref: '#/components/schemas/MFAType'
+          nullable: true
+          description: If this field is associated with an MFA option, the type of that option (e.g., password field linked to "Enter password" option)
+        hint:
+          type: string
+          description: Contextual help text near the field that tells the user what to enter (e.g., "Enter the phone ending in (***) ***-**92")
+          example: Enter the phone ending in (***) ***-**92
+      required:
+      - name
+      - type
+      - label
+      - selector
+      additionalProperties: false
+    ManagedAuthExchangeResponse:
+      type: object
+      description: Response from exchange endpoint
+      required:
+      - invocation_id
+      - jwt
+      properties:
+        invocation_id:
+          type: string
+          description: Invocation ID
+          example: abc123xyz
+        jwt:
+          type: string
+          description: JWT token with invocation_id claim (30 minute TTL)
+          example: eyJ0eXAi...
+      additionalProperties: false
+    SignInOption:
+      type: object
+      description: A non-MFA choice presented during the auth flow (e.g. account selection, org picker)
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this option (used to submit selection back)
+          example: work-account
+        label:
+          type: string
+          description: Display text for the option
+          example: Work Account (user@company.com)
+        description:
+          type: string
+          nullable: true
+          description: Additional context such as email address or org name
+          example: user@company.com
+      required:
+      - id
+      - label
+      additionalProperties: false
+    MFAOption:
+      type: object
+      description: An MFA method option for verification
+      properties:
+        type:
+          $ref: '#/components/schemas/MFAType'
+        label:
+          type: string
+          description: The visible option text
+          example: Text me a code
+        target:
+          type: string
+          nullable: true
+          description: The masked destination (phone/email) if shown
+          example: '***-***-5678'
+        description:
+          type: string
+          nullable: true
+          description: Additional instructions from the site
+          example: We'll send a 6-digit code to your phone
+      required:
+      - type
+      - label
+      additionalProperties: false
+    ManagedAuth:
+      type: object
+      description: Managed authentication that keeps a profile logged into a specific domain. Flow fields (flow_status, flow_step, discovered_fields, mfa_options) reflect the most recent login flow and are null when no flow has been initiated.
+      required:
+      - id
+      - profile_name
+      - domain
+      - status
+      - save_credentials
+      - record_session
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the auth connection
+          example: ma_abc123xyz
+        profile_name:
+          type: string
+          description: Name of the profile associated with this auth connection
+          example: my-netflix-profile
+        domain:
+          type: string
+          description: Target domain for authentication
+          example: netflix.com
+        status:
+          type: string
+          enum:
+          - AUTHENTICATED
+          - NEEDS_AUTH
+          description: Current authentication status of the managed profile
+          example: AUTHENTICATED
+        last_auth_check_at:
+          type: string
+          format: date-time
+          description: When the most recent auth health check ran for this connection, regardless of outcome. Updated on every health check and does not by itself indicate that the profile is currently authenticated - use `status` for that. May be newer than `flow_expires_at` when a flow is still in progress because health checks continue to run in parallel.
+          example: '2025-01-15T10:30:00Z'
+        last_auth_at:
+          type: string
+          format: date-time
+          deprecated: true
+          description: Deprecated alias for `last_auth_check_at`. Despite the name, this is the last health-check timestamp, not the last successful authentication. Use `last_auth_check_at` instead.
+          example: '2025-01-15T10:30:00Z'
+        credential:
+          $ref: '#/components/schemas/CredentialReference'
+        can_reauth:
+          type: boolean
+          description: Whether Kernel can automatically re-authenticate this connection when the session expires. Requires a prior successful login plus either a Kernel credential or an external credential reference. See `can_reauth_reason` for the specific outcome.
+          example: true
+        can_reauth_reason:
+          type: string
+          description: "Machine-readable reason for the current value of `can_reauth`.\nAffirmative values (re-auth is possible):\n  - `external_credential` — an external credential provider is attached\n  - `cua_has_credential` — CUA flow with a stored credential\n  - `has_credential` — Kernel credential is attached (optimistic; plan viability not checked)\n  - `viable_plans_found` — at least one stored login plan can be replayed\n  - `no_requirements_recorded` — no recorded credential requirements to fail against\n  - `requirements_satisfiable` — recorded requirements can be met by the attached credential\n\nNegative values (a human must complete the login flow):\n  - `no_prior_successful_login` — connection has never completed a successful login\n  - `no_credential` — no Kernel or external credential attached\n  - `no_viable_plans` — credential attached but no replayable login plan exists yet\n  - `viable_plans_require_external_action` — stored plans need an external step (email link, push, etc.)\n  - `requires_external_action` — recorded requirements include an external step\n  - `requires_totp_without_secret` — flow needs a TOTP code but no TOTP secret is stored\n  - `requires_sms_code` — flow needs an SMS code that cannot be received automatically\n  - `requires_email_code` — flow needs an email code that cannot be received automatically"
+          enum:
+          - external_credential
+          - cua_has_credential
+          - has_credential
+          - viable_plans_found
+          - no_requirements_recorded
+          - requirements_satisfiable
+          - no_prior_successful_login
+          - no_credential
+          - no_viable_plans
+          - viable_plans_require_external_action
+          - requires_external_action
+          - requires_totp_without_secret
+          - requires_sms_code
+          - requires_email_code
+          example: has_credential
+        proxy_id:
+          type: string
+          description: ID of the proxy associated with this connection, if any.
+        allowed_domains:
+          type: array
+          items:
+            type: string
+          description: 'Additional domains that are valid for this auth flow (besides the primary domain). Useful when login pages redirect to different domains.
+
+
+            The following SSO/OAuth provider domains are automatically allowed by default and do not need to be specified:
+
+            - Google: accounts.google.com
+
+            - Microsoft/Azure AD: login.microsoftonline.com, login.live.com
+
+            - Okta: *.okta.com, *.oktapreview.com
+
+            - Auth0: *.auth0.com, *.us.auth0.com, *.eu.auth0.com, *.au.auth0.com
+
+            - Apple: appleid.apple.com
+
+            - GitHub: github.com
+
+            - Facebook/Meta: www.facebook.com
+
+            - LinkedIn: www.linkedin.com
+
+            - Amazon Cognito: *.amazoncognito.com
+
+            - OneLogin: *.onelogin.com
+
+            - Ping Identity: *.pingone.com, *.pingidentity.com
+
+            '
+          example:
+          - login.netflix.com
+          - auth.netflix.com
+        login_url:
+          type: string
+          format: uri
+          description: Optional login page URL to skip discovery
+          example: https://example.com/login
+        post_login_url:
+          type: string
+          format: uri
+          description: URL where the browser landed after successful login
+          example: https://www.netflix.com/browse
+        flow_status:
+          type: string
+          enum:
+          - IN_PROGRESS
+          - SUCCESS
+          - FAILED
+          - EXPIRED
+          - CANCELED
+          nullable: true
+          description: Current flow status (null when no flow in progress)
+          example: IN_PROGRESS
+        flow_step:
+          type: string
+          enum:
+          - DISCOVERING
+          - AWAITING_INPUT
+          - AWAITING_EXTERNAL_ACTION
+          - SUBMITTING
+          - COMPLETED
+          nullable: true
+          description: Current step in the flow (null when no flow in progress)
+          example: AWAITING_INPUT
+        flow_type:
+          type: string
+          enum:
+          - LOGIN
+          - REAUTH
+          nullable: true
+          description: Type of the current flow (null when no flow in progress)
+          example: LOGIN
+        flow_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current flow expires (null when no flow in progress). A flow past this timestamp is no longer valid and its `flow_status` will be `EXPIRED`. Clients may start a new login to supersede a stale `IN_PROGRESS` flow past this timestamp.
+          example: '2025-11-05T20:00:00Z'
+        fields:
+          type: array
+          nullable: true
+          description: Canonical fields awaiting input. Prefer this over discovered_fields when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthField'
+        choices:
+          type: array
+          nullable: true
+          description: Canonical choices awaiting selection. Prefer this over pending_sso_buttons, mfa_options, and sign_in_options when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthChoice'
+        discovered_fields:
+          type: array
+          nullable: true
+          description: Fields awaiting input (present when flow_step=awaiting_input; may also be present with awaiting_external_action as fallback actions)
+          items:
+            $ref: '#/components/schemas/DiscoveredField'
+        mfa_options:
+          type: array
+          nullable: true
+          description: MFA method options (present when flow_step=awaiting_input; may also be present with awaiting_external_action as fallback actions)
+          items:
+            $ref: '#/components/schemas/MFAOption'
+        sign_in_options:
+          type: array
+          nullable: true
+          description: Non-MFA choices presented during the auth flow, such as account selection or org pickers (present when flow_step=awaiting_input; may also be present with awaiting_external_action as fallback actions).
+          items:
+            $ref: '#/components/schemas/SignInOption'
+        pending_sso_buttons:
+          type: array
+          nullable: true
+          description: SSO buttons available (present when flow_step=awaiting_input; may also be present with awaiting_external_action as fallback actions)
+          items:
+            $ref: '#/components/schemas/SSOButton'
+        external_action_message:
+          type: string
+          nullable: true
+          description: Instructions for external action (present when flow_step=awaiting_external_action)
+          example: Tap 'Yes' on the Google prompt on your phone
+        website_error:
+          type: string
+          nullable: true
+          description: Visible error message from the website (e.g., 'Incorrect password'). Present when the website displays an error during login.
+        sso_provider:
+          type: string
+          nullable: true
+          description: SSO provider being used (e.g., google, github, microsoft)
+          example: google
+        error_message:
+          type: string
+          nullable: true
+          description: Error message (present when flow_status=failed)
+          example: Invalid password
+        error_code:
+          type: string
+          nullable: true
+          description: Machine-readable error code (present when flow_status=failed)
+        hosted_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to redirect user to for hosted login (present when flow in progress)
+          example: https://auth.kernel.com/login/abc123xyz
+        live_view_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Browser live view URL for debugging (present when flow in progress)
+          example: https://live.kernel.com/abc123xyz
+        browser_session_id:
+          type: string
+          nullable: true
+          description: 'ID of the underlying browser session driving the current flow (present when flow in progress).
+
+            Use this to inspect or terminate the browser session via the `/browsers` API.
+
+            '
+          example: bs_abc123xyz
+        health_check_interval:
+          type: integer
+          nullable: true
+          minimum: 300
+          maximum: 86400
+          description: 'Interval in seconds between automatic health checks. When set, the system periodically
+
+            verifies the authentication status and triggers re-authentication if needed.
+
+            Maximum is 86400 (24 hours). Default is 3600 (1 hour). The minimum depends on your plan:
+
+            Enterprise: 300 (5 minutes), Startup: 1200 (20 minutes), Hobbyist: 3600 (1 hour).
+
+            '
+          example: 3600
+        health_checks:
+          type: boolean
+          description: 'Whether periodic health checks are enabled for this connection. When false, the system
+
+            will not automatically verify authentication status, and `auto_reauth` has no effect on
+
+            the automatic flow (since re-auth is only triggered by a failed scheduled health check).
+
+            Manually triggering a health check via the API still works regardless of this setting.
+
+            '
+          example: true
+        auto_reauth:
+          type: boolean
+          description: 'Whether automatic re-authentication is permitted for this connection. This is an opt-in
+
+            flag only — it does not check whether re-auth is actually feasible. Even when true,
+
+            re-auth only runs when the system has what it needs to perform it (for example, saved
+
+            credentials for the required login fields), and only after a scheduled health check
+
+            detects an expired session — so this flag has no effect when `health_checks` is false.
+
+            When false, expired sessions detected by a health check are marked as `NEEDS_AUTH`
+
+            instead of attempting re-auth.
+
+            '
+          example: true
+        save_credentials:
+          type: boolean
+          description: Whether credentials are saved after every successful login. One-time codes (TOTP, SMS, etc.) are not saved.
+          example: true
+        record_session:
+          type: boolean
+          description: Whether to record browser session replays for this connection by default. Useful for debugging login flows. Can be overridden per-login.
+          example: false
+      additionalProperties: false
+    ManagedAuthExchangeRequest:
+      type: object
+      description: Request to exchange handoff code for JWT
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Handoff code from start endpoint
+          example: abc123xyz
+      additionalProperties: false
+    SSEHeartbeatEvent:
+      type: object
+      description: Heartbeat event sent periodically to keep SSE connection alive.
+      required:
+      - event
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the heartbeat was sent.
+    CredentialReference:
+      type: object
+      description: 'Reference to credentials for the auth connection. Use one of:
+
+        - { name } for Kernel credentials
+
+        - { provider, path } for external provider item
+
+        - { provider, auto: true } for external provider domain lookup
+
+        '
+      properties:
+        name:
+          type: string
+          description: Kernel credential name
+          example: my-netflix-creds
+        provider:
+          type: string
+          description: External provider name (e.g., "my-1p")
+          example: my-1p
+        path:
+          type: string
+          description: Provider-specific path (e.g., "VaultName/ItemName" for 1Password)
+          example: Personal/Netflix
+        auto:
+          type: boolean
+          description: If true, lookup by domain from the specified provider
+          example: true
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      description: Response from starting a login flow
+      required:
+      - id
+      - flow_type
+      - hosted_url
+      - flow_expires_at
+      properties:
+        id:
+          type: string
+          description: Auth connection ID
+          example: ma_abc123xyz
+        flow_type:
+          type: string
+          enum:
+          - LOGIN
+          - REAUTH
+          description: Type of login flow started
+          example: LOGIN
+        hosted_url:
+          type: string
+          format: uri
+          description: URL to redirect user to for login
+          example: https://auth.kernel.com/login/abc123xyz
+        flow_expires_at:
+          type: string
+          format: date-time
+          description: When the login flow expires
+          example: '2025-11-05T20:00:00Z'
+        handoff_code:
+          type: string
+          description: One-time code for handoff (internal use)
+          example: aBcD123EfGh456IjKl789MnOp012QrStUvWxYzAbCdEf
+        live_view_url:
+          type: string
+          format: uri
+          description: Browser live view URL for watching the login flow
+          example: https://live.onkernel.com/abc123xyz
+      additionalProperties: false
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Gone:
+      description: Resource expired or no longer available
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

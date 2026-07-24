@@ -1,0 +1,876 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Browser Filesystem API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Browser Filesystem
+  description: Read, write, and manage files on the browser instance.
+paths:
+  /browsers/{id}/fs/read_file:
+    get:
+      summary: Read file contents
+      operationId: readFile
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^/.*
+        description: Absolute file path to read.
+      responses:
+        '200':
+          description: File read successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.readFile('id', { path: '/J!' });\n\nconsole.log(response);\n\nconst content = await response.blob();\nconsole.log(content);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.fs.read_file(\n    id=\"id\",\n    path=\"/J!\",\n)\nprint(response)\ncontent = response.read()\nprint(content)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Fs.ReadFile(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFReadFileParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
+  /browsers/{id}/fs/write_file:
+    put:
+      summary: Write or create a file
+      operationId: writeFile
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^/.*
+        description: Destination absolute file path.
+      - name: mode
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-7]{3,4}$
+        description: Optional file mode (octal string, e.g. 644). Defaults to 644.
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: File written successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.writeFile('id', fs.createReadStream('path/to/file'), { path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.write_file(\n    id=\"id\",\n    contents=b\"Example data\",\n    path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.WriteFile(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tio.Reader(bytes.NewBuffer([]byte(\"Example data\"))),\n\t\tkernel.BrowserFWriteFileParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/list_files:
+    get:
+      summary: List files in a directory
+      operationId: listFiles
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^/.*
+        description: Absolute directory path.
+      responses:
+        '200':
+          description: Directory listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFiles'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.listFiles('id', { path: '/J!' });\n\nconsole.log(response);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.fs.list_files(\n    id=\"id\",\n    path=\"/J!\",\n)\nprint(response)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Fs.ListFiles(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFListFilesParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
+  /browsers/{id}/fs/create_directory:
+    put:
+      summary: Create a new directory
+      operationId: createDirectory
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDirectoryRequest'
+      responses:
+        '201':
+          description: Directory created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.createDirectory('id', { path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.create_directory(\n    id=\"id\",\n    path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.NewDirectory(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFNewDirectoryParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/delete_file:
+    put:
+      summary: Delete a file
+      operationId: deleteFile
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletePathRequest'
+      responses:
+        '200':
+          description: File deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.deleteFile('id', { path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.delete_file(\n    id=\"id\",\n    path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.DeleteFile(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFDeleteFileParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/delete_directory:
+    put:
+      summary: Delete a directory
+      operationId: deleteDirectory
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletePathRequest'
+      responses:
+        '200':
+          description: Directory deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.deleteDirectory('id', { path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.delete_directory(\n    id=\"id\",\n    path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.DeleteDirectory(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFDeleteDirectoryParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/set_file_permissions:
+    put:
+      summary: Set file or directory permissions/ownership
+      operationId: setFilePermissions
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetFilePermissionsRequest'
+      responses:
+        '200':
+          description: Permissions updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.setFilePermissions('id', { mode: '0611', path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.set_file_permissions(\n    id=\"id\",\n    mode=\"0611\",\n    path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.SetFilePermissions(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFSetFilePermissionsParams{\n\t\t\tMode: \"0611\",\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/file_info:
+    get:
+      summary: Get information about a file or directory
+      operationId: fileInfo
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^/.*
+        description: Absolute path of the file or directory.
+      responses:
+        '200':
+          description: File information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.fileInfo('id', { path: '/J!' });\n\nconsole.log(response.is_dir);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.fs.file_info(\n    id=\"id\",\n    path=\"/J!\",\n)\nprint(response.is_dir)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Fs.FileInfo(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFFileInfoParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.IsDir)\n}\n"
+  /browsers/{id}/fs/move:
+    put:
+      summary: Move or rename a file or directory
+      operationId: movePath
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovePathRequest'
+      responses:
+        '200':
+          description: Move successful
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.move('id', { dest_path: '/J!', src_path: '/J!' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.move(\n    id=\"id\",\n    dest_path=\"/J!\",\n    src_path=\"/J!\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.Move(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFMoveParams{\n\t\t\tDestPath: \"/J!\",\n\t\t\tSrcPath:  \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/watch:
+    post:
+      summary: Watch a directory for changes
+      operationId: startFsWatch
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartFsWatchRequest'
+      responses:
+        '201':
+          description: Watch started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  watch_id:
+                    type: string
+                    description: Unique identifier for the directory watch
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.watch.start('id', { path: 'path' });\n\nconsole.log(response.watch_id);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.fs.watch.start(\n    id=\"id\",\n    path=\"path\",\n)\nprint(response.watch_id)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Fs.Watch.Start(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFWatchStartParams{\n\t\t\tPath: \"path\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.WatchID)\n}\n"
+  /browsers/{id}/fs/watch/{watch_id}/events:
+    get:
+      summary: Stream filesystem events for a watch
+      operationId: streamFsEvents
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: watch_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: SSE stream of filesystem events
+          headers:
+            X-SSE-Content-Type:
+              description: Media type of SSE data events (application/json)
+              schema:
+                type: string
+                const: application/json
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/FileSystemEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.watch.events('watch_id', { id: 'id' });\n\nconsole.log(response.path);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nfor watch in client.browsers.fs.watch.events(\n    watch_id=\"watch_id\",\n    id=\"id\",\n):\n  print(watch)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Browsers.Fs.Watch.EventsStreaming(\n\t\tcontext.TODO(),\n\t\t\"watch_id\",\n\t\tkernel.BrowserFWatchEventsParams{\n\t\t\tID: \"id\",\n\t\t},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/watch/{watch_id}:
+    delete:
+      summary: Stop watching a directory
+      operationId: stopFsWatch
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: watch_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Watch stopped successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.watch.stop('watch_id', { id: 'id' });"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.watch.stop(\n    watch_id=\"watch_id\",\n    id=\"id\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.Watch.Stop(\n\t\tcontext.TODO(),\n\t\t\"watch_id\",\n\t\tkernel.BrowserFWatchStopParams{\n\t\t\tID: \"id\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/download_dir_zip:
+    get:
+      summary: Download a directory as a ZIP archive
+      description: Returns a ZIP file containing the contents of the specified directory.
+      operationId: downloadDirZip
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^/.*
+        description: Absolute directory path to archive and download.
+      responses:
+        '200':
+          description: ZIP archive of the requested directory
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.fs.downloadDirZip('id', { path: '/J!' });\n\nconsole.log(response);\n\nconst content = await response.blob();\nconsole.log(content);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.fs.download_dir_zip(\n    id=\"id\",\n    path=\"/J!\",\n)\nprint(response)\ncontent = response.read()\nprint(content)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Fs.DownloadDirZip(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFDownloadDirZipParams{\n\t\t\tPath: \"/J!\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
+  /browsers/{id}/fs/upload:
+    post:
+      summary: Upload one or more files
+      description: Allows uploading single or multiple files to the remote filesystem.
+      operationId: uploadFiles
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      file:
+                        type: string
+                        format: binary
+                      dest_path:
+                        type: string
+                        description: Absolute destination path to write the file.
+                        pattern: ^/.*
+                    required:
+                    - file
+                    - dest_path
+              required:
+              - files
+      responses:
+        '201':
+          description: Files uploaded successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.upload('id', {\n  files: [{ dest_path: '/J!', file: fs.createReadStream('path/to/file') }],\n});"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.upload(\n    id=\"id\",\n    files=[{\n        \"dest_path\": \"/J!\",\n        \"file\": b\"Example data\",\n    }],\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.Upload(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFUploadParams{\n\t\t\tFiles: []kernel.BrowserFUploadParamsFile{{\n\t\t\t\tDestPath: \"/J!\",\n\t\t\t\tFile:     io.Reader(bytes.NewBuffer([]byte(\"Example data\"))),\n\t\t\t}},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/fs/upload_zip:
+    post:
+      summary: Upload a zip archive and extract it
+      description: Upload a zip file and extract its contents to the specified destination path.
+      operationId: uploadZip
+      tags:
+      - Browser Filesystem
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                zip_file:
+                  type: string
+                  format: binary
+                dest_path:
+                  type: string
+                  description: Absolute destination directory to extract the archive to.
+                  pattern: ^/.*
+              required:
+              - zip_file
+              - dest_path
+      responses:
+        '201':
+          description: Zip uploaded and extracted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import fs from 'fs';\nimport Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.fs.uploadZip('id', {\n  dest_path: '/J!',\n  zip_file: fs.createReadStream('path/to/file'),\n});"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.fs.upload_zip(\n    id=\"id\",\n    dest_path=\"/J!\",\n    zip_file=b\"Example data\",\n)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.UploadZip(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFUploadZipParams{\n\t\t\tDestPath: \"/J!\",\n\t\t\tZipFile:  io.Reader(bytes.NewBuffer([]byte(\"Example data\"))),\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+components:
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    FileSystemEvent:
+      type: object
+      description: Filesystem change event.
+      required:
+      - type
+      - path
+      properties:
+        type:
+          type: string
+          enum:
+          - CREATE
+          - WRITE
+          - DELETE
+          - RENAME
+          description: Event type.
+        name:
+          type: string
+          description: Base name of the file or directory affected.
+        path:
+          type: string
+          description: Absolute path of the file or directory.
+        is_dir:
+          type: boolean
+          description: Whether the affected path is a directory.
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ListFiles:
+      type: array
+      description: Array of file or directory information entries.
+      items:
+        $ref: '#/components/schemas/FileInfo'
+    StartFsWatchRequest:
+      type: object
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: Directory to watch.
+        recursive:
+          type: boolean
+          description: Whether to watch recursively.
+          default: false
+      additionalProperties: false
+    FileInfo:
+      type: object
+      required:
+      - name
+      - path
+      - size_bytes
+      - is_dir
+      - mod_time
+      - mode
+      properties:
+        name:
+          type: string
+          description: Base name of the file or directory.
+        path:
+          type: string
+          description: Absolute path.
+        size_bytes:
+          type: integer
+          description: Size in bytes. 0 for directories.
+        is_dir:
+          type: boolean
+          description: Whether the path is a directory.
+        mod_time:
+          type: string
+          format: date-time
+          description: Last modification time.
+        mode:
+          type: string
+          description: File mode bits (e.g., "drwxr-xr-x" or "-rw-r--r--").
+    DeletePathRequest:
+      type: object
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: Absolute path to delete.
+          pattern: ^/.*
+      additionalProperties: false
+    CreateDirectoryRequest:
+      type: object
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: Absolute directory path to create.
+          pattern: ^/.*
+        mode:
+          type: string
+          description: Optional directory mode (octal string, e.g. 755). Defaults to 755.
+          pattern: ^[0-7]{3,4}$
+      additionalProperties: false
+    MovePathRequest:
+      type: object
+      required:
+      - src_path
+      - dest_path
+      properties:
+        src_path:
+          type: string
+          description: Absolute source path.
+          pattern: ^/.*
+        dest_path:
+          type: string
+          description: Absolute destination path.
+          pattern: ^/.*
+      additionalProperties: false
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    SetFilePermissionsRequest:
+      type: object
+      required:
+      - path
+      - mode
+      properties:
+        path:
+          type: string
+          description: Absolute path whose permissions are to be changed.
+          pattern: ^/.*
+        owner:
+          type: string
+          description: New owner username or UID.
+        group:
+          type: string
+          description: New group name or GID.
+        mode:
+          type: string
+          description: File mode bits (octal string, e.g. 644).
+          pattern: ^[0-7]{3,4}$
+      additionalProperties: false
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

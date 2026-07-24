@@ -1,0 +1,579 @@
+openapi: 3.1.0
+info:
+  title: Kernel API Keys Browser Processes API
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  version: 0.1.0
+servers:
+- url: https://api.onkernel.com
+  description: API Server
+security:
+- bearerAuth: []
+tags:
+- name: Browser Processes
+  description: Execute and manage processes on the browser instance.
+paths:
+  /browsers/{id}/process/exec:
+    post:
+      summary: Execute a command synchronously
+      operationId: processExec
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessExecRequest'
+      responses:
+        '200':
+          description: Execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessExecResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.exec('id', { command: 'command' });\n\nconsole.log(response.duration_ms);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.exec(\n    id=\"id\",\n    command=\"command\",\n)\nprint(response.duration_ms)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Exec(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserProcessExecParams{\n\t\t\tCommand: \"command\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.DurationMs)\n}\n"
+  /browsers/{id}/process/spawn:
+    post:
+      summary: Execute a command asynchronously
+      operationId: processSpawn
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessSpawnRequest'
+      responses:
+        '200':
+          description: Spawned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessSpawnResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.spawn('id', { command: 'command' });\n\nconsole.log(response.pid);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.spawn(\n    id=\"id\",\n    command=\"command\",\n)\nprint(response.pid)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Spawn(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserProcessSpawnParams{\n\t\t\tCommand: \"command\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Pid)\n}\n"
+  /browsers/{id}/process/{process_id}/status:
+    get:
+      summary: Get process status
+      operationId: processStatus
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.status('182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e', {\n  id: 'id',\n});\n\nconsole.log(response.cpu_pct);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.status(\n    process_id=\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n    id=\"id\",\n)\nprint(response.cpu_pct)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Status(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessStatusParams{\n\t\t\tID: \"id\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.CPUPct)\n}\n"
+  /browsers/{id}/process/{process_id}/stdout/stream:
+    get:
+      summary: Stream process stdout via SSE
+      operationId: processStdoutStream
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: SSE stream of process output and lifecycle events
+          headers:
+            X-SSE-Content-Type:
+              description: Media type of SSE data events (application/json)
+              schema:
+                type: string
+                const: application/json
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ProcessStreamEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.stdoutStream(\n  '182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e',\n  { id: 'id' },\n);\n\nconsole.log(response.data_b64);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nfor process in client.browsers.process.stdout_stream(\n    process_id=\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n    id=\"id\",\n):\n  print(process)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Browsers.Process.StdoutStreamStreaming(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessStdoutStreamParams{\n\t\t\tID: \"id\",\n\t\t},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+  /browsers/{id}/process/{process_id}/stdin:
+    post:
+      summary: Write to process stdin
+      operationId: processStdin
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessStdinRequest'
+      responses:
+        '200':
+          description: Bytes written
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessStdinResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.stdin('182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e', {\n  id: 'id',\n  data_b64: 'data_b64',\n});\n\nconsole.log(response.written_bytes);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.stdin(\n    process_id=\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n    id=\"id\",\n    data_b64=\"data_b64\",\n)\nprint(response.written_bytes)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Stdin(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessStdinParams{\n\t\t\tID:      \"id\",\n\t\t\tDataB64: \"data_b64\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.WrittenBytes)\n}\n"
+  /browsers/{id}/process/{process_id}/kill:
+    post:
+      summary: Send signal to process
+      operationId: processKill
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessKillRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.kill('182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e', {\n  id: 'id',\n  signal: 'TERM',\n});\n\nconsole.log(response.ok);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.kill(\n    process_id=\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n    id=\"id\",\n    signal=\"TERM\",\n)\nprint(response.ok)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Kill(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessKillParams{\n\t\t\tID:     \"id\",\n\t\t\tSignal: kernel.BrowserProcessKillParamsSignalTerm,\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Ok)\n}\n"
+  /browsers/{id}/process/{process_id}/resize:
+    post:
+      summary: Resize a PTY-backed process terminal
+      operationId: processResize
+      tags:
+      - Browser Processes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Browser session ID
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessResizeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-codeSamples:
+      - lang: JavaScript
+        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.process.resize('182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e', {\n  id: 'id',\n  cols: 1,\n  rows: 1,\n});\n\nconsole.log(response.ok);"
+      - lang: Python
+        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.process.resize(\n    process_id=\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n    id=\"id\",\n    cols=1,\n    rows=1,\n)\nprint(response.ok)"
+      - lang: Go
+        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Resize(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessResizeParams{\n\t\t\tID:   \"id\",\n\t\t\tCols: 1,\n\t\t\tRows: 1,\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Ok)\n}\n"
+components:
+  schemas:
+    ProcessSpawnRequest:
+      allOf:
+      - $ref: '#/components/schemas/ProcessExecRequest'
+      - type: object
+        properties:
+          allocate_tty:
+            type: boolean
+            description: Allocate a pseudo-terminal (PTY) for interactive shells.
+            default: false
+          rows:
+            type: integer
+            description: Initial terminal rows. Only used when allocate_tty is true.
+            minimum: 1
+            maximum: 65535
+          cols:
+            type: integer
+            description: Initial terminal columns. Only used when allocate_tty is true.
+            minimum: 1
+            maximum: 65535
+    ProcessStdinResult:
+      type: object
+      description: Result of writing to stdin.
+      properties:
+        written_bytes:
+          type: integer
+          description: Number of bytes written.
+      additionalProperties: false
+    ProcessExecRequest:
+      type: object
+      description: Request to execute a command synchronously.
+      required:
+      - command
+      properties:
+        command:
+          type: string
+          description: Executable or shell command to run.
+        args:
+          type: array
+          description: Command arguments.
+          items:
+            type: string
+          default: []
+        cwd:
+          type: string
+          description: Working directory (absolute path) to run the command in.
+          nullable: true
+          pattern: ^/.*
+        env:
+          type: object
+          description: Environment variables to set for the process.
+          additionalProperties:
+            type: string
+          default: {}
+        as_user:
+          type: string
+          description: Run the process as this user.
+          nullable: true
+        as_root:
+          type: boolean
+          description: Run the process with root privileges.
+          default: false
+        timeout_sec:
+          type: integer
+          description: Maximum execution time in seconds.
+          nullable: true
+      additionalProperties: false
+    OkResponse:
+      type: object
+      description: Generic OK response.
+      required:
+      - ok
+      properties:
+        ok:
+          type: boolean
+          description: Indicates success.
+          default: true
+      additionalProperties: false
+    ProcessStreamEvent:
+      type: object
+      description: SSE payload representing process output or lifecycle events.
+      properties:
+        stream:
+          type: string
+          description: Source stream of the data chunk.
+          enum:
+          - stdout
+          - stderr
+        data_b64:
+          type: string
+          description: Base64-encoded data from the process stream.
+        event:
+          type: string
+          description: Lifecycle event type.
+          enum:
+          - exit
+        exit_code:
+          type: integer
+          description: Exit code when the event is "exit".
+      additionalProperties: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ProcessExecResult:
+      type: object
+      description: Result of a synchronous command execution.
+      properties:
+        exit_code:
+          type: integer
+          description: Process exit code.
+        stdout_b64:
+          type: string
+          description: Base64-encoded stdout buffer.
+        stderr_b64:
+          type: string
+          description: Base64-encoded stderr buffer.
+        duration_ms:
+          type: integer
+          description: Execution duration in milliseconds.
+      additionalProperties: false
+    ProcessResizeRequest:
+      type: object
+      description: Resize a PTY-backed process terminal.
+      required:
+      - rows
+      - cols
+      properties:
+        rows:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: New terminal rows.
+        cols:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: New terminal columns.
+      additionalProperties: false
+    ProcessStatus:
+      type: object
+      description: Current status of a process.
+      properties:
+        state:
+          type: string
+          enum:
+          - running
+          - exited
+          description: Process state.
+        exit_code:
+          type: integer
+          nullable: true
+          description: Exit code if the process has exited.
+        cpu_pct:
+          type: number
+          description: Estimated CPU usage percentage.
+        mem_bytes:
+          type: integer
+          description: Estimated resident memory usage in bytes.
+      additionalProperties: false
+    ProcessStdinRequest:
+      type: object
+      description: Data to write to the process standard input.
+      required:
+      - data_b64
+      properties:
+        data_b64:
+          type: string
+          description: Base64-encoded data to write.
+      additionalProperties: false
+    ProcessKillRequest:
+      type: object
+      description: Signal to send to the process.
+      required:
+      - signal
+      properties:
+        signal:
+          type: string
+          enum:
+          - TERM
+          - KILL
+          - INT
+          - HUP
+          default: TERM
+          description: Signal to send.
+      additionalProperties: false
+    ProcessSpawnResult:
+      type: object
+      description: Information about a spawned process.
+      properties:
+        process_id:
+          type: string
+          format: uuid
+          description: Server-assigned identifier for the process.
+        pid:
+          type: integer
+          description: OS process ID.
+        started_at:
+          type: string
+          format: date-time
+          description: Timestamp when the process started.
+      additionalProperties: false
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
