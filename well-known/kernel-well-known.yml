@@ -1,0 +1,24 @@
+generated: '2026-07-19'
+method: searched
+host: https://api.onkernel.com
+documents:
+  - path: /.well-known/oauth-authorization-server   # RFC 8414 + agent-auth extensions
+    status: 200
+    file: kernel-oauth-authorization-server.json
+    note: >-
+      Advertises issuer, bearer_methods (header), scopes_supported (api.read, api.write),
+      and an agent_auth block (identity_assertion via verified_email + api_key, register_uri,
+      skill https://www.kernel.sh/auth.md) enabling agents to self-register.
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+other_hosts_checked:
+  - host: https://kernel.sh
+    result: all probed /.well-known/* returned 404
+  - host: https://www.kernel.sh
+    result: all probed /.well-known/* returned 404

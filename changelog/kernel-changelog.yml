@@ -1,0 +1,49 @@
+generated: '2026-07-19'
+method: searched
+source: https://www.kernel.sh/changelog
+scheme: dated-weekly
+current_version: "0.80.0"
+note: >-
+  Kernel publishes a dated weekly changelog tagged Product / Docs. Recent window
+  captured below (highlights condensed; see the live changelog for full detail).
+entries:
+  - date: '2026-07-17'
+    label: July 17
+    highlights:
+      - Launched browser telemetry - capture console/network/lifecycle/interaction/captcha/crash events, stream live or pull later, with an in-VM OTLP export sink and OTel-compatible browser events API.
+      - Added Grok 4.5 and Meta Muse Spark computer-use providers to @onkernel/cua-agent, plus a --proxy flag and configurable retries.
+  - date: '2026-07-10'
+    label: July 10
+    highlights:
+      - Consolidated on-demand and browser-pool concurrency into a single unified concurrency limit.
+      - Shipped `kernel audit-logs search` in the CLI (query by time window, HTTP method, service, auth strategy, user).
+  - date: '2026-07-03'
+    label: July 3
+    highlights:
+      - Shipped `kernel extensions get <id-or-name>` for extension metadata lookups.
+      - Extended CLI browser telemetry with paginated historical reads and a --replay=all flag.
+  - date: '2026-06-26'
+    label: June 26
+    highlights:
+      - Added a playwright_execute tool to @onkernel/cua-agent and gemini-3.5-flash CUA support.
+      - Extended the MCP server browser-pool tool with SDK parity fields (start_url, chrome_policy, kiosk_mode, profile/viewport, fill_rate_per_minute).
+  - date: '2026-06-12'
+    label: June 12
+    highlights:
+      - Released the Kernel x Claude Managed Agents cookbook for parallel computer-use agent swarms on Kernel cloud browsers.
+      - Shipped a kernel-browser-harness skill for Claude Code with persistent session IDs.
+  - date: '2026-06-05'
+    label: June 5
+    highlights:
+      - Browser sessions now play audio by default; replay recording gained a record_audio option.
+      - Extended browser telemetry to the CLI via --telemetry flags on browsers create/update.
+  - date: '2026-05-28'
+    label: May 28
+    highlights:
+      - Soft-launched auth.md, a discovery file letting agents sign up for a Kernel account or fetch an API key on their own.
+      - Added browser telemetry as a first-class request config on browsers.create()/update().
+  - date: '2026-05-21'
+    label: May 21
+    highlights:
+      - Added auto standby to browser pool instances (suspend when idle, resume on request).
+      - Launched chrome_policy and start_url browser configuration options.

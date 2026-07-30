@@ -1,0 +1,50 @@
+generated: '2026-07-19'
+method: searched
+source: https://kernel.sh/docs/ + npm/PyPI/pkg.go.dev registries
+packages:
+  - language: javascript
+    registry: npm
+    name: "@onkernel/sdk"
+    url: https://www.npmjs.com/package/@onkernel/sdk
+    install: npm install @onkernel/sdk
+    version: 0.80.0
+    license: Apache-2.0
+    repo: https://github.com/kernel/kernel-node-sdk
+    official: true
+    note: Official TypeScript library for the Kernel API (generated with Stainless).
+  - language: python
+    registry: pypi
+    name: kernel
+    url: https://pypi.org/project/kernel/
+    install: pip install kernel
+    version: 0.80.0
+    repo: https://github.com/kernel/kernel-python-sdk
+    official: true
+    note: Official Python library for the Kernel API (generated with Stainless).
+  - language: go
+    registry: pkg.go.dev
+    name: github.com/kernel/kernel-go-sdk
+    url: https://pkg.go.dev/github.com/kernel/kernel-go-sdk
+    install: go get github.com/kernel/kernel-go-sdk
+    repo: https://github.com/kernel/kernel-go-sdk
+    official: true
+    note: Official Go SDK for the Kernel API.
+  - language: javascript
+    registry: npm
+    name: "@onkernel/cli"
+    url: https://www.npmjs.com/package/@onkernel/cli
+    install: npm install -g @onkernel/cli
+    repo: https://github.com/kernel/cli
+    official: true
+    kind: cli
+    note: Kernel CLI (also installable via Homebrew - brew install kernel/tap/kernel).
+  - language: javascript
+    registry: npm
+    name: "@onkernel/cua-agent"
+    url: https://www.npmjs.com/package/@onkernel/cua-agent
+    repo: https://github.com/kernel/cua
+    official: true
+    kind: agent-toolkit
+    note: Computer-use agent SDK/CLI for agent builders.
+disambiguation:
+  - "PyPI 'onkernel' and 'kernel-sdk' are NOT this provider (onkernel.ai / hardware bindings are unrelated). The official Python package is 'kernel'."

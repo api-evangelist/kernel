@@ -1,0 +1,8 @@
+generated: '2026-07-19'
+method: derived
+source: arazzo/*.yml
+workflows:
+  - file: kernel-browser-automate.yml
+    workflowId: browserAutomate
+    title: Create a browser, run Playwright, screenshot, tear down
+    summary: End-to-end cloud browser automation on Kernel.

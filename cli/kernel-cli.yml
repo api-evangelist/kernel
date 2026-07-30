@@ -1,0 +1,57 @@
+generated: '2026-07-19'
+method: searched
+source: https://kernel.sh/docs/reference/cli.md
+name: kernel
+binary: kernel
+package: "@onkernel/cli"
+description: >-
+  First-party CLI to access and manage Kernel resources - scaffold and deploy apps,
+  create and control cloud browsers, manage pools/profiles/proxies/extensions,
+  configure managed auth, install the MCP server, and manage projects and API keys.
+install:
+  - brew install kernel/tap/kernel
+  - pnpm install -g @onkernel/cli
+  - npm install -g @onkernel/cli
+global_flags:
+  - "--version, -v"
+  - "--no-color"
+  - "--log-level <trace|debug|info|warn|error|fatal|print>"
+  - "--project <id-or-name> (KERNEL_PROJECT)"
+  - "--output json, -o json"
+command_groups:
+  - name: create
+    summary: Scaffold new Kernel apps from templates.
+  - name: auth (login/logout/status)
+    summary: Login, logout, and check auth status.
+  - name: browsers
+    summary: Create, view, and manage Kernel browsers (incl. telemetry).
+  - name: browser-pools
+    summary: Pre-warm and reuse pools of browsers.
+  - name: profiles
+    summary: Persist and reuse browser profiles.
+  - name: proxies
+    summary: Create and manage proxy configurations.
+  - name: apps
+    summary: Deploy apps, invoke actions, and stream logs.
+  - name: managed-auth
+    summary: Manage auth connections, credentials, and credential providers.
+  - name: extensions
+    summary: Upload, download, and build browser extensions.
+  - name: mcp
+    summary: Install Kernel MCP server configuration for AI tools.
+  - name: projects
+    summary: Manage projects and scope commands with --project.
+  - name: api-keys
+    summary: Create, list, rename, and delete API keys.
+  - name: audit-logs
+    summary: Search and download (chunked bulk export) the org audit log.
+  - name: status
+    summary: Check operational status of Kernel services.
+  - name: upgrade
+    summary: Upgrade the CLI to the latest version.
+  - name: completion
+    summary: Generate shell autocompletion (bash, zsh, fish, powershell).
+key_flows:
+  - "kernel create -> kernel login -> kernel deploy index.ts -> kernel invoke my-app action-name --payload '{...}'"
+  - "kernel mcp install --target <target>"
+skills_file: https://github.com/kernel/skills/blob/main/plugins/kernel-cli/skills/kernel-cli/SKILL.md

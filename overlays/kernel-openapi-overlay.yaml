@@ -1,0 +1,24 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for Kernel API
+  version: 1.0.0
+extends: openapi/kernel-openapi-original.yml
+actions:
+  - target: $.info
+    update:
+      x-apievangelist-provider: kernel
+      x-apievangelist-category: browser-infrastructure-for-agents
+      x-apievangelist-rating-notes: >-
+        OpenAPI 3.1 with 135 operations across 22 tags; bearer auth; OAuth 2.1
+        authorization-server metadata + hosted MCP server; SOC 2 / ISO 27001 / HIPAA /
+        PCI / GDPR compliance program. No idempotency contract; custom error envelope
+        (not RFC 9457).
+  - target: $.info
+    update:
+      x-agentic-access-profile: agentic-access/kernel-agentic-access.yml
+      x-error-catalog: errors/kernel-problem-types.yml
+      x-conventions: conventions/kernel-conventions.yml
+  - target: $.components.securitySchemes.bearerAuth
+    update:
+      x-apievangelist-oauth-metadata: https://api.onkernel.com/.well-known/oauth-authorization-server
+      x-apievangelist-scopes: [api.read, api.write]

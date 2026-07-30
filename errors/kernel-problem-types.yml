@@ -1,0 +1,51 @@
+generated: '2026-07-19'
+method: derived
+source: openapi/kernel-openapi-original.yml
+format: kernel-error-envelope
+content_type: application/json
+envelope:
+  fields:
+    code: Application-specific, machine-readable error code (e.g. bad_request, invalid_input).
+    message: Human-readable error description for debugging.
+    details: Array of ErrorDetail objects (code + message) for multiple errors.
+    inner_error: Optional nested ErrorDetail providing lower-level detail.
+  required: [code, message]
+note: >-
+  Kernel returns a consistent JSON error envelope (not RFC 9457 problem+json).
+  The HTTP status classes below are derived from the OpenAPI responses across
+  135 operations. Representative example codes are taken from the spec.
+problems:
+  - status: 400
+    title: Bad Request
+    example_code: bad_request
+    meaning: Malformed request or invalid input (e.g. non-semver version string).
+  - status: 401
+    title: Unauthorized
+    meaning: Missing or invalid API key / bearer token.
+  - status: 403
+    title: Forbidden
+    meaning: Authenticated but not permitted for this resource or project scope.
+  - status: 404
+    title: Not Found
+    meaning: Resource (browser, profile, proxy, deployment, invocation, ...) not found by id or name.
+  - status: 409
+    title: Conflict
+    meaning: Resource state conflict (e.g. name already in use, concurrent modification).
+  - status: 410
+    title: Gone
+    meaning: Resource no longer available.
+  - status: 422
+    title: Unprocessable Entity
+    meaning: Request understood but semantically invalid.
+  - status: 429
+    title: Too Many Requests
+    meaning: Rate limit exceeded; a Retry-After header indicates when to retry.
+  - status: 500
+    title: Internal Server Error
+    meaning: Unexpected server-side error.
+  - status: 502
+    title: Bad Gateway
+    meaning: Upstream/browser backend error.
+  - status: 529
+    title: Site Overloaded
+    meaning: Service temporarily overloaded; retry with backoff.

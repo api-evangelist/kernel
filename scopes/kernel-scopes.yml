@@ -1,0 +1,25 @@
+generated: '2026-07-19'
+method: searched
+source: https://api.onkernel.com/.well-known/oauth-authorization-server
+docs: https://kernel.sh/docs/reference/mcp-server/authentication.md
+note: >-
+  The Kernel REST API OpenAPI declares a single bearer (API key) scheme without
+  oauth2 flows, but the RFC 8414 authorization-server metadata advertises OAuth 2.1
+  (used by the hosted MCP server, with dynamic client registration) and two coarse
+  scopes. Scopes are captured from the well-known document verbatim.
+schemes:
+  - name: OAuth2.1
+    source: https://api.onkernel.com/.well-known/oauth-authorization-server
+    issuer: https://api.onkernel.com/
+    bearer_methods_supported: [header]
+    dynamic_client_registration: true
+    flows:
+      - flow: authorizationCode
+        note: OAuth 2.1 with dynamic client registration; used by the hosted MCP server.
+scopes:
+  - scope: api.read
+    description: Read access to Kernel API resources.
+    sources: [https://api.onkernel.com/.well-known/oauth-authorization-server]
+  - scope: api.write
+    description: Write access to Kernel API resources.
+    sources: [https://api.onkernel.com/.well-known/oauth-authorization-server]

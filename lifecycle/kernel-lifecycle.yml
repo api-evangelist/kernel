@@ -1,0 +1,32 @@
+generated: '2026-07-19'
+method: searched
+source: https://kernel.sh/docs/ + https://www.kernel.sh/changelog + openapi/kernel-openapi-original.yml
+versioning:
+  scheme: continuous
+  api_version: "0.1.0"
+  sdk_version: "0.80.0"
+  cadence: weekly
+  docs: https://www.kernel.sh/changelog
+  note: >-
+    Kernel ships a continuously-versioned API with weekly changelog releases;
+    SDKs (@onkernel/sdk, kernel) are versioned independently and generated with Stainless.
+deprecation:
+  policy_url: null
+  sunset_header: false
+  note: >-
+    No standalone deprecation-policy page or RFC 8594 Sunset header support was found.
+    Deprecations are surfaced in-spec via `deprecated: true` operations and announced in
+    the changelog. The legacy /projects/* operations are marked deprecated in favor of
+    the /org/projects/* set.
+status_page: https://status.kernel.sh
+sla:
+  url: null
+  uptime_target: null
+deprecated_operations:
+  - openapi/kernel-openapi-original.yml#postProjects
+  - openapi/kernel-openapi-original.yml#getProjects
+  - openapi/kernel-openapi-original.yml#getProjectsId
+  - openapi/kernel-openapi-original.yml#patchProjectsId
+  - openapi/kernel-openapi-original.yml#deleteProjectsId
+  - openapi/kernel-openapi-original.yml#getProjectLimits
+  - openapi/kernel-openapi-original.yml#patchProjectLimits

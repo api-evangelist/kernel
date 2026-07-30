@@ -1,0 +1,106 @@
+generated: '2026-07-19'
+method: derived
+source: openapi/kernel-openapi-original.yml
+note: >-
+  Entity-relationship graph derived from OpenAPI tags, paths, and id-reference
+  fields across 175 schemas. Relationships inferred from *_id / *_name fields and
+  path nesting. Browser is the central runtime entity.
+entities:
+  - name: Organization
+    path: /org
+    description: Top-level tenant; owns projects, API keys, limits, credential providers.
+  - name: Project
+    path: /org/projects
+    description: Scoping boundary within an org for resources and limits.
+  - name: ApiKey
+    path: /org/api_keys
+    description: Bearer credential, org- or project-scoped, rotatable.
+  - name: Browser
+    path: /browsers
+    description: A running cloud Chromium session (the central runtime entity).
+  - name: BrowserPool
+    path: /browser_pools
+    description: Pre-warmed reusable pool that browsers are acquired from / released to.
+  - name: Profile
+    path: /profiles
+    description: Persisted browser profile (cookies/storage) reusable across sessions.
+  - name: Proxy
+    path: /proxies
+    description: Proxy configuration a browser can route through.
+  - name: Extension
+    path: /extensions
+    description: Browser extension uploaded / fetched from Chrome Web Store.
+  - name: AuthConnection
+    path: /auth/connections
+    description: Managed-auth login connection to a target site.
+  - name: Credential
+    path: /credentials
+    description: Stored credential used by managed auth (incl. TOTP).
+  - name: CredentialProvider
+    path: /org/credential_providers
+    description: External secret source (e.g. 1Password) supplying credentials.
+  - name: App
+    path: /apps
+    description: A deployed Kernel app exposing invokable actions.
+  - name: Deployment
+    path: /deployments
+    description: A deployment of an app.
+  - name: Invocation
+    path: /invocations
+    description: An execution of an app action; can spawn browsers.
+  - name: Replay
+    path: /browsers/{id}/replays
+    description: Video replay recording of a browser session.
+relationships:
+  - from: Project
+    to: Organization
+    type: belongs_to
+    via: org
+  - from: ApiKey
+    to: Project
+    type: belongs_to
+    via: project_id
+  - from: Browser
+    to: Profile
+    type: has_one
+    via: profile_id
+  - from: Browser
+    to: Proxy
+    type: has_one
+    via: proxy_id
+  - from: Browser
+    to: Invocation
+    type: belongs_to
+    via: invocation_id
+  - from: BrowserPool
+    to: Browser
+    type: has_many
+    via: acquire/release
+  - from: AuthConnection
+    to: Profile
+    type: belongs_to
+    via: profile_id
+  - from: AuthConnection
+    to: Credential
+    type: has_one
+    via: credential
+  - from: Credential
+    to: CredentialProvider
+    type: belongs_to
+    via: provider
+  - from: Deployment
+    to: App
+    type: belongs_to
+    via: app_name
+  - from: Invocation
+    to: Deployment
+    type: belongs_to
+    via: deployment
+  - from: Invocation
+    to: Browser
+    type: has_many
+    via: browser_session_id
+  - from: Replay
+    to: Browser
+    type: belongs_to
+    via: browser

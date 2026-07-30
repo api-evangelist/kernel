@@ -1,0 +1,24 @@
+generated: '2026-07-19'
+method: generated
+source: openapi/kernel-openapi-original.yml + conventions/kernel-conventions.yml + errors/kernel-problem-types.yml
+note: >-
+  Packaged operating instructions per marquee Kernel flow, grounded in verified
+  operationIds. Kernel also publishes agent skills at github.com/kernel/skills
+  (kernel-cli, kernel-browser-harness) - referenced but not duplicated here.
+skills:
+  - file: kernel-create-browser-and-automate.md
+    name: Create a cloud browser and automate it with Playwright
+    api: openapi/kernel-openapi-original.yml
+    operations: [postBrowsers, executePlaywrightCode, takeScreenshot, deleteBrowsersByIdOrName]
+  - file: kernel-managed-auth-login.md
+    name: Log a browser into a site with Managed Auth
+    api: openapi/kernel-openapi-original.yml
+    operations: [postAuthConnections, postAuthConnectionsLogin, postAuthConnectionsSubmit, getAuthConnectionsEventsById]
+  - file: kernel-deploy-and-invoke-app.md
+    name: Deploy a Kernel app and invoke an action
+    api: openapi/kernel-openapi-original.yml
+    operations: [postDeployments, postInvocations, getInvocationsById, getInvocationsEventsById]
+  - file: kernel-browser-pool.md
+    name: Acquire and release browsers from a pre-warmed pool
+    api: openapi/kernel-openapi-original.yml
+    operations: [postBrowserPools, acquireFromBrowserPoolByIdOrName, releaseToBrowserPoolByIdOrName, flushBrowserPoolByIdOrName]
