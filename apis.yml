@@ -1,22 +1,345 @@
 aid: kernel
 name: Kernel
-description: Kernel is a company surfaced as a portfolio company of general-catalyst and added to the
-  API Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+description: >-
+  Kernel is browser infrastructure for AI agents and automations. It runs sandboxed
+  cloud Chromium browsers that spin up in under 30ms, with Playwright execution,
+  computer-use controls, managed authentication into third-party sites, reusable
+  browser profiles, proxies, pre-warmed browser pools, session replays, live
+  telemetry, and a serverless App platform for deploying and invoking agent actions.
+  Kernel exposes a REST API (OpenAPI 3.1, 135 operations across 22 tags), first-party
+  TypeScript, Python and Go SDKs, a CLI, and a centrally hosted MCP server so agents
+  can drive real browsers. Backed by General Catalyst.
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://www.kernel.sh/favicon.ico
 url: https://raw.githubusercontent.com/api-evangelist/kernel/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
 x-backed-by:
 - general-catalyst
-x-tier: stub
-x-tier-reason: portfolio-lead
+x-tier: enriched
+x-tier-reason: portfolio-lead-enriched
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-19'
 tags:
 - Company
-apis: []
+- Browser Automation
+- Web Agents
+- Browser Infrastructure
+- AI Agents
+- Playwright
+- Cloud Browsers
+- Computer Use
+- MCP
+- Managed Auth
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+apis:
+- aid: kernel:kernel-api-keys-api
+  name: Kernel API Keys API
+  description: Create and manage API keys for organization and project-scoped access.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - API Keys
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-api-keys-api-openapi.yml
+- aid: kernel:kernel-apps-api
+  name: Kernel Apps API
+  description: List applications and versions.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Apps
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-apps-api-openapi.yml
+- aid: kernel:kernel-audit-logs-api
+  name: Kernel Audit Logs API
+  description: Read audit log records for the authenticated organization.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Audit Logs
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-audit-logs-api-openapi.yml
+- aid: kernel:kernel-browser-computer-controls-api
+  name: Kernel Browser Computer Controls API
+  description: Control mouse, keyboard, and screen on the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Computer Controls
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-computer-controls-api-openapi.yml
+- aid: kernel:kernel-browser-filesystem-api
+  name: Kernel Browser Filesystem API
+  description: Read, write, and manage files on the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Filesystem
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-filesystem-api-openapi.yml
+- aid: kernel:kernel-browser-logs-api
+  name: Kernel Browser Logs API
+  description: Stream logs from the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Logs
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-logs-api-openapi.yml
+- aid: kernel:kernel-browser-playwright-api
+  name: Kernel Browser Playwright API
+  description: Execute Playwright code against the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Playwright
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-playwright-api-openapi.yml
+- aid: kernel:kernel-browser-pools-api
+  name: Kernel Browser Pools API
+  description: Create and manage browser pools for acquiring and releasing browsers.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Pools
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-pools-api-openapi.yml
+- aid: kernel:kernel-browser-processes-api
+  name: Kernel Browser Processes API
+  description: Execute and manage processes on the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Processes
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-processes-api-openapi.yml
+- aid: kernel:kernel-browser-replays-api
+  name: Kernel Browser Replays API
+  description: Record and manage browser session video replays.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Replays
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-replays-api-openapi.yml
+- aid: kernel:kernel-browser-telemetry-api
+  name: Kernel Browser Telemetry API
+  description: Stream live telemetry events from a browser session.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser Telemetry
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-telemetry-api-openapi.yml
+- aid: kernel:kernel-browsers-api
+  name: Kernel Browsers API
+  description: Create and manage browser sessions.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browsers
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browsers-api-openapi.yml
+- aid: kernel:kernel-credential-providers-api
+  name: Kernel Credential Providers API
+  description: Configure external credential providers like 1Password.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Credential Providers
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-credential-providers-api-openapi.yml
+- aid: kernel:kernel-credentials-api
+  name: Kernel Credentials API
+  description: Create and manage credentials for authentication.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Credentials
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-credentials-api-openapi.yml
+- aid: kernel:kernel-deployments-api
+  name: Kernel Deployments API
+  description: Create and manage app deployments and stream deployment events.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Deployments
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-deployments-api-openapi.yml
+- aid: kernel:kernel-extensions-api
+  name: Kernel Extensions API
+  description: Create, list, retrieve, and delete browser extensions.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Extensions
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-extensions-api-openapi.yml
+- aid: kernel:kernel-invocations-api
+  name: Kernel Invocations API
+  description: Invoke actions and stream or query invocation status and events.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Invocations
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-invocations-api-openapi.yml
+- aid: kernel:kernel-managed-auth-api
+  name: Kernel Managed Auth API
+  description: Create and manage auth connections for automated credential capture and login.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Managed Auth
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-managed-auth-api-openapi.yml
+- aid: kernel:kernel-organization-api
+  name: Kernel Organization API
+  description: Read and manage organization-level limits.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Organization
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-organization-api-openapi.yml
+- aid: kernel:kernel-profiles-api
+  name: Kernel Profiles API
+  description: Create, list, retrieve, and delete browser profiles.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Profiles
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-profiles-api-openapi.yml
+- aid: kernel:kernel-projects-api
+  name: Kernel Projects API
+  description: Create and manage projects for resource isolation within an organization.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Projects
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-projects-api-openapi.yml
+- aid: kernel:kernel-proxies-api
+  name: Kernel Proxies API
+  description: Create and manage proxy configurations for routing browser traffic.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Proxies
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-proxies-api-openapi.yml
+common:
+# --- artifact pointers (script-wired) ---
+- type: AgenticAccess
+  url: agentic-access/kernel-agentic-access.yml
+- type: DomainSecurity
+  url: security/kernel-domain-security.yml
+- type: Authentication
+  url: authentication/kernel-authentication.yml
+# --- artifact pointers (this round) ---
+- type: Packages
+  url: packages/kernel-packages.yml
+- type: SDKs
+  url: packages/kernel-packages.yml
+- type: CLI
+  url: cli/kernel-cli.yml
+- type: MCPServer
+  url: mcp/kernel-mcp.yml
+- type: WellKnown
+  url: well-known/kernel-well-known.yml
+- type: OAuthScopes
+  url: scopes/kernel-scopes.yml
+- type: Conventions
+  url: conventions/kernel-conventions.yml
+- type: Conformance
+  url: conformance/kernel-conformance.yml
+- type: ErrorCatalog
+  url: errors/kernel-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/kernel-lifecycle.yml
+- type: Deprecation
+  url: lifecycle/kernel-lifecycle.yml
+- type: DataModel
+  url: data-model/kernel-data-model.yml
+- type: ChangeLog
+  url: changelog/kernel-changelog.yml
+- type: LLMsTxt
+  url: llms/kernel-llms.txt
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Arazzo
+  name: Create a browser, run Playwright, screenshot, tear down
+  url: arazzo/kernel-browser-automate.yml
+- type: TrustCenter
+  url: https://trust.kernel.sh
+- type: Compliance
+  url: https://www.kernel.sh/security
+# --- link properties (searched, 200) ---
+- type: Website
+  url: https://www.kernel.sh
+- type: DeveloperPortal
+  url: https://kernel.sh/docs/
+- type: Documentation
+  url: https://kernel.sh/docs/
+- type: APIReference
+  url: https://kernel.sh/docs/api-reference/
+- type: GettingStarted
+  url: https://kernel.sh/docs/introduction/
+- type: Support
+  url: https://kernel.sh/docs/info/support
+- type: Blog
+  url: https://www.kernel.sh/blog
+- type: GitHubOrganization
+  url: https://github.com/kernel
+- type: Pricing
+  url: https://www.kernel.sh/pricing
+- type: SignUp
+  url: https://dashboard.onkernel.com
+- type: StatusPage
+  url: https://status.kernel.sh
+x-enrichment:
+  date: '2026-07-19'
+  status: backfilled
+  pass: local-v1
+  note: backfilled from .gitignore signal + verified work evidence
