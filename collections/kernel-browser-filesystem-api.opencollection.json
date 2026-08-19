@@ -1,0 +1,464 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Browser Filesystem API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Browser Filesystem",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Read file contents",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/fs/read_file",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "path",
+                "value": "",
+                "type": "query",
+                "description": "Absolute file path to read."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Read file contents"
+        },
+        {
+          "info": {
+            "name": "Write or create a file",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/write_file",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "path",
+                "value": "",
+                "type": "query",
+                "description": "Destination absolute file path."
+              },
+              {
+                "name": "mode",
+                "value": "",
+                "type": "query",
+                "description": "Optional file mode (octal string, e.g. 644). Defaults to 644."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Write or create a file"
+        },
+        {
+          "info": {
+            "name": "List files in a directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/fs/list_files",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "path",
+                "value": "",
+                "type": "query",
+                "description": "Absolute directory path."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List files in a directory"
+        },
+        {
+          "info": {
+            "name": "Create a new directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/create_directory",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Create a new directory"
+        },
+        {
+          "info": {
+            "name": "Delete a file",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/delete_file",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Delete a file"
+        },
+        {
+          "info": {
+            "name": "Delete a directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/delete_directory",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Delete a directory"
+        },
+        {
+          "info": {
+            "name": "Set file or directory permissions/ownership",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/set_file_permissions",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Set file or directory permissions/ownership"
+        },
+        {
+          "info": {
+            "name": "Get information about a file or directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/fs/file_info",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "path",
+                "value": "",
+                "type": "query",
+                "description": "Absolute path of the file or directory."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get information about a file or directory"
+        },
+        {
+          "info": {
+            "name": "Move or rename a file or directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.onkernel.com/browsers/:id/fs/move",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Move or rename a file or directory"
+        },
+        {
+          "info": {
+            "name": "Watch a directory for changes",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/fs/watch",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Watch a directory for changes"
+        },
+        {
+          "info": {
+            "name": "Stream filesystem events for a watch",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/fs/watch/:watch_id/events",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "watch_id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Stream filesystem events for a watch"
+        },
+        {
+          "info": {
+            "name": "Stop watching a directory",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.onkernel.com/browsers/:id/fs/watch/:watch_id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "watch_id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Stop watching a directory"
+        },
+        {
+          "info": {
+            "name": "Download a directory as a ZIP archive",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/fs/download_dir_zip",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "path",
+                "value": "",
+                "type": "query",
+                "description": "Absolute directory path to archive and download."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns a ZIP file containing the contents of the specified directory."
+        },
+        {
+          "info": {
+            "name": "Upload one or more files",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/fs/upload",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "multipart-form",
+              "data": [
+                {
+                  "name": "files",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Allows uploading single or multiple files to the remote filesystem."
+        },
+        {
+          "info": {
+            "name": "Upload a zip archive and extract it",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/fs/upload_zip",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "multipart-form",
+              "data": [
+                {
+                  "name": "zip_file",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "name": "dest_path",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Upload a zip file and extract its contents to the specified destination path."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

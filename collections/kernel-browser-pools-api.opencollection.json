@@ -1,0 +1,238 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Browser Pools API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Browser Pools",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List browser pools",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browser_pools",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Limit the number of browser pools to return."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Offset the number of browser pools to return."
+              },
+              {
+                "name": "query",
+                "value": "",
+                "type": "query",
+                "description": "Case-insensitive substring match against browser pool name. IDs match by exact value."
+              },
+              {
+                "name": "name",
+                "value": "",
+                "type": "query",
+                "description": "Exact-match filter on browser pool name using the database collation. In production, matching is case- and accent-insensitive. During the default-project migration, unscoped requests prefer a concrete default-project browser pool over a legacy unscoped browser pool with the same name."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List browser pools in the resolved project."
+        },
+        {
+          "info": {
+            "name": "Create a browser pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browser_pools",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Create a new browser pool with the specified configuration and size.\nPooled browsers load their profile read-only: any save_changes on the profile is ignored\n(not rejected), so pooled browsers never persist changes back to the profile.\n"
+        },
+        {
+          "info": {
+            "name": "Get browser pool details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve details for a single browser pool by its ID or name."
+        },
+        {
+          "info": {
+            "name": "Update a browser pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Updates the configuration used to create browsers in the pool.\nAs with creation, save_changes on the pool profile is ignored (not rejected); pooled\nbrowsers never persist changes back to the profile.\nTo clear the profile reference, send `profile: { \"id\": \"\" }`. Clearing the profile\nalso disables `refresh_on_profile_update`.\n"
+        },
+        {
+          "info": {
+            "name": "Delete a browser pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Delete a browser pool and all browsers in it. By default, deletion is blocked if browsers are currently leased. Use force=true to terminate leased browsers."
+        },
+        {
+          "info": {
+            "name": "Acquire a browser from the pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name/acquire",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Long-polling endpoint to acquire a browser from the pool. Returns immediately when a browser\nis available, or returns 204 No Content when the poll times out. The client should retry\nthe request to continue waiting for a browser. The acquired browser will use the pool's\ntimeout_seconds for its idle timeout.\n"
+        },
+        {
+          "info": {
+            "name": "Release a browser back to the pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name/release",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Release a browser back to the pool, optionally recreating the browser instance."
+        },
+        {
+          "info": {
+            "name": "Flush all idle browsers in the pool",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browser_pools/:id_or_name/flush",
+            "params": [
+              {
+                "name": "id_or_name",
+                "value": "",
+                "type": "path",
+                "description": "Browser pool ID or name"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Destroys all idle browsers in the pool; leased browsers are not affected."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

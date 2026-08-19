@@ -4,44 +4,49 @@ status: published
 source: https://kernel.sh/docs/reference/mcp-server.md
 server:
   name: kernel
-  transport: http          # Streamable HTTP; stdio endpoint also supported
-  transports: [streamable-http, stdio]
+  transport: http
+  transports:
+  - streamable-http
+  - stdio
   url: https://mcp.onkernel.com/mcp
   repo: https://github.com/kernel/kernel-mcp-server
   hosted: true
-  description: >-
-    Centrally hosted, authenticated remote MCP server that lets any MCP-compatible
-    model or agent launch Chromium browsers, execute Playwright code, capture video
-    replays, manage profiles/proxies/pools, and invoke deployed Kernel apps.
+  description: Centrally hosted, authenticated remote MCP server that lets any MCP-compatible model or
+    agent launch Chromium browsers, execute Playwright code, capture video replays, manage profiles/proxies/pools,
+    and invoke deployed Kernel apps.
 authentication:
-  methods: [oauth2.1, api-key]
+  methods:
+  - oauth2.1
+  - api-key
   oauth:
-    version: "2.1"
+    version: '2.1'
     dynamic_client_registration: true
     metadata: https://api.onkernel.com/.well-known/oauth-authorization-server
-    scopes_supported: [api.read, api.write]
+    scopes_supported:
+    - api.read
+    - api.write
   api_key:
     header: Authorization
     scheme: Bearer
     note: The server detects non-JWT tokens and treats them as Kernel API keys.
 install:
   cli: kernel mcp install --target <target>
-  config_example: |
-    {
-      "mcpServers": {
-        "kernel": {
-          "url": "https://mcp.onkernel.com/mcp",
-          "headers": { "Authorization": "Bearer YOUR_KERNEL_API_KEY" }
-        }
-      }
-    }
+  config_example: "{\n  \"mcpServers\": {\n    \"kernel\": {\n      \"url\": \"https://mcp.onkernel.com/mcp\"\
+    ,\n      \"headers\": { \"Authorization\": \"Bearer YOUR_KERNEL_API_KEY\" }\n    }\n  }\n}\n"
 capabilities:
-  tools: true          # browsers, profiles, proxies, browser pools, apps
-  resources: true      # read browsers, pools, profiles, apps
-  prompts: true        # prebuilt prompts for concepts and debugging
+  tools: true
+  resources: true
+  prompts: true
 tool_families:
-  - manage-browsers
-  - profiles
-  - proxies
-  - browser-pools
-  - apps
+- manage-browsers
+- profiles
+- proxies
+- browser-pools
+- apps
+deployment:
+  mode: remote
+  endpoint: https://mcp.onkernel.com/mcp
+  verified: probed
+  probe: wall
+  checked: '2026-08-12'
+  source: catalog MCP census

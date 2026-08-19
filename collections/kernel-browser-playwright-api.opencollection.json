@@ -1,0 +1,51 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Browser Playwright API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Browser Playwright",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Execute Playwright/TypeScript code against the browser",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/playwright/execute",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Execute arbitrary Playwright code in a fresh execution context against the browser.\nThe code runs in the same VM as the browser, minimizing latency and maximizing throughput.\nIt has access to 'page', 'context', and 'browser' variables.\nIt can `return` a value, and this value is returned in the response.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

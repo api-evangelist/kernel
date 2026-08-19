@@ -1,0 +1,58 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Organization API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Organization",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get organization limits",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/org/limits",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get the organization's concurrency limit — the maximum browsers running at once across on-demand sessions and browser pool reservations — and the default per-project concurrency cap applied to projects without an explicit override."
+        },
+        {
+          "info": {
+            "name": "Update organization limits",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://api.onkernel.com/org/limits",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Set the default per-project concurrency cap applied to projects without an explicit override. Set the value to 0 to remove the default; omit to leave it unchanged. The default cannot exceed the organization's concurrency limit."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

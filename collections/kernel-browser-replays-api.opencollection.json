@@ -1,0 +1,132 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Browser Replays API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Browser Replays",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List browser session replays",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/replays",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List all replays for the specified browser session."
+        },
+        {
+          "info": {
+            "name": "Start a browser session replay recording",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/replays",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Start recording the browser session and return a replay ID."
+        },
+        {
+          "info": {
+            "name": "Download a replay recording",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/replays/:replay_id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "replay_id",
+                "value": "",
+                "type": "path",
+                "description": "Replay recording identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Download or stream the specified replay recording."
+        },
+        {
+          "info": {
+            "name": "Stop a browser session replay recording",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/browsers/:id/replays/:replay_id/stop",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "replay_id",
+                "value": "",
+                "type": "path",
+                "description": "Replay recording identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Stop the specified replay recording and persist the video."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

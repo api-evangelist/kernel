@@ -1,0 +1,118 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Browser Telemetry API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Browser Telemetry",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Stream telemetry events via SSE",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/telemetry/stream",
+            "headers": [
+              {
+                "name": "Last-Event-ID",
+                "value": ""
+              }
+            ],
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "replay",
+                "value": "",
+                "type": "query",
+                "description": "Pass `all` to start from the oldest retained event instead of only new events; any other value is treated as from-now. The buffer is bounded, so the first event id may be greater than 1 if older events were evicted."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Streams browser telemetry events as a server-sent events (SSE) stream. The stream closes when the browser session terminates. Each event frame includes an id: field containing a monotonically increasing sequence number; pass it as Last-Event-ID on reconnect to resume without gaps. The event: field is never set; all frames carry JSON in the data: field. A keepalive comment frame is sent every 15 seconds when no events arrive. Returns 404 if the browser session does not exist. If telemetry was not"
+        },
+        {
+          "info": {
+            "name": "Read telemetry events for a browser session",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/browsers/:id/telemetry/events",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Browser session ID"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Opaque pagination cursor: pass the X-Next-Offset value from the previous response to fetch the next page. When set, paging continues from this cursor and since is ignored, while until still bounds the page. It is not an event's seq field, so do not derive it from the response body.\n"
+              },
+              {
+                "name": "since",
+                "value": "",
+                "type": "query",
+                "description": "Start of the window: an RFC-3339 timestamp, or a duration like 5m meaning that long ago. Defaults to 5m. Ignored when offset is set.\n"
+              },
+              {
+                "name": "until",
+                "value": "",
+                "type": "query",
+                "description": "End of the window (exclusive): an RFC-3339 timestamp, or a duration like 5m meaning that long ago.\n"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of events per page. Defaults to 20."
+              },
+              {
+                "name": "category",
+                "value": "",
+                "type": "query",
+                "description": "Restrict results to these event categories. Repeat the parameter for multiple values."
+              },
+              {
+                "name": "order",
+                "value": "",
+                "type": "query",
+                "description": "Read direction. asc (default) reads oldest first, starting from since or the offset cursor. desc reads newest first: each request returns one page of up to limit records ending at the offset cursor (or until, or the newest archived event); combining desc with since is rejected with a 400. In either direction the category filter applies within the page, so a filtered page may be empty while X-Has-More is true.\n"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Reads a page of telemetry events for the browser session. To page through results, pass the X-Next-Offset value from the previous response as offset and repeat while X-Has-More is true. Returns an empty list when telemetry data is unavailable.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

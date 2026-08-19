@@ -1,0 +1,3368 @@
+{
+  "item": [
+    {
+      "id": "28785893-3cce-4e3e-8d29-6afe29f818b3",
+      "name": "Browser Pools",
+      "description": {
+        "content": "Create and manage browser pools for acquiring and releasing browsers.",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "caf681c6-803b-464f-8e21-90571691e05d",
+          "name": "Create a browser pool",
+          "request": {
+            "name": "Create a browser pool",
+            "description": {
+              "content": "Create a new browser pool with the specified configuration and size.\nPooled browsers load their profile read-only: any save_changes on the profile is ignored\n(not rejected), so pooled browsers never persist changes back to the profile.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": false,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": false,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": \"<integer>\",\n    \"height\": \"<integer>\",\n    \"refresh_rate\": \"<integer>\"\n  },\n  \"kiosk_mode\": false,\n  \"chrome_policy\": {\n    \"key_0\": 9200\n  },\n  \"start_url\": \"<string>\",\n  \"telemetry\": {\n    \"enabled\": \"<boolean>\",\n    \"browser\": {\n      \"console\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"page\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"interaction\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"network\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"control\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"connection\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"system\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"screenshot\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"captcha\": {\n        \"enabled\": \"<boolean>\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "5f53e43e-14af-4399-8ed0-6b249c60ef9e",
+              "name": "Browser pool created successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"iv25ujqf37x3j07dwoffegqr\",\n  \"available_count\": 85,\n  \"acquired_count\": 15,\n  \"created_at\": \"1956-12-25T09:12:30.095Z\",\n  \"browser_pool_config\": {\n    \"size\": 10,\n    \"name\": \"my-pool\",\n    \"fill_rate_per_minute\": 178,\n    \"timeout_seconds\": 193303,\n    \"stealth\": true,\n    \"headless\": false,\n    \"profile\": {},\n    \"refresh_on_profile_update\": true,\n    \"proxy_id\": \"string\",\n    \"viewport\": {\n      \"width\": 1280,\n      \"height\": 800,\n      \"refresh_rate\": 60\n    },\n    \"kiosk_mode\": true,\n    \"chrome_policy\": {\n      \"key_0\": 4320.541085425188\n    },\n    \"start_url\": \"https://example.com\",\n    \"telemetry\": {\n      \"browser\": {\n        \"console\": {\n          \"enabled\": true\n        },\n        \"page\": {\n          \"enabled\": true\n        },\n        \"interaction\": {\n          \"enabled\": true\n        },\n        \"network\": {\n          \"enabled\": false\n        },\n        \"control\": {\n          \"enabled\": false\n        },\n        \"connection\": {\n          \"enabled\": true\n        },\n        \"system\": {\n          \"enabled\": true\n        },\n        \"screenshot\": {\n          \"enabled\": false\n        },\n        \"captcha\": {\n          \"enabled\": false\n        }\n      }\n    }\n  },\n  \"extension_ids\": [\n    \"string\",\n    \"string\"\n  ],\n  \"name\": \"my-pool\",\n  \"profile_id\": \"iv25ujqf37x3j07dwoffegqr\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0c42ad8a-fca9-44f4-a1e0-88c3ee44f2ce",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "51e499a7-1ad1-4f60-bddc-b9d72aad933e",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "92618869-26ac-4cfb-9ec2-ce4126247bc5",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3ee2470f-6da0-4016-ab46-0adeae669ed5",
+              "name": "Conflict – resource already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "26dba479-8431-4a80-a9e6-7f013c04b098",
+              "name": "Too Many Requests – rate limit exceeded",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Seconds to wait before retrying",
+                  "key": "Retry-After",
+                  "value": "7699"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5fff93db-38e3-40ff-8492-535c3140b393",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": 25,\n  \"timeout_seconds\": 600,\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": false,\n    \"key_1\": 3921\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": false,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": false\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": false\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "1c002d26-b761-4462-98a6-04e006d29aca",
+          "name": "List browser pools",
+          "request": {
+            "name": "List browser pools",
+            "description": {
+              "content": "List browser pools in the resolved project.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Limit the number of browser pools to return."
+                },
+                {
+                  "disabled": false,
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Offset the number of browser pools to return."
+                },
+                {
+                  "disabled": false,
+                  "key": "query",
+                  "value": "<string>",
+                  "description": "Case-insensitive substring match against browser pool name. IDs match by exact value."
+                },
+                {
+                  "disabled": false,
+                  "key": "name",
+                  "value": "<string>",
+                  "description": "Exact-match filter on browser pool name using the database collation. In production, matching is case- and accent-insensitive. During the default-project migration, unscoped requests prefer a concrete default-project browser pool over a legacy unscoped browser pool with the same name."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "f7c59a70-1d6e-4b38-918b-4322af9ed31b",
+              "name": "List of browser pools",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "name",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Limit the number of browser pools to return.",
+                  "key": "X-Limit",
+                  "value": "20"
+                },
+                {
+                  "disabled": false,
+                  "description": "The offset of browser pools to return.",
+                  "key": "X-Offset",
+                  "value": "0"
+                },
+                {
+                  "disabled": false,
+                  "description": "The offset where the next page starts. 0 when there are no more results.",
+                  "key": "X-Next-Offset",
+                  "value": "724"
+                },
+                {
+                  "disabled": false,
+                  "description": "Whether there are more browser pools to fetch.",
+                  "key": "X-Has-More",
+                  "value": "false"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"iv25ujqf37x3j07dwoffegqr\",\n    \"available_count\": 85,\n    \"acquired_count\": 15,\n    \"created_at\": \"2016-01-22T14:01:17.898Z\",\n    \"browser_pool_config\": {\n      \"size\": 10,\n      \"name\": \"my-pool\",\n      \"fill_rate_per_minute\": 3103,\n      \"timeout_seconds\": 47950,\n      \"stealth\": true,\n      \"headless\": false,\n      \"profile\": {},\n      \"refresh_on_profile_update\": true,\n      \"proxy_id\": \"string\",\n      \"viewport\": {\n        \"width\": 1280,\n        \"height\": 800,\n        \"refresh_rate\": 60\n      },\n      \"kiosk_mode\": true,\n      \"chrome_policy\": {\n        \"key_0\": 3194.2574168176575,\n        \"key_1\": 3544,\n        \"key_2\": 20.325316094267354\n      },\n      \"start_url\": \"https://example.com\",\n      \"telemetry\": {\n        \"browser\": {\n          \"console\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"page\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"interaction\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"network\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"control\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"connection\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"system\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"screenshot\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"captcha\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      }\n    },\n    \"extension_ids\": [\n      \"string\",\n      \"string\"\n    ],\n    \"name\": \"my-pool\",\n    \"profile_id\": \"iv25ujqf37x3j07dwoffegqr\"\n  },\n  {\n    \"id\": \"iv25ujqf37x3j07dwoffegqr\",\n    \"available_count\": 85,\n    \"acquired_count\": 15,\n    \"created_at\": \"1985-11-21T18:27:08.476Z\",\n    \"browser_pool_config\": {\n      \"size\": 10,\n      \"name\": \"my-pool\",\n      \"fill_rate_per_minute\": 9477,\n      \"timeout_seconds\": 233623,\n      \"stealth\": true,\n      \"headless\": false,\n      \"profile\": {},\n      \"refresh_on_profile_update\": true,\n      \"proxy_id\": \"string\",\n      \"viewport\": {\n        \"width\": 1280,\n        \"height\": 800,\n        \"refresh_rate\": 60\n      },\n      \"kiosk_mode\": true,\n      \"chrome_policy\": {\n        \"key_0\": false\n      },\n      \"start_url\": \"https://example.com\",\n      \"telemetry\": {\n        \"browser\": {\n          \"console\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"page\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"interaction\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"network\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"control\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"connection\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"system\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"screenshot\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"captcha\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      }\n    },\n    \"extension_ids\": [\n      \"string\",\n      \"string\"\n    ],\n    \"name\": \"my-pool\",\n    \"profile_id\": \"iv25ujqf37x3j07dwoffegqr\"\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "04a3f77b-3901-40b4-93e2-7f10af57ed92",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "name",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3aacd0b8-1929-455a-b790-cc8f43b8d042",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "name",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bed6a138-3003-429a-b198-5db09612d0ba",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "name",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "cee23cfc-fe1c-44c1-8d92-2951a41acc5d",
+          "name": "Get browser pool details",
+          "request": {
+            "name": "Get browser pool details",
+            "description": {
+              "content": "Retrieve details for a single browser pool by its ID or name.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "6c861dd8-aee8-4aab-9a7e-5d8b65e7cf4f",
+              "name": "Browser pool details",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"iv25ujqf37x3j07dwoffegqr\",\n  \"available_count\": 85,\n  \"acquired_count\": 15,\n  \"created_at\": \"1956-12-25T09:12:30.095Z\",\n  \"browser_pool_config\": {\n    \"size\": 10,\n    \"name\": \"my-pool\",\n    \"fill_rate_per_minute\": 178,\n    \"timeout_seconds\": 193303,\n    \"stealth\": true,\n    \"headless\": false,\n    \"profile\": {},\n    \"refresh_on_profile_update\": true,\n    \"proxy_id\": \"string\",\n    \"viewport\": {\n      \"width\": 1280,\n      \"height\": 800,\n      \"refresh_rate\": 60\n    },\n    \"kiosk_mode\": true,\n    \"chrome_policy\": {\n      \"key_0\": 4320.541085425188\n    },\n    \"start_url\": \"https://example.com\",\n    \"telemetry\": {\n      \"browser\": {\n        \"console\": {\n          \"enabled\": true\n        },\n        \"page\": {\n          \"enabled\": true\n        },\n        \"interaction\": {\n          \"enabled\": true\n        },\n        \"network\": {\n          \"enabled\": false\n        },\n        \"control\": {\n          \"enabled\": false\n        },\n        \"connection\": {\n          \"enabled\": true\n        },\n        \"system\": {\n          \"enabled\": true\n        },\n        \"screenshot\": {\n          \"enabled\": false\n        },\n        \"captcha\": {\n          \"enabled\": false\n        }\n      }\n    }\n  },\n  \"extension_ids\": [\n    \"string\",\n    \"string\"\n  ],\n  \"name\": \"my-pool\",\n  \"profile_id\": \"iv25ujqf37x3j07dwoffegqr\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bd4f4c89-ece9-46bc-bd0f-d737b0f544ee",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "db133e53-ec48-41d9-b564-22fb9faaecdc",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4dd484ce-3bc6-4c07-a568-1dfd75574ef5",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "79831282-2d70-4d6b-900a-cc7b00938d89",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "5de59253-e741-45f6-b66d-1df1ed1ca66a",
+          "name": "Update a browser pool",
+          "request": {
+            "name": "Update a browser pool",
+            "description": {
+              "content": "Updates the configuration used to create browsers in the pool.\nAs with creation, save_changes on the pool profile is ignored (not rejected); pooled\nbrowsers never persist changes back to the profile.\nTo clear the profile reference, send `profile: { \"id\": \"\" }`. Clearing the profile\nalso disables `refresh_on_profile_update`.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": \"<boolean>\",\n  \"headless\": \"<boolean>\",\n  \"profile\": {},\n  \"refresh_on_profile_update\": \"<boolean>\",\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": \"<integer>\",\n    \"height\": \"<integer>\",\n    \"refresh_rate\": \"<integer>\"\n  },\n  \"kiosk_mode\": \"<boolean>\",\n  \"chrome_policy\": {\n    \"key_0\": 1510.3573937249348\n  },\n  \"start_url\": \"<string>\",\n  \"telemetry\": {\n    \"enabled\": \"<boolean>\",\n    \"browser\": {\n      \"console\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"page\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"interaction\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"network\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"control\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"connection\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"system\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"screenshot\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"captcha\": {\n        \"enabled\": \"<boolean>\"\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "45b2cdb1-3fa3-46b2-8f8e-03d4b75a52e6",
+              "name": "Browser pool details",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"iv25ujqf37x3j07dwoffegqr\",\n  \"available_count\": 85,\n  \"acquired_count\": 15,\n  \"created_at\": \"1956-12-25T09:12:30.095Z\",\n  \"browser_pool_config\": {\n    \"size\": 10,\n    \"name\": \"my-pool\",\n    \"fill_rate_per_minute\": 178,\n    \"timeout_seconds\": 193303,\n    \"stealth\": true,\n    \"headless\": false,\n    \"profile\": {},\n    \"refresh_on_profile_update\": true,\n    \"proxy_id\": \"string\",\n    \"viewport\": {\n      \"width\": 1280,\n      \"height\": 800,\n      \"refresh_rate\": 60\n    },\n    \"kiosk_mode\": true,\n    \"chrome_policy\": {\n      \"key_0\": 4320.541085425188\n    },\n    \"start_url\": \"https://example.com\",\n    \"telemetry\": {\n      \"browser\": {\n        \"console\": {\n          \"enabled\": true\n        },\n        \"page\": {\n          \"enabled\": true\n        },\n        \"interaction\": {\n          \"enabled\": true\n        },\n        \"network\": {\n          \"enabled\": false\n        },\n        \"control\": {\n          \"enabled\": false\n        },\n        \"connection\": {\n          \"enabled\": true\n        },\n        \"system\": {\n          \"enabled\": true\n        },\n        \"screenshot\": {\n          \"enabled\": false\n        },\n        \"captcha\": {\n          \"enabled\": false\n        }\n      }\n    }\n  },\n  \"extension_ids\": [\n    \"string\",\n    \"string\"\n  ],\n  \"name\": \"my-pool\",\n  \"profile_id\": \"iv25ujqf37x3j07dwoffegqr\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "553b2174-a0d1-4bb1-8a7d-369f950bdd91",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7516be94-1fff-466b-befb-6767d55aa457",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b000723a-d4ac-4de6-ad9b-a0ed2754d7dd",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5cd32571-a80f-4199-ab1d-68854ca676f3",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6b798416-a324-4296-a140-5f019f3a5bde",
+              "name": "Conflict – resource already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8c92f7bd-635f-4e8e-aec7-f234c59c64ae",
+              "name": "Too Many Requests – rate limit exceeded",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Seconds to wait before retrying",
+                  "key": "Retry-After",
+                  "value": "7699"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1745c950-9aeb-46f7-ad61-a9295f6ef30d",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"size\": 10,\n  \"name\": \"my-pool\",\n  \"fill_rate_per_minute\": \"<integer>\",\n  \"timeout_seconds\": \"<integer>\",\n  \"stealth\": true,\n  \"headless\": false,\n  \"profile\": {},\n  \"refresh_on_profile_update\": true,\n  \"proxy_id\": \"<string>\",\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": true,\n  \"chrome_policy\": {\n    \"key_0\": true,\n    \"key_1\": 1423,\n    \"key_2\": 5330,\n    \"key_3\": \"string\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": false\n      },\n      \"page\": {\n        \"enabled\": true\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  },\n  \"discard_all_idle\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "d0876aac-ad41-4b1f-bdde-a514ee51a764",
+          "name": "Delete a browser pool",
+          "request": {
+            "name": "Delete a browser pool",
+            "description": {
+              "content": "Delete a browser pool and all browsers in it. By default, deletion is blocked if browsers are currently leased. Use force=true to terminate leased browsers.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "d74c29ea-b634-47d4-9f03-81ce2478a174",
+              "name": "Browser pool deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "a2b2669d-39c4-4d9e-b8a9-d0baf4327828",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ba15255c-d949-47aa-992d-75be70c6832a",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2487a2ae-aea4-4e7e-acaa-9ecf9db0529e",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a720d64d-e9c2-4c17-82ae-4726d0044065",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ffa2e8fc-f25e-410d-b322-a865a92d0c78",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "5957c2b1-8814-4947-8c0a-18fdfadd42e8",
+          "name": "Acquire a browser from the pool",
+          "request": {
+            "name": "Acquire a browser from the pool",
+            "description": {
+              "content": "Long-polling endpoint to acquire a browser from the pool. Returns immediately when a browser\nis available, or returns 204 No Content when the poll times out. The client should retry\nthe request to continue waiting for a browser. The acquired browser will use the pool's\ntimeout_seconds for its idle timeout.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name",
+                "acquire"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"tags\": {\n    \"key_0\": \"<string>\",\n    \"key_1\": \"<string>\",\n    \"key_2\": \"<string>\",\n    \"key_3\": \"<string>\",\n    \"key_4\": \"<string>\",\n    \"key_5\": \"<string>\",\n    \"key_6\": \"<string>\",\n    \"key_7\": \"<string>\",\n    \"key_8\": \"<string>\",\n    \"key_9\": \"<string>\",\n    \"key_10\": \"<string>\",\n    \"key_11\": \"<string>\",\n    \"key_12\": \"<string>\",\n    \"key_13\": \"<string>\"\n  },\n  \"start_url\": \"<string>\",\n  \"telemetry\": {\n    \"enabled\": \"<boolean>\",\n    \"browser\": {\n      \"console\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"page\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"interaction\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"network\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"control\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"connection\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"system\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"screenshot\": {\n        \"enabled\": \"<boolean>\"\n      },\n      \"captcha\": {\n        \"enabled\": \"<boolean>\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "32e07870-1b9f-4e17-a374-a0eebe98412b",
+              "name": "Browser acquired successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"created_at\": \"1976-10-27T23:21:02.632Z\",\n  \"cdp_ws_url\": \"wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/cdp?jwt=eyJ0eXAi...\",\n  \"webdriver_ws_url\": \"wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/webdriver/session?jwt=eyJ0eXAi...\",\n  \"session_id\": \"htzv5orfit78e1m2biiifpbv\",\n  \"stealth\": false,\n  \"headless\": false,\n  \"timeout_seconds\": 986,\n  \"browser_live_view_url\": \"https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/live?jwt=eyJ0eXAi...\",\n  \"base_url\": \"https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/kernel\",\n  \"gpu\": false,\n  \"name\": \"checkout-flow-1\",\n  \"profile\": {\n    \"id\": \"string\",\n    \"created_at\": \"1962-06-24T08:53:41.420Z\",\n    \"name\": \"string\",\n    \"updated_at\": \"1977-12-30T03:08:06.471Z\",\n    \"last_used_at\": \"1986-12-21T00:16:22.556Z\"\n  },\n  \"proxy_id\": \"string\",\n  \"pool\": {\n    \"id\": \"string\",\n    \"name\": \"string\"\n  },\n  \"viewport\": {\n    \"width\": 1280,\n    \"height\": 800,\n    \"refresh_rate\": 60\n  },\n  \"kiosk_mode\": false,\n  \"start_url\": \"https://example.com\",\n  \"chrome_policy\": {\n    \"key_0\": \"string\"\n  },\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"deleted_at\": \"1962-11-04T10:03:01.210Z\",\n  \"usage\": {\n    \"uptime_ms\": 4763\n  },\n  \"telemetry\": {\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": false\n      },\n      \"connection\": {\n        \"enabled\": false\n      },\n      \"system\": {\n        \"enabled\": true\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": true\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d095ea38-5fad-4378-a8bc-693e1ef4e2f3",
+              "name": "Poll timed out, no browser available. Retry the request to continue waiting.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "b8ee5b8f-8067-48c2-b356-3cadb9fbf3ef",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bec94a32-f88d-4058-8e2d-c32f3f16740d",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "846b7111-85c4-4b57-bcdd-68065dac6b68",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7c3326d9-55e1-4355-860d-5ade72540d8f",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "dae05100-5385-4394-9040-8520150987b0",
+              "name": "Conflict – resource already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3a6589cf-893d-4a56-9068-fc09fc24c29c",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "acquire"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"acquire_timeout_seconds\": \"<integer>\",\n  \"name\": \"checkout-flow-1\",\n  \"tags\": {\n    \"team\": \"backend\",\n    \"env\": \"staging\"\n  },\n  \"start_url\": \"https://example.com\",\n  \"telemetry\": {\n    \"enabled\": true,\n    \"browser\": {\n      \"console\": {\n        \"enabled\": true\n      },\n      \"page\": {\n        \"enabled\": false\n      },\n      \"interaction\": {\n        \"enabled\": true\n      },\n      \"network\": {\n        \"enabled\": true\n      },\n      \"control\": {\n        \"enabled\": true\n      },\n      \"connection\": {\n        \"enabled\": true\n      },\n      \"system\": {\n        \"enabled\": false\n      },\n      \"screenshot\": {\n        \"enabled\": true\n      },\n      \"captcha\": {\n        \"enabled\": false\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "eefeac40-645f-4623-b8c6-48fa2300672d",
+          "name": "Release a browser back to the pool",
+          "request": {
+            "name": "Release a browser back to the pool",
+            "description": {
+              "content": "Release a browser back to the pool, optionally recreating the browser instance.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name",
+                "release"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"<string>\",\n  \"reuse\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "45d1d245-60f5-4f0a-9065-a9a10a26c7bb",
+              "name": "Browser released successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "a9d02d31-ccfe-4455-b007-74c2b27083ab",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "86fcba4c-e45c-429a-a5f0-7885b3cc0c09",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3d91f5cf-fc25-459e-a7b7-94161ce6f01b",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5c1852ff-b7e9-4615-b22f-6b19ab1b0996",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "53386cf3-9f8c-48da-bd2e-dcb55a9079d4",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "release"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"ts8iy3sg25ibheguyni2lg9t\",\n  \"reuse\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "c91f0c98-b574-4f5e-b943-d905559215c7",
+          "name": "Flush all idle browsers in the pool",
+          "request": {
+            "name": "Flush all idle browsers in the pool",
+            "description": {
+              "content": "Destroys all idle browsers in the pool; leased browsers are not affected.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "browser_pools",
+                ":id_or_name",
+                "flush"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id_or_name",
+                  "description": "(Required) Browser pool ID or name"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "5f4b0216-17b2-4e3d-9d74-b8ee7fd50005",
+              "name": "Pool flushed successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "flush"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "4bcbf1f8-781a-4cb4-b358-e03f4c8c3db5",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "flush"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4591011c-a927-4375-a030-9f20df06a2c5",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "flush"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9e24eb07-cb27-4fe5-bec6-7cdf7fb459ab",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "flush"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b781653e-5a9f-482a-be70-5496a01fefb0",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "browser_pools",
+                    ":id_or_name",
+                    "flush"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id_or_name",
+                      "description": "(Required) Browser pool ID or name"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.onkernel.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "1bba7902-9a07-458a-a737-f23ecaae238b",
+    "name": "Kernel API Keys Browser Pools API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Developer tools and cloud infrastructure for AI agents to use web browsers",
+      "type": "text/plain"
+    }
+  }
+}

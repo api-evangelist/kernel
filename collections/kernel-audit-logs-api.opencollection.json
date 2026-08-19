@@ -1,0 +1,184 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Audit Logs API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Audit Logs",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List audit logs",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/audit-logs",
+            "params": [
+              {
+                "name": "start",
+                "value": "",
+                "type": "query",
+                "description": "Lower bound (inclusive) for the audit record timestamp."
+              },
+              {
+                "name": "end",
+                "value": "",
+                "type": "query",
+                "description": "Upper bound (exclusive) for the audit record timestamp."
+              },
+              {
+                "name": "auth_strategy",
+                "value": "",
+                "type": "query",
+                "description": "Filter by authentication strategy."
+              },
+              {
+                "name": "service",
+                "value": "",
+                "type": "query",
+                "description": "Filter by service name."
+              },
+              {
+                "name": "method",
+                "value": "",
+                "type": "query",
+                "description": "Filter by HTTP method."
+              },
+              {
+                "name": "exclude_method",
+                "value": "",
+                "type": "query",
+                "description": "Filter out results by HTTP method."
+              },
+              {
+                "name": "search",
+                "value": "",
+                "type": "query",
+                "description": "Free-text search over path, user ID, email, client IP, and status."
+              },
+              {
+                "name": "search_user_id",
+                "value": "",
+                "type": "query",
+                "description": "Additional user IDs to OR into free-text search."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of results to return."
+              },
+              {
+                "name": "page_token",
+                "value": "",
+                "type": "query",
+                "description": "Opaque page token from X-Next-Page-Token for the next page of older records."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "API for searching audit logs. Limited to at most 30 day search, returns up to 100 records per page. Not recommended for bulk export."
+        },
+        {
+          "info": {
+            "name": "Download an audit-log export chunk",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/audit-logs/export/chunk",
+            "params": [
+              {
+                "name": "start",
+                "value": "",
+                "type": "query",
+                "description": "Lower bound (inclusive) for the audit record timestamp."
+              },
+              {
+                "name": "end",
+                "value": "",
+                "type": "query",
+                "description": "Upper bound (exclusive) for the audit record timestamp."
+              },
+              {
+                "name": "auth_strategy",
+                "value": "",
+                "type": "query",
+                "description": "Filter by authentication strategy."
+              },
+              {
+                "name": "service",
+                "value": "",
+                "type": "query",
+                "description": "Filter by service name."
+              },
+              {
+                "name": "method",
+                "value": "",
+                "type": "query",
+                "description": "Filter by HTTP method."
+              },
+              {
+                "name": "exclude_method",
+                "value": "",
+                "type": "query",
+                "description": "Filter out results by HTTP method."
+              },
+              {
+                "name": "search",
+                "value": "",
+                "type": "query",
+                "description": "Free-text search over path, user ID, email, client IP, and status."
+              },
+              {
+                "name": "search_user_id",
+                "value": "",
+                "type": "query",
+                "description": "Additional user IDs to OR into free-text search."
+              },
+              {
+                "name": "cursor",
+                "value": "",
+                "type": "query",
+                "description": "Opaque cursor from X-Next-Cursor for the next chunk of older records."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of records to return in this chunk."
+              },
+              {
+                "name": "format",
+                "value": "",
+                "type": "query",
+                "description": "Encoding for the returned chunk."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Download an organization's audit log records for a time range as a file, for archival, compliance, or offline analysis. For interactive browsing, use GET /audit-logs."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

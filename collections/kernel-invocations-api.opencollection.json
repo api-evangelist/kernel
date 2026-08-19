@@ -1,0 +1,239 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Invocations API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Invocations",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List invocations",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/invocations",
+            "params": [
+              {
+                "name": "app_name",
+                "value": "",
+                "type": "query",
+                "description": "Filter results by application name."
+              },
+              {
+                "name": "version",
+                "value": "",
+                "type": "query",
+                "description": "Filter results by application version."
+              },
+              {
+                "name": "action_name",
+                "value": "",
+                "type": "query",
+                "description": "Filter results by action name."
+              },
+              {
+                "name": "deployment_id",
+                "value": "",
+                "type": "query",
+                "description": "Filter results by deployment ID."
+              },
+              {
+                "name": "status",
+                "value": "",
+                "type": "query",
+                "description": "Filter results by invocation status."
+              },
+              {
+                "name": "since",
+                "value": "",
+                "type": "query",
+                "description": "Show invocations that have started since the given time (RFC timestamps or durations like 5m)."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Limit the number of invocations to return."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Offset the number of invocations to return."
+              },
+              {
+                "name": "query",
+                "value": "",
+                "type": "query",
+                "description": "Search invocations by ID, app name, or action name."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List invocations. Optionally filter by application name, action name, status, deployment ID, or start time."
+        },
+        {
+          "info": {
+            "name": "Invoke an action",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/invocations",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Invoke an action."
+        },
+        {
+          "info": {
+            "name": "Get invocation details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/invocations/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "rr33xuugxj9h0bkf1rdt2bet",
+                "type": "path",
+                "description": "The invocation ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get details about an invocation's status and output."
+        },
+        {
+          "info": {
+            "name": "Update invocation",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://api.onkernel.com/invocations/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Invocation ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an invocation's status or output. This can be used to cancel an invocation by setting the status to \"failed\"."
+        },
+        {
+          "info": {
+            "name": "List browsers for an invocation",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/invocations/:id/browsers",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Invocation ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns all active browser sessions created within the specified invocation."
+        },
+        {
+          "info": {
+            "name": "Delete browser sessions for an invocation",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.onkernel.com/invocations/:id/browsers",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Invocation ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Delete all browser sessions created within the specified invocation."
+        },
+        {
+          "info": {
+            "name": "Stream invocation events via SSE",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/invocations/:id/events",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "The invocation ID to follow."
+              },
+              {
+                "name": "since",
+                "value": "",
+                "type": "query",
+                "description": "Show logs since the given time (RFC timestamps or durations like 5m)."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Establishes a Server-Sent Events (SSE) stream that delivers real-time logs and\nstatus updates for an invocation. The stream terminates automatically\nonce the invocation reaches a terminal state.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

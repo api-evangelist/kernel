@@ -1,0 +1,3527 @@
+{
+  "item": [
+    {
+      "id": "285e9ecd-d836-440c-aa4a-48257309b3ce",
+      "name": "Managed Auth",
+      "description": {
+        "content": "Create and manage auth connections for automated credential capture and login.",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "ed5a4725-c7aa-4ac5-9cc7-76a46716ed70",
+          "name": "Create auth connection",
+          "request": {
+            "name": "Create auth connection",
+            "description": {
+              "content": "Creates an auth connection for a profile and domain combination. If the provided profile_name does not exist, it is created automatically. Returns 409 Conflict if an auth connection already exists for the given profile and domain.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"domain\": \"<string>\",\n  \"profile_name\": \"<string>\",\n  \"login_url\": \"<uri>\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"<string>\",\n    \"provider\": \"<string>\",\n    \"path\": \"<string>\",\n    \"auto\": \"<boolean>\"\n  },\n  \"allowed_domains\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"health_check_interval\": \"<integer>\",\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "ff88170e-f1f4-486b-95af-70f205c77416",
+              "name": "Auth connection created",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"ma_abc123xyz\",\n  \"profile_name\": \"my-netflix-profile\",\n  \"domain\": \"netflix.com\",\n  \"status\": \"AUTHENTICATED\",\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"last_auth_check_at\": \"2025-01-15T10:30:00Z\",\n  \"last_auth_at\": \"2025-01-15T10:30:00Z\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"can_reauth\": true,\n  \"can_reauth_reason\": \"has_credential\",\n  \"proxy_id\": \"string\",\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"login_url\": \"https://example.com/login\",\n  \"post_login_url\": \"https://www.netflix.com/browse\",\n  \"flow_status\": \"IN_PROGRESS\",\n  \"flow_step\": \"AWAITING_INPUT\",\n  \"flow_type\": \"LOGIN\",\n  \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n  \"fields\": [\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    },\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    }\n  ],\n  \"choices\": [\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    },\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    }\n  ],\n  \"discovered_fields\": [\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    }\n  ],\n  \"mfa_options\": [\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    },\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    }\n  ],\n  \"sign_in_options\": [\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    },\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    }\n  ],\n  \"pending_sso_buttons\": [\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    },\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    }\n  ],\n  \"external_action_message\": \"Tap 'Yes' on the Google prompt on your phone\",\n  \"website_error\": \"string\",\n  \"sso_provider\": \"google\",\n  \"error_message\": \"Invalid password\",\n  \"error_code\": \"string\",\n  \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n  \"live_view_url\": \"https://live.kernel.com/abc123xyz\",\n  \"browser_session_id\": \"bs_abc123xyz\",\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b00fb143-e7eb-4cfa-bf37-cca95429a0a0",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "14a822eb-59fa-4485-8f32-318295c5b0c4",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b7ce0c60-da98-48ee-a0a3-7138bd619501",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "60a784d2-3ae6-43b5-94b9-78b6c27c05d5",
+              "name": "Auth connection already exists for this profile and domain",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"already_exists\",\n  \"message\": \"Auth connection already exists for this profile and domain\",\n  \"existing_id\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1ddf7ef4-e764-4808-ba75-479f145bc322",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"domain\": \"netflix.com\",\n  \"profile_name\": \"user-123\",\n  \"login_url\": \"https://netflix.com/login\",\n  \"proxy\": {},\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9ac0e429-cfb2-4f05-a466-836ed3ef5435",
+          "name": "List auth connections",
+          "request": {
+            "name": "List auth connections",
+            "description": {
+              "content": "List auth connections with optional filters for profile_name and domain.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "profile_name",
+                  "value": "<string>",
+                  "description": "Filter by profile name"
+                },
+                {
+                  "disabled": false,
+                  "key": "domain",
+                  "value": "<string>",
+                  "description": "Filter by domain"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Maximum number of results to return"
+                },
+                {
+                  "disabled": false,
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                },
+                {
+                  "disabled": false,
+                  "key": "query",
+                  "value": "<string>",
+                  "description": "Search auth connections by ID, domain, or profile name."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "f002045b-17cf-461c-b1c4-09bdf7341759",
+              "name": "List of auth connections",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "profile_name",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "domain",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Whether there are more results",
+                  "key": "X-Has-More",
+                  "value": "false"
+                },
+                {
+                  "disabled": false,
+                  "description": "The offset where the next page starts. 0 when there are no more results.",
+                  "key": "X-Next-Offset",
+                  "value": "8289"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"ma_abc123xyz\",\n    \"profile_name\": \"my-netflix-profile\",\n    \"domain\": \"netflix.com\",\n    \"status\": \"AUTHENTICATED\",\n    \"save_credentials\": true,\n    \"record_session\": false,\n    \"last_auth_check_at\": \"2025-01-15T10:30:00Z\",\n    \"last_auth_at\": \"2025-01-15T10:30:00Z\",\n    \"credential\": {\n      \"name\": \"my-netflix-creds\",\n      \"provider\": \"my-1p\",\n      \"path\": \"Personal/Netflix\",\n      \"auto\": true\n    },\n    \"can_reauth\": true,\n    \"can_reauth_reason\": \"has_credential\",\n    \"proxy_id\": \"string\",\n    \"allowed_domains\": [\n      \"login.netflix.com\",\n      \"auth.netflix.com\"\n    ],\n    \"login_url\": \"https://example.com/login\",\n    \"post_login_url\": \"https://www.netflix.com/browse\",\n    \"flow_status\": \"IN_PROGRESS\",\n    \"flow_step\": \"AWAITING_INPUT\",\n    \"flow_type\": \"LOGIN\",\n    \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n    \"fields\": [\n      {\n        \"id\": \"field_email\",\n        \"ref\": \"email\",\n        \"type\": \"identifier\",\n        \"label\": \"Email address\",\n        \"required\": true,\n        \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n      },\n      {\n        \"id\": \"field_email\",\n        \"ref\": \"email\",\n        \"type\": \"identifier\",\n        \"label\": \"Email address\",\n        \"required\": true,\n        \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n      }\n    ],\n    \"choices\": [\n      {\n        \"id\": \"google\",\n        \"type\": \"sso_provider\",\n        \"label\": \"Google\",\n        \"description\": \"string\",\n        \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n      },\n      {\n        \"id\": \"google\",\n        \"type\": \"sso_provider\",\n        \"label\": \"Google\",\n        \"description\": \"string\",\n        \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n      }\n    ],\n    \"discovered_fields\": [\n      {\n        \"name\": \"email\",\n        \"type\": \"email\",\n        \"label\": \"Email address\",\n        \"selector\": \"input#email\",\n        \"placeholder\": \"you@example.com\",\n        \"required\": true,\n        \"linked_mfa_type\": \"sms\",\n        \"hint\": \"Enter the phone ending in (***) ***-**92\"\n      },\n      {\n        \"name\": \"email\",\n        \"type\": \"email\",\n        \"label\": \"Email address\",\n        \"selector\": \"input#email\",\n        \"placeholder\": \"you@example.com\",\n        \"required\": true,\n        \"linked_mfa_type\": \"sms\",\n        \"hint\": \"Enter the phone ending in (***) ***-**92\"\n      }\n    ],\n    \"mfa_options\": [\n      {\n        \"type\": \"sms\",\n        \"label\": \"Text me a code\",\n        \"target\": \"***-***-5678\",\n        \"description\": \"We'll send a 6-digit code to your phone\"\n      },\n      {\n        \"type\": \"sms\",\n        \"label\": \"Text me a code\",\n        \"target\": \"***-***-5678\",\n        \"description\": \"We'll send a 6-digit code to your phone\"\n      }\n    ],\n    \"sign_in_options\": [\n      {\n        \"id\": \"work-account\",\n        \"label\": \"Work Account (user@company.com)\",\n        \"description\": \"user@company.com\"\n      },\n      {\n        \"id\": \"work-account\",\n        \"label\": \"Work Account (user@company.com)\",\n        \"description\": \"user@company.com\"\n      }\n    ],\n    \"pending_sso_buttons\": [\n      {\n        \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n        \"provider\": \"google\",\n        \"label\": \"Continue with Google\"\n      },\n      {\n        \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n        \"provider\": \"google\",\n        \"label\": \"Continue with Google\"\n      }\n    ],\n    \"external_action_message\": \"Tap 'Yes' on the Google prompt on your phone\",\n    \"website_error\": \"string\",\n    \"sso_provider\": \"google\",\n    \"error_message\": \"Invalid password\",\n    \"error_code\": \"string\",\n    \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n    \"live_view_url\": \"https://live.kernel.com/abc123xyz\",\n    \"browser_session_id\": \"bs_abc123xyz\",\n    \"health_check_interval\": 3600,\n    \"health_checks\": true,\n    \"auto_reauth\": true\n  },\n  {\n    \"id\": \"ma_abc123xyz\",\n    \"profile_name\": \"my-netflix-profile\",\n    \"domain\": \"netflix.com\",\n    \"status\": \"AUTHENTICATED\",\n    \"save_credentials\": true,\n    \"record_session\": false,\n    \"last_auth_check_at\": \"2025-01-15T10:30:00Z\",\n    \"last_auth_at\": \"2025-01-15T10:30:00Z\",\n    \"credential\": {\n      \"name\": \"my-netflix-creds\",\n      \"provider\": \"my-1p\",\n      \"path\": \"Personal/Netflix\",\n      \"auto\": true\n    },\n    \"can_reauth\": true,\n    \"can_reauth_reason\": \"has_credential\",\n    \"proxy_id\": \"string\",\n    \"allowed_domains\": [\n      \"login.netflix.com\",\n      \"auth.netflix.com\"\n    ],\n    \"login_url\": \"https://example.com/login\",\n    \"post_login_url\": \"https://www.netflix.com/browse\",\n    \"flow_status\": \"IN_PROGRESS\",\n    \"flow_step\": \"AWAITING_INPUT\",\n    \"flow_type\": \"LOGIN\",\n    \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n    \"fields\": [\n      {\n        \"id\": \"field_email\",\n        \"ref\": \"email\",\n        \"type\": \"identifier\",\n        \"label\": \"Email address\",\n        \"required\": true,\n        \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n      },\n      {\n        \"id\": \"field_email\",\n        \"ref\": \"email\",\n        \"type\": \"identifier\",\n        \"label\": \"Email address\",\n        \"required\": true,\n        \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n      }\n    ],\n    \"choices\": [\n      {\n        \"id\": \"google\",\n        \"type\": \"sso_provider\",\n        \"label\": \"Google\",\n        \"description\": \"string\",\n        \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n      },\n      {\n        \"id\": \"google\",\n        \"type\": \"sso_provider\",\n        \"label\": \"Google\",\n        \"description\": \"string\",\n        \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n      }\n    ],\n    \"discovered_fields\": [\n      {\n        \"name\": \"email\",\n        \"type\": \"email\",\n        \"label\": \"Email address\",\n        \"selector\": \"input#email\",\n        \"placeholder\": \"you@example.com\",\n        \"required\": true,\n        \"linked_mfa_type\": \"sms\",\n        \"hint\": \"Enter the phone ending in (***) ***-**92\"\n      },\n      {\n        \"name\": \"email\",\n        \"type\": \"email\",\n        \"label\": \"Email address\",\n        \"selector\": \"input#email\",\n        \"placeholder\": \"you@example.com\",\n        \"required\": true,\n        \"linked_mfa_type\": \"sms\",\n        \"hint\": \"Enter the phone ending in (***) ***-**92\"\n      }\n    ],\n    \"mfa_options\": [\n      {\n        \"type\": \"sms\",\n        \"label\": \"Text me a code\",\n        \"target\": \"***-***-5678\",\n        \"description\": \"We'll send a 6-digit code to your phone\"\n      },\n      {\n        \"type\": \"sms\",\n        \"label\": \"Text me a code\",\n        \"target\": \"***-***-5678\",\n        \"description\": \"We'll send a 6-digit code to your phone\"\n      }\n    ],\n    \"sign_in_options\": [\n      {\n        \"id\": \"work-account\",\n        \"label\": \"Work Account (user@company.com)\",\n        \"description\": \"user@company.com\"\n      },\n      {\n        \"id\": \"work-account\",\n        \"label\": \"Work Account (user@company.com)\",\n        \"description\": \"user@company.com\"\n      }\n    ],\n    \"pending_sso_buttons\": [\n      {\n        \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n        \"provider\": \"google\",\n        \"label\": \"Continue with Google\"\n      },\n      {\n        \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n        \"provider\": \"google\",\n        \"label\": \"Continue with Google\"\n      }\n    ],\n    \"external_action_message\": \"Tap 'Yes' on the Google prompt on your phone\",\n    \"website_error\": \"string\",\n    \"sso_provider\": \"google\",\n    \"error_message\": \"Invalid password\",\n    \"error_code\": \"string\",\n    \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n    \"live_view_url\": \"https://live.kernel.com/abc123xyz\",\n    \"browser_session_id\": \"bs_abc123xyz\",\n    \"health_check_interval\": 3600,\n    \"health_checks\": true,\n    \"auto_reauth\": true\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "728705d9-3c64-42a7-bfb9-604467c32eaa",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "profile_name",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "domain",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7b6200e4-148d-47f5-9acc-1144b2d136c9",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "profile_name",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "domain",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    },
+                    {
+                      "key": "query",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "69b936e9-6e85-4001-b8ac-d4142bf0a480",
+          "name": "Get auth connection",
+          "request": {
+            "name": "Get auth connection",
+            "description": {
+              "content": "Retrieve an auth connection by its ID. Includes current flow state if a login is in progress.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "e55307e3-952c-4e4b-b1e6-0e8f03a81a61",
+              "name": "Auth connection details",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"ma_abc123xyz\",\n  \"profile_name\": \"my-netflix-profile\",\n  \"domain\": \"netflix.com\",\n  \"status\": \"AUTHENTICATED\",\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"last_auth_check_at\": \"2025-01-15T10:30:00Z\",\n  \"last_auth_at\": \"2025-01-15T10:30:00Z\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"can_reauth\": true,\n  \"can_reauth_reason\": \"has_credential\",\n  \"proxy_id\": \"string\",\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"login_url\": \"https://example.com/login\",\n  \"post_login_url\": \"https://www.netflix.com/browse\",\n  \"flow_status\": \"IN_PROGRESS\",\n  \"flow_step\": \"AWAITING_INPUT\",\n  \"flow_type\": \"LOGIN\",\n  \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n  \"fields\": [\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    },\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    }\n  ],\n  \"choices\": [\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    },\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    }\n  ],\n  \"discovered_fields\": [\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    }\n  ],\n  \"mfa_options\": [\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    },\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    }\n  ],\n  \"sign_in_options\": [\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    },\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    }\n  ],\n  \"pending_sso_buttons\": [\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    },\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    }\n  ],\n  \"external_action_message\": \"Tap 'Yes' on the Google prompt on your phone\",\n  \"website_error\": \"string\",\n  \"sso_provider\": \"google\",\n  \"error_message\": \"Invalid password\",\n  \"error_code\": \"string\",\n  \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n  \"live_view_url\": \"https://live.kernel.com/abc123xyz\",\n  \"browser_session_id\": \"bs_abc123xyz\",\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "31f0c466-3b28-43cc-877a-8ee021b8813a",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5fea9373-9190-4531-adbd-c05c6d5c68b2",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5a891439-fd14-47f7-8427-e53c7cabc4e4",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "5e6f5bdd-a2e8-4550-9940-4f813d0b1d97",
+          "name": "Update auth connection",
+          "request": {
+            "name": "Update auth connection",
+            "description": {
+              "content": "Update an auth connection's configuration. Only the fields provided will be updated.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login_url\": \"<uri>\",\n  \"credential\": {\n    \"name\": \"<string>\",\n    \"provider\": \"<string>\",\n    \"path\": \"<string>\",\n    \"auto\": \"<boolean>\"\n  },\n  \"allowed_domains\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"health_check_interval\": \"<integer>\",\n  \"health_checks\": \"<boolean>\",\n  \"auto_reauth\": \"<boolean>\",\n  \"save_credentials\": \"<boolean>\",\n  \"record_session\": \"<boolean>\",\n  \"proxy\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "608c4a86-ea83-43c6-a807-42c4c39a1b57",
+              "name": "Auth connection updated successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login_url\": \"https://netflix.com/login\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"proxy\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"ma_abc123xyz\",\n  \"profile_name\": \"my-netflix-profile\",\n  \"domain\": \"netflix.com\",\n  \"status\": \"AUTHENTICATED\",\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"last_auth_check_at\": \"2025-01-15T10:30:00Z\",\n  \"last_auth_at\": \"2025-01-15T10:30:00Z\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"can_reauth\": true,\n  \"can_reauth_reason\": \"has_credential\",\n  \"proxy_id\": \"string\",\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"login_url\": \"https://example.com/login\",\n  \"post_login_url\": \"https://www.netflix.com/browse\",\n  \"flow_status\": \"IN_PROGRESS\",\n  \"flow_step\": \"AWAITING_INPUT\",\n  \"flow_type\": \"LOGIN\",\n  \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n  \"fields\": [\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    },\n    {\n      \"id\": \"field_email\",\n      \"ref\": \"email\",\n      \"type\": \"identifier\",\n      \"label\": \"Email address\",\n      \"required\": true,\n      \"observed_selector\": \"input[name=\\\"identifier\\\"]\"\n    }\n  ],\n  \"choices\": [\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    },\n    {\n      \"id\": \"google\",\n      \"type\": \"sso_provider\",\n      \"label\": \"Google\",\n      \"description\": \"string\",\n      \"observed_selector\": \"button:has-text(\\\"Google\\\")\"\n    }\n  ],\n  \"discovered_fields\": [\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"email\",\n      \"label\": \"Email address\",\n      \"selector\": \"input#email\",\n      \"placeholder\": \"you@example.com\",\n      \"required\": true,\n      \"linked_mfa_type\": \"sms\",\n      \"hint\": \"Enter the phone ending in (***) ***-**92\"\n    }\n  ],\n  \"mfa_options\": [\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    },\n    {\n      \"type\": \"sms\",\n      \"label\": \"Text me a code\",\n      \"target\": \"***-***-5678\",\n      \"description\": \"We'll send a 6-digit code to your phone\"\n    }\n  ],\n  \"sign_in_options\": [\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    },\n    {\n      \"id\": \"work-account\",\n      \"label\": \"Work Account (user@company.com)\",\n      \"description\": \"user@company.com\"\n    }\n  ],\n  \"pending_sso_buttons\": [\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    },\n    {\n      \"selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n      \"provider\": \"google\",\n      \"label\": \"Continue with Google\"\n    }\n  ],\n  \"external_action_message\": \"Tap 'Yes' on the Google prompt on your phone\",\n  \"website_error\": \"string\",\n  \"sso_provider\": \"google\",\n  \"error_message\": \"Invalid password\",\n  \"error_code\": \"string\",\n  \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n  \"live_view_url\": \"https://live.kernel.com/abc123xyz\",\n  \"browser_session_id\": \"bs_abc123xyz\",\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0f91a123-efaa-46d9-acd9-148e66dfd717",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login_url\": \"https://netflix.com/login\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"proxy\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "99e1bba4-ccad-44e0-ba15-5c1a10fd9813",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login_url\": \"https://netflix.com/login\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"proxy\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "33ac5493-5ee9-473b-915b-bfc8e5be8d43",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login_url\": \"https://netflix.com/login\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"proxy\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "97d4b781-f76f-4f3b-9364-8b465d96361e",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login_url\": \"https://netflix.com/login\",\n  \"credential\": {\n    \"name\": \"my-netflix-creds\",\n    \"provider\": \"my-1p\",\n    \"path\": \"Personal/Netflix\",\n    \"auto\": true\n  },\n  \"allowed_domains\": [\n    \"login.netflix.com\",\n    \"auth.netflix.com\"\n  ],\n  \"health_check_interval\": 3600,\n  \"health_checks\": true,\n  \"auto_reauth\": true,\n  \"save_credentials\": true,\n  \"record_session\": false,\n  \"proxy\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "98ac737e-787f-4e6b-8633-54a519426e13",
+          "name": "Delete auth connection",
+          "request": {
+            "name": "Delete auth connection",
+            "description": {
+              "content": "Deletes an auth connection and terminates its workflow. This will:\n- Delete the auth connection record\n- Terminate the Temporal workflow\n- Cancel any in-progress login flows\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "f32deeb9-b8cb-45f2-ba21-b3b80ed42830",
+              "name": "Auth connection deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "d1e26a8e-b427-4cdd-bce4-0e50ecffefd6",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4e1ad972-5e7e-4ecf-96ad-cdb6ed07fbe5",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ddaa5a21-e2d8-402b-aee6-8c4e555631d0",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "0d1a9c60-1976-440f-9327-8d2f76160659",
+          "name": "Start login flow",
+          "request": {
+            "name": "Start login flow",
+            "description": {
+              "content": "Starts a login flow for the auth connection. Returns immediately with a hosted URL for the user to complete authentication, or triggers automatic re-auth if credentials are stored.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id",
+                "login"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proxy\": {},\n  \"record_session\": \"<boolean>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "978a07af-5a89-4c6e-b499-b2e7f8480cc9",
+              "name": "Login flow started",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"ma_abc123xyz\",\n  \"flow_type\": \"LOGIN\",\n  \"hosted_url\": \"https://auth.kernel.com/login/abc123xyz\",\n  \"flow_expires_at\": \"2025-11-05T20:00:00Z\",\n  \"handoff_code\": \"aBcD123EfGh456IjKl789MnOp012QrStUvWxYzAbCdEf\",\n  \"live_view_url\": \"https://live.onkernel.com/abc123xyz\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "26c74e16-7c19-4e4e-aacb-8260ea906136",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "45e6b36f-660a-4421-a708-56d1f4b6f807",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0ca66d2b-044d-4fc6-be27-0f8fd3842184",
+              "name": "Forbidden – insufficient permissions or plan",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bb7795cc-02f3-4100-8cbe-84e2e31a1dfb",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8b45dfff-ac81-4231-ae37-d67a743fdd86",
+              "name": "Login flow already in progress",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "54a12c03-b16d-4f75-b88d-a49ff32eb698",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "login"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"proxy\": {},\n  \"record_session\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "654a2ad2-1f32-4f9c-a1b8-85182125062b",
+          "name": "Submit field values",
+          "request": {
+            "name": "Submit field values",
+            "description": {
+              "content": "Submits field values for the login form. Poll the auth connection to track progress and get results.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id",
+                "submit"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field_values\": {\n    \"key_0\": \"<string>\"\n  },\n  \"selected_choice_id\": \"<string>\",\n  \"fields\": {\n    \"key_0\": \"<string>\"\n  },\n  \"sso_button_selector\": \"<string>\",\n  \"sso_provider\": \"<string>\",\n  \"mfa_option_id\": \"<string>\",\n  \"sign_in_option_id\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "382d3bd6-db27-4d1f-8de3-e5cdb61ffd88",
+              "name": "Submission accepted for processing",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Accepted",
+              "code": 202,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accepted\": true\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bf78d874-bcc7-4f8d-881e-aba99a36e388",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "46ef1336-f13a-4839-b479-0c222195def4",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3c0a4575-ebf1-4ae8-95c5-9db2d79352b4",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "06c6ed35-e51d-4250-8d8d-3a59004426bf",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6d801a3b-ab6d-4e2e-a60d-5f9b478d0c53",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "submit"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"field_values\": {\n    \"field_email\": \"user@example.com\",\n    \"field_password\": \"secret\"\n  },\n  \"selected_choice_id\": \"google\",\n  \"fields\": {\n    \"email\": \"user@example.com\",\n    \"password\": \"secret\"\n  },\n  \"sso_button_selector\": \"xpath=//button[contains(text(), 'Continue with Google')]\",\n  \"sso_provider\": \"google\",\n  \"mfa_option_id\": \"sms\",\n  \"sign_in_option_id\": \"work-account\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "a4757e50-da89-496b-971a-0122fcc0fec0",
+          "name": "Stream login flow events via SSE",
+          "request": {
+            "name": "Stream login flow events via SSE",
+            "description": {
+              "content": "Establishes a Server-Sent Events (SSE) stream that delivers real-time\nlogin flow state updates. The stream terminates automatically once\nthe flow reaches a terminal state (SUCCESS, FAILED, EXPIRED, CANCELED).\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id",
+                "events"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) The auth connection ID to follow."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "3fd4e369-6699-4435-8fcc-f9fed2e3460e",
+              "name": "SSE stream of auth connection state updates.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "events"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) The auth connection ID to follow."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "text/event-stream"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Media type of SSE data events (always application/json).",
+                  "key": "X-SSE-Content-Type",
+                  "value": "string"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "text/event-stream"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "49ae6740-2b41-42a4-93d8-6ba6b7a73726",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "events"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) The auth connection ID to follow."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7c8ca529-ae27-45e9-9c21-3058bf353017",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "events"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) The auth connection ID to follow."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1c9ba207-83cd-4191-bb82-f3679e6bd9bd",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "events"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) The auth connection ID to follow."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "98f9f14a-d8ae-4668-8a9c-7475629c6b5b",
+          "name": "Get auth connection event timeline",
+          "request": {
+            "name": "Get auth connection event timeline",
+            "description": {
+              "content": "Returns a chronological timeline of events for an auth connection —\nlogin attempts, automatic re-auth attempts, and health checks. Events\nare returned newest-first.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id",
+                "timeline"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "type",
+                  "value": "<string>",
+                  "description": "Filter the timeline to a single event type."
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Maximum number of events to return"
+                },
+                {
+                  "disabled": false,
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of events to skip"
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "21406628-edd6-4df5-b252-0ea2994cde45",
+              "name": "Event timeline for the auth connection",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "timeline"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "disabled": false,
+                  "description": "Whether there are more results",
+                  "key": "X-Has-More",
+                  "value": "true"
+                },
+                {
+                  "disabled": false,
+                  "description": "The offset where the next page starts. 0 when there are no more results.",
+                  "key": "X-Next-Offset",
+                  "value": "8289"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"type\": \"reauth\",\n    \"id\": \"string\",\n    \"timestamp\": \"2021-06-25T12:50:25.536Z\",\n    \"status\": \"CANCELED\",\n    \"previous_status\": \"AUTHENTICATED\",\n    \"step\": \"AWAITING_EXTERNAL_ACTION\",\n    \"error_code\": \"string\",\n    \"error_message\": \"string\",\n    \"website_error\": \"string\",\n    \"browser_session_id\": \"string\",\n    \"replay_id\": \"string\",\n    \"updated_at\": \"1987-06-12T08:49:21.074Z\"\n  },\n  {\n    \"type\": \"login\",\n    \"id\": \"string\",\n    \"timestamp\": \"2000-08-25T18:48:54.958Z\",\n    \"status\": \"SUCCESS\",\n    \"previous_status\": \"AUTHENTICATED\",\n    \"step\": \"INITIALIZED\",\n    \"error_code\": \"string\",\n    \"error_message\": \"string\",\n    \"website_error\": \"string\",\n    \"browser_session_id\": \"string\",\n    \"replay_id\": \"string\",\n    \"updated_at\": \"1970-05-07T17:39:10.658Z\"\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7ad11bbd-f4b4-4e97-9383-25bd8ddc0bb6",
+              "name": "Unauthorized – missing or invalid authorization token",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "timeline"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c4d48143-96cf-4443-9b62-0c97573172ae",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "timeline"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "583ff21d-e189-40ee-bae6-4b4ae08925c7",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "timeline"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9bb9916a-4f68-43c0-8e58-69b7798559e6",
+          "name": "Exchange handoff code for JWT",
+          "request": {
+            "name": "Exchange handoff code for JWT",
+            "description": {
+              "content": "Validates the handoff code and returns a JWT token for subsequent requests. Used by the hosted login UI.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "auth",
+                "connections",
+                ":id",
+                "exchange"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) Auth connection ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "7cb4cc2d-3d65-4627-a482-9ddd170bb5cd",
+              "name": "Exchange successful, JWT returned",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "exchange"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"abc123xyz\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"invocation_id\": \"abc123xyz\",\n  \"jwt\": \"eyJ0eXAi...\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5ba24e3d-9f91-4ec8-a75e-bbe2da6a7e45",
+              "name": "Bad Request – invalid input",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "exchange"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"abc123xyz\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "782ece02-d56d-4e89-993a-cb73138c8fa5",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "exchange"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"abc123xyz\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "de7f9ade-2420-44a8-bcaa-24d004daeff7",
+              "name": "Resource expired or no longer available",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "exchange"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"abc123xyz\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Gone",
+              "code": 410,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1448d5fe-aad7-4cfb-bab8-8eb339ab7860",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "connections",
+                    ":id",
+                    "exchange"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) Auth connection ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"abc123xyz\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"code\": \"bad_request\",\n  \"message\": \"Missing required field: app_name\",\n  \"details\": [\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    },\n    {\n      \"code\": \"invalid_input\",\n      \"message\": \"Provided version string is not semver compliant\"\n    }\n  ],\n  \"inner_error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"Provided version string is not semver compliant\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.onkernel.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "14ebf765-fe6f-4d84-9909-33ef4f89e572",
+    "name": "Kernel API Keys Managed Auth API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Developer tools and cloud infrastructure for AI agents to use web browsers",
+      "type": "text/plain"
+    }
+  }
+}

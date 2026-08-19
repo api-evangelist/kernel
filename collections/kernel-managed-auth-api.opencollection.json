@@ -1,0 +1,304 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Kernel API Keys Managed Auth API",
+    "version": "0.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Managed Auth",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List auth connections",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/auth/connections",
+            "params": [
+              {
+                "name": "profile_name",
+                "value": "",
+                "type": "query",
+                "description": "Filter by profile name"
+              },
+              {
+                "name": "domain",
+                "value": "",
+                "type": "query",
+                "description": "Filter by domain"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of results to return"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to skip"
+              },
+              {
+                "name": "query",
+                "value": "",
+                "type": "query",
+                "description": "Search auth connections by ID, domain, or profile name."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List auth connections with optional filters for profile_name and domain."
+        },
+        {
+          "info": {
+            "name": "Create auth connection",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/auth/connections",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates an auth connection for a profile and domain combination. If the provided profile_name does not exist, it is created automatically. Returns 409 Conflict if an auth connection already exists for the given profile and domain."
+        },
+        {
+          "info": {
+            "name": "Get auth connection",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/auth/connections/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve an auth connection by its ID. Includes current flow state if a login is in progress."
+        },
+        {
+          "info": {
+            "name": "Update auth connection",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://api.onkernel.com/auth/connections/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an auth connection's configuration. Only the fields provided will be updated."
+        },
+        {
+          "info": {
+            "name": "Delete auth connection",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.onkernel.com/auth/connections/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Deletes an auth connection and terminates its workflow. This will:\n- Delete the auth connection record\n- Terminate the Temporal workflow\n- Cancel any in-progress login flows\n"
+        },
+        {
+          "info": {
+            "name": "Start login flow",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/auth/connections/:id/login",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Starts a login flow for the auth connection. Returns immediately with a hosted URL for the user to complete authentication, or triggers automatic re-auth if credentials are stored."
+        },
+        {
+          "info": {
+            "name": "Submit field values",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/auth/connections/:id/submit",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Submits field values for the login form. Poll the auth connection to track progress and get results."
+        },
+        {
+          "info": {
+            "name": "Stream login flow events via SSE",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/auth/connections/:id/events",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "The auth connection ID to follow."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Establishes a Server-Sent Events (SSE) stream that delivers real-time\nlogin flow state updates. The stream terminates automatically once\nthe flow reaches a terminal state (SUCCESS, FAILED, EXPIRED, CANCELED).\n"
+        },
+        {
+          "info": {
+            "name": "Get auth connection event timeline",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.onkernel.com/auth/connections/:id/timeline",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              },
+              {
+                "name": "type",
+                "value": "",
+                "type": "query",
+                "description": "Filter the timeline to a single event type."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of events to return"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Number of events to skip"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns a chronological timeline of events for an auth connection —\nlogin attempts, automatic re-auth attempts, and health checks. Events\nare returned newest-first.\n"
+        },
+        {
+          "info": {
+            "name": "Exchange handoff code for JWT",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.onkernel.com/auth/connections/:id/exchange",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "Auth connection ID"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Validates the handoff code and returns a JWT token for subsequent requests. Used by the hosted login UI."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
