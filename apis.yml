@@ -55,6 +55,8 @@ apis:
   humanURL: https://kernel.sh/docs/api-reference/
   baseURL: https://api.onkernel.com
   tags:
+  - APIKeys
+  tags_raw:
   - API Keys
   properties:
   - type: OpenAPI
@@ -65,6 +67,8 @@ apis:
   humanURL: https://kernel.sh/docs/api-reference/
   baseURL: https://api.onkernel.com
   tags:
+  - Application
+  tags_raw:
   - Apps
   properties:
   - type: OpenAPI
@@ -195,6 +199,8 @@ apis:
   humanURL: https://kernel.sh/docs/api-reference/
   baseURL: https://api.onkernel.com
   tags:
+  - Deployment
+  tags_raw:
   - Deployments
   properties:
   - type: OpenAPI
@@ -255,6 +261,8 @@ apis:
   humanURL: https://kernel.sh/docs/api-reference/
   baseURL: https://api.onkernel.com
   tags:
+  - Project
+  tags_raw:
   - Projects
   properties:
   - type: OpenAPI
