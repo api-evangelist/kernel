@@ -4,49 +4,55 @@ info:
   version: 1.0.0
   summary: End-to-end cloud browser automation on Kernel.
 sourceDescriptions:
-  - name: kernelApi
-    url: ../openapi/kernel-openapi-original.yml
-    type: openapi
+- name: browserComputerControlsApi
+  url: ../openapi/kernel-browser-computer-controls-api-openapi.yml
+  type: openapi
+- name: browserPlaywrightApi
+  url: ../openapi/kernel-browser-playwright-api-openapi.yml
+  type: openapi
+- name: browsersApi
+  url: ../openapi/kernel-browsers-api-openapi.yml
+  type: openapi
 workflows:
-  - workflowId: browserAutomate
-    summary: Create a cloud browser, execute Playwright code, capture a screenshot, then delete the session.
-    inputs:
-      type: object
-      properties:
-        start_url:
-          type: string
-          example: https://example.com
-        playwright_code:
-          type: string
-          example: "await page.goto('https://example.com'); return await page.title();"
-    steps:
-      - stepId: createBrowser
-        operationId: postBrowsers
-        requestBody:
-          payload:
-            start_url: $inputs.start_url
-        outputs:
-          browser_id: $response.body#/id
-      - stepId: runPlaywright
-        operationId: executePlaywrightCode
-        parameters:
-          - name: id
-            in: path
-            value: $steps.createBrowser.outputs.browser_id
-        requestBody:
-          payload:
-            code: $inputs.playwright_code
-      - stepId: screenshot
-        operationId: takeScreenshot
-        parameters:
-          - name: id
-            in: path
-            value: $steps.createBrowser.outputs.browser_id
-      - stepId: deleteBrowser
-        operationId: deleteBrowsersByIdOrName
-        parameters:
-          - name: id_or_name
-            in: path
-            value: $steps.createBrowser.outputs.browser_id
+- workflowId: browserAutomate
+  summary: Create a cloud browser, execute Playwright code, capture a screenshot, then delete the session.
+  inputs:
+    type: object
+    properties:
+      start_url:
+        type: string
+        example: https://example.com
+      playwright_code:
+        type: string
+        example: "await page.goto('https://example.com'); return await page.title();"
+  steps:
+  - stepId: createBrowser
+    operationId: postBrowsers
+    requestBody:
+      payload:
+        start_url: $inputs.start_url
     outputs:
-      browser_id: $steps.createBrowser.outputs.browser_id
+      browser_id: $response.body#/id
+  - stepId: runPlaywright
+    operationId: executePlaywrightCode
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createBrowser.outputs.browser_id
+    requestBody:
+      payload:
+        code: $inputs.playwright_code
+  - stepId: screenshot
+    operationId: takeScreenshot
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createBrowser.outputs.browser_id
+  - stepId: deleteBrowser
+    operationId: deleteBrowsersByIdOrName
+    parameters:
+    - name: id_or_name
+      in: path
+      value: $steps.createBrowser.outputs.browser_id
+  outputs:
+    browser_id: $steps.createBrowser.outputs.browser_id
