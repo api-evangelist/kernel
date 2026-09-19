@@ -183,6 +183,8 @@ apis:
   humanURL: https://kernel.sh/docs/api-reference/
   baseURL: https://api.onkernel.com
   tags:
+  - Browser
+  tags_raw:
   - Browsers
   properties:
   - type: OpenAPI
