@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Organization API
+  title: Kernel Organization API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -83,14 +83,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
       content:
         application/json:
           schema:
@@ -114,6 +114,24 @@ components:
           nullable: true
           description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
           example: 10
+    UpdateOrgLimitsRequest:
+      type: object
+      properties:
+        default_project_max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
     Error:
       type: object
       required:
@@ -135,24 +153,6 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    UpdateOrgLimitsRequest:
-      type: object
-      properties:
-        default_project_max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
   securitySchemes:
     bearerAuth:
       type: http

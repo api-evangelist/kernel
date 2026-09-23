@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Proxies API
+  title: Kernel Proxies API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -319,17 +319,30 @@ components:
           type: boolean
           description: Whether the proxy has a password.
           example: true
-    ProxyUpdateRequest:
+    CreateCustomProxyConfig:
       type: object
+      title: Custom
+      description: Configuration for a custom proxy (e.g., private proxy server).
       required:
-      - name
+      - host
+      - port
       properties:
-        name:
+        host:
           type: string
-          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
-          minLength: 1
-          maxLength: 255
-          example: my-renamed-proxy
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+        port:
+          type: integer
+          description: Proxy port.
+          example: 8080
+        username:
+          type: string
+          description: Username for proxy authentication.
+          example: user123
+        password:
+          type: string
+          description: Password for proxy authentication.
+          example: secret
     ResidentialProxyConfig:
       type: object
       title: Residential
@@ -364,27 +377,6 @@ components:
           - windows
           - macos
           - android
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
     MobileProxyConfig:
       type: object
       title: Mobile
@@ -411,47 +403,6 @@ components:
           type: string
           description: ISO 3166 country code. Defaults to US if not provided.
           example: US
-    IspProxyConfig:
-      type: object
-      title: ISP
-      description: Configuration for an ISP proxy.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code. Defaults to US if not provided.
-          example: US
-    ProxyCheckRequest:
-      type: object
-      description: Optional parameters for the proxy health check.
-      properties:
-        url:
-          type: string
-          example: https://example.com
-          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
-    CreateCustomProxyConfig:
-      type: object
-      title: Custom
-      description: Configuration for a custom proxy (e.g., private proxy server).
-      required:
-      - host
-      - port
-      properties:
-        host:
-          type: string
-          description: Proxy host address or IP.
-          example: 127.0.0.1
-        port:
-          type: integer
-          description: Proxy port.
-          example: 8080
-        username:
-          type: string
-          description: Username for proxy authentication.
-          example: user123
-        password:
-          type: string
-          description: Password for proxy authentication.
-          example: secret
     ProxyCreateRequest:
       type: object
       description: Configuration for routing traffic through a proxy.
@@ -500,6 +451,23 @@ components:
           residential: '#/components/schemas/ResidentialProxyConfig'
           mobile: '#/components/schemas/MobileProxyConfig'
           custom: '#/components/schemas/CustomProxyConfig'
+    ProxyCheckRequest:
+      type: object
+      description: Optional parameters for the proxy health check.
+      properties:
+        url:
+          type: string
+          example: https://example.com
+          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
+    IspProxyConfig:
+      type: object
+      title: ISP
+      description: Configuration for an ISP proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
     ErrorDetail:
       type: object
       properties:
@@ -575,9 +543,53 @@ components:
           residential: '#/components/schemas/ResidentialProxyConfig'
           mobile: '#/components/schemas/MobileProxyConfig'
           custom: '#/components/schemas/CustomProxyConfig'
+    ProxyUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
+          minLength: 1
+          maxLength: 255
+          example: my-renamed-proxy
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
   responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     InternalError:
       description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable Entity – request was valid but the operation failed
       content:
         application/json:
           schema:
@@ -588,26 +600,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     Forbidden:
       description: Forbidden – insufficient permissions or plan
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    UnprocessableEntity:
-      description: Unprocessable Entity – request was valid but the operation failed
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:

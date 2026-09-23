@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Apps API
+  title: Kernel Apps API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -116,58 +116,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    AppAction:
-      type: object
-      description: An action available on the app
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Name of the action
-          example: analyze
-        input_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-        output_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
     AppVersionSummary:
       type: object
       description: Summary of an application version.
@@ -210,6 +158,58 @@ components:
       - deployment
       - actions
       - env_vars
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    AppAction:
+      type: object
+      description: An action available on the app
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Name of the action
+          example: analyze
+        input_schema:
+          type: object
+          nullable: true
+          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
+          additionalProperties: true
+        output_schema:
+          type: object
+          nullable: true
+          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
+          additionalProperties: true
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
   securitySchemes:
     bearerAuth:
       type: http

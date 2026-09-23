@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Browser Playwright API
+  title: Kernel Browser Playwright API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -21,9 +21,7 @@ paths:
 
         It has access to ''page'', ''context'', and ''browser'' variables.
 
-        It can `return` a value, and this value is returned in the response.
-
-        '
+        It can `return` a value, and this value is returned in the response.'
       operationId: executePlaywrightCode
       tags:
       - Browser Playwright
@@ -75,27 +73,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
     ExecutePlaywrightResult:
       type: object
       description: Result of Playwright code execution
@@ -152,6 +129,27 @@ components:
           minimum: 1
           maximum: 300
       additionalProperties: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
   securitySchemes:
     bearerAuth:
       type: http

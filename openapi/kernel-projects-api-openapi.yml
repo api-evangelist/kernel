@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Projects API
+  title: Kernel Projects API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -21,9 +21,7 @@ paths:
       description: 'Deprecated: use `POST /org/projects` instead. This route will be removed on 2026-11-24.
 
 
-        Create a new project within the authenticated organization.
-
-        '
+        Create a new project within the authenticated organization.'
       deprecated: true
       security:
       - bearerAuth: []
@@ -60,9 +58,7 @@ paths:
       description: 'Deprecated: use `GET /org/projects` instead. This route will be removed on 2026-11-24.
 
 
-        List projects for the authenticated organization.
-
-        '
+        List projects for the authenticated organization.'
       deprecated: true
       security:
       - bearerAuth: []
@@ -127,9 +123,7 @@ paths:
       description: 'Deprecated: use `GET /org/projects/{id}` instead. This route will be removed on 2026-11-24.
 
 
-        Get a project by ID.
-
-        '
+        Get a project by ID.'
       deprecated: true
       security:
       - bearerAuth: []
@@ -161,9 +155,7 @@ paths:
       description: 'Deprecated: use `PATCH /org/projects/{id}` instead. This route will be removed on 2026-11-24.
 
 
-        Update a project''s name or status.
-
-        '
+        Update a project''s name or status.'
       deprecated: true
       security:
       - bearerAuth: []
@@ -207,9 +199,7 @@ paths:
       description: 'Deprecated: use `DELETE /org/projects/{id}` instead. This route will be removed on 2026-11-24.
 
 
-        Soft-delete a project. The project must be empty (no active resources).
-
-        '
+        Soft-delete a project. The project must be empty (no active resources).'
       deprecated: true
       security:
       - bearerAuth: []
@@ -244,9 +234,7 @@ paths:
       description: 'Deprecated: use `GET /org/projects/{id}/limits` instead. This route will be removed on 2026-11-24.
 
 
-        Get the resource limit overrides for a project. Null values mean no project-level cap (org limit applies).
-
-        '
+        Get the resource limit overrides for a project. Null values mean no project-level cap (org limit applies).'
       deprecated: true
       security:
       - bearerAuth: []
@@ -278,9 +266,7 @@ paths:
       description: 'Deprecated: use `PATCH /org/projects/{id}/limits` instead. This route will be removed on 2026-11-24.
 
 
-        Update resource limit overrides for a project. Only fields present in the request are modified. Set a field to 0 to remove that limit cap; omit a field to leave it unchanged.
-
-        '
+        Update resource limit overrides for a project. Only fields present in the request are modified. Set a field to 0 to remove that limit cap; omit a field to leave it unchanged.'
       deprecated: true
       security:
       - bearerAuth: []
@@ -624,77 +610,7 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tprojectLimits, err := client.Projects.Limits.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProjectLimitUpdateParams{\n\t\t\tUpdateProjectLimitsRequest: kernel.UpdateProjectLimitsRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", projectLimits.MaxConcurrentInvocations)\n}\n"
 components:
-  responses:
-    Conflict:
-      description: Conflict – resource already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    UpdateProjectRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: New project name
-        status:
-          type: string
-          enum:
-          - active
-          - archived
-          description: New project status
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
     ProjectLimits:
       type: object
       properties:
@@ -714,22 +630,38 @@ components:
           deprecated: true
           description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Always null once the unified concurrency limit is enabled for your organization.'
           example: 50
-    UpdateProjectLimitsRequest:
+    CreateProjectRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Project name (1-255 characters)
+          example: staging
+    ErrorDetail:
       type: object
       properties:
-        max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Maximum concurrent browsers for this project, covering both on-demand sessions and browser pool reservations. Set to 0 to remove the cap; omit to leave unchanged.
-        max_concurrent_invocations:
-          type: integer
-          nullable: true
-          description: Maximum concurrent app invocations for this project. Set to 0 to remove the cap; omit to leave unchanged.
-        max_pooled_sessions:
-          type: integer
-          nullable: true
-          deprecated: true
-          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Requests that set this field are rejected with a 400 once the unified concurrency limit is enabled for your organization.'
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: New project name
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+          description: New project status
     Project:
       type: object
       required:
@@ -762,26 +694,80 @@ components:
           type: string
           format: date-time
           description: When the project was last updated
-    CreateProjectRequest:
+    UpdateProjectLimitsRequest:
+      type: object
+      properties:
+        max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Maximum concurrent browsers for this project, covering both on-demand sessions and browser pool reservations. Set to 0 to remove the cap; omit to leave unchanged.
+        max_concurrent_invocations:
+          type: integer
+          nullable: true
+          description: Maximum concurrent app invocations for this project. Set to 0 to remove the cap; omit to leave unchanged.
+        max_pooled_sessions:
+          type: integer
+          nullable: true
+          deprecated: true
+          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Requests that set this field are rejected with a 400 once the unified concurrency limit is enabled for your organization.'
+    Error:
       type: object
       required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Project name (1-255 characters)
-          example: staging
-    ErrorDetail:
-      type: object
+      - code
+      - message
       properties:
         code:
           type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
+          description: Application-specific error code (machine-readable)
+          example: bad_request
         message:
           type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Kernel API Keys Invocations API
+  title: Kernel Invocations API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
   version: 0.1.0
 servers:
@@ -372,9 +372,7 @@ paths:
 
         status updates for an invocation. The stream terminates automatically
 
-        once the invocation reaches a terminal state.
-
-        '
+        once the invocation reaches a terminal state.'
       security:
       - bearerAuth: []
       parameters:
@@ -421,20 +419,82 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Invocations.FollowStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.InvocationFollowParams{},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    InvocationEvent:
-      oneOf:
-      - $ref: '#/components/schemas/LogEvent'
-      - $ref: '#/components/schemas/InvocationStateEvent'
-      - $ref: '#/components/schemas/ErrorEvent'
-      - $ref: '#/components/schemas/SSEHeartbeatEvent'
-      discriminator:
-        propertyName: event
-        mapping:
-          log: '#/components/schemas/LogEvent'
-          invocation_state: '#/components/schemas/InvocationStateEvent'
-          error: '#/components/schemas/ErrorEvent'
-          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
-      description: Union type representing any invocation event.
+    LogEvent:
+      type: object
+      description: A log entry from the application.
+      required:
+      - event
+      - message
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: log
+          description: Event type identifier (always "log").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the log entry was produced.
+        message:
+          type: string
+          description: Log message text.
+    BrowserPoolRef:
+      type: object
+      description: Browser pool this session was acquired from, if any.
+      properties:
+        id:
+          type: string
+          description: Browser pool ID
+        name:
+          type: string
+          description: Browser pool name, if set
+      required:
+      - id
+    BrowserTelemetryCategoryConfig:
+      type: object
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    BrowserUsage:
+      type: object
+      description: Session usage metrics.
+      properties:
+        uptime_ms:
+          type: integer
+          description: Time in milliseconds the session was actively running.
+      required:
+      - uptime_ms
+    InvocationStateEvent:
+      type: object
+      description: An event representing the current state of an invocation.
+      required:
+      - event
+      - invocation
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: invocation_state
+          description: Event type identifier (always "invocation_state").
+        invocation:
+          $ref: '#/components/schemas/Invocation'
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the state was reported.
     BrowserTelemetryCategoriesConfig:
       type: object
       description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
@@ -556,75 +616,45 @@ components:
       - stealth
       - headless
       - timeout_seconds
-    InvokeResponse:
+    BrowserTelemetryConfig:
       type: object
+      description: Active telemetry configuration for a browser session.
       properties:
-        id:
-          type: string
-          description: ID of the invocation
-          example: rr33xuugxj9h0bkf1rdt2bet
-        action_name:
-          type: string
-          description: Name of the action invoked
-          example: analyze
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category enable/disable flags.
+    InvocationUpdateRequest:
+      type: object
+      description: Request body for updating an invocation.
+      properties:
         status:
           type: string
-          description: Status of the invocation
+          description: New status for the invocation.
           enum:
-          - queued
-          - running
           - succeeded
           - failed
-          example: queued
-        status_reason:
-          type: string
-          description: Status reason
-          example: Invocation queued for execution
         output:
           type: string
-          description: 'The return value of the action that was invoked, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
-          example: '{"result":"success","data":"processed input"}'
+          description: Updated output of the invocation rendered as JSON string.
       required:
-      - id
-      - action_name
       - status
-    LogEvent:
+    Tags:
       type: object
-      description: A log entry from the application.
-      required:
-      - event
-      - message
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: log
-          description: Event type identifier (always "log").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the log entry was produced.
-        message:
-          type: string
-          description: Log message text.
-    InvocationStateEvent:
-      type: object
-      description: An event representing the current state of an invocation.
-      required:
-      - event
-      - invocation
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: invocation_state
-          description: Event type identifier (always "invocation_state").
-        invocation:
-          $ref: '#/components/schemas/Invocation'
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the state was reported.
+      maxProperties: 50
+      description: User-defined key-value tags.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+      additionalProperties:
+        type: string
+        minLength: 0
+        maxLength: 256
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+      example:
+        team: backend
+        env: staging
     Profile:
       type: object
       description: Browser profile metadata.
@@ -651,98 +681,6 @@ components:
       required:
       - id
       - created_at
-    BrowserUsage:
-      type: object
-      description: Session usage metrics.
-      properties:
-        uptime_ms:
-          type: integer
-          description: Time in milliseconds the session was actively running.
-      required:
-      - uptime_ms
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    BrowserViewport:
-      type: object
-      description: 'Initial browser window size in pixels with optional refresh rate.
-
-        If omitted, image defaults apply (1920x1080@25).
-
-        For GPU images, the default is 1920x1080@60.
-
-        Arbitrary viewport dimensions and refresh rates are accepted.
-
-        Known-good presets include:
-
-        2560x1440@10, 1920x1080@25, 1920x1200@25, 1440x900@25, 1280x800@60, 1024x768@60, 1200x800@60, 768x1024@60, 390x844@60.
-
-        For GPU images, recommended presets use one of these resolutions with refresh rates 60, 30, 25, or 10:
-
-        800x600, 960x720, 1024x576, 1024x768, 1152x648, 1200x800, 1280x720, 1368x768, 1440x900, 1600x900, 1920x1080, 1920x1200, 390x844, 360x250, 768x1024, 800x1600.
-
-        Viewports outside this list may exhibit unstable live view or recording behavior.
-
-        If refresh_rate is not provided, it will be automatically determined based on the resolution
-
-        (higher resolutions use lower refresh rates to keep bandwidth reasonable).
-
-        '
-      properties:
-        width:
-          type: integer
-          description: Browser window width in pixels. Any positive integer is accepted.
-          minimum: 1
-          example: 1280
-        height:
-          type: integer
-          description: Browser window height in pixels. Any positive integer is accepted.
-          minimum: 1
-          example: 800
-        refresh_rate:
-          type: integer
-          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
-          minimum: 1
-          example: 60
-      required:
-      - width
-      - height
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    BrowserTelemetryConfig:
-      type: object
-      description: Active telemetry configuration for a browser session.
-      properties:
-        browser:
-          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
-          description: Per-category enable/disable flags.
     ErrorEvent:
       type: object
       description: An error event from the application.
@@ -819,57 +757,85 @@ components:
       - action_name
       - started_at
       - status
-    InvocationUpdateRequest:
+    Error:
       type: object
-      description: Request body for updating an invocation.
-      properties:
-        status:
-          type: string
-          description: New status for the invocation.
-          enum:
-          - succeeded
-          - failed
-        output:
-          type: string
-          description: Updated output of the invocation rendered as JSON string.
       required:
-      - status
-    Tags:
-      type: object
-      maxProperties: 50
-      description: User-defined key-value tags.
-      propertyNames:
-        type: string
-        minLength: 1
-        maxLength: 128
-        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
-      additionalProperties:
-        type: string
-        minLength: 0
-        maxLength: 256
-        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
-      example:
-        team: backend
-        env: staging
-    BrowserPoolRef:
-      type: object
-      description: Browser pool this session was acquired from, if any.
+      - code
+      - message
       properties:
-        id:
+        code:
           type: string
-          description: Browser pool ID
-        name:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
           type: string
-          description: Browser pool name, if set
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    InvocationEvent:
+      oneOf:
+      - $ref: '#/components/schemas/LogEvent'
+      - $ref: '#/components/schemas/InvocationStateEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          log: '#/components/schemas/LogEvent'
+          invocation_state: '#/components/schemas/InvocationStateEvent'
+          error: '#/components/schemas/ErrorEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any invocation event.
+    BrowserViewport:
+      type: object
+      description: 'Initial browser window size in pixels with optional refresh rate.
+
+        If omitted, image defaults apply (1920x1080@25).
+
+        For GPU images, the default is 1920x1080@60.
+
+        Arbitrary viewport dimensions and refresh rates are accepted.
+
+        Known-good presets include:
+
+        2560x1440@10, 1920x1080@25, 1920x1200@25, 1440x900@25, 1280x800@60, 1024x768@60, 1200x800@60, 768x1024@60, 390x844@60.
+
+        For GPU images, recommended presets use one of these resolutions with refresh rates 60, 30, 25, or 10:
+
+        800x600, 960x720, 1024x576, 1024x768, 1152x648, 1200x800, 1280x720, 1368x768, 1440x900, 1600x900, 1920x1080, 1920x1200, 390x844, 360x250, 768x1024, 800x1600.
+
+        Viewports outside this list may exhibit unstable live view or recording behavior.
+
+        If refresh_rate is not provided, it will be automatically determined based on the resolution
+
+        (higher resolutions use lower refresh rates to keep bandwidth reasonable).
+
+        '
+      properties:
+        width:
+          type: integer
+          description: Browser window width in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 1280
+        height:
+          type: integer
+          description: Browser window height in pixels. Any positive integer is accepted.
+          minimum: 1
+          example: 800
+        refresh_rate:
+          type: integer
+          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
+          minimum: 1
+          example: 60
       required:
-      - id
-    BrowserTelemetryCategoryConfig:
-      type: object
-      description: Per-category telemetry configuration.
-      properties:
-        enabled:
-          type: boolean
-          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+      - width
+      - height
     SSEHeartbeatEvent:
       type: object
       description: Heartbeat event sent periodically to keep SSE connection alive.
@@ -885,33 +851,59 @@ components:
           type: string
           format: date-time
           description: Time the heartbeat was sent.
+    InvokeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the invocation
+          example: rr33xuugxj9h0bkf1rdt2bet
+        action_name:
+          type: string
+          description: Name of the action invoked
+          example: analyze
+        status:
+          type: string
+          description: Status of the invocation
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          example: queued
+        status_reason:
+          type: string
+          description: Status reason
+          example: Invocation queued for execution
+        output:
+          type: string
+          description: 'The return value of the action that was invoked, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
+          example: '{"result":"success","data":"processed input"}'
+      required:
+      - id
+      - action_name
+      - status
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Unauthorized – missing or invalid authorization token
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     CapacityExhausted:
       description: Capacity exhausted, unable to fulfill request at this time
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
       content:
         application/json:
           schema:
@@ -923,6 +915,12 @@ components:
           description: Seconds to wait before retrying
           schema:
             type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:
