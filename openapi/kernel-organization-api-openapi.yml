@@ -76,31 +76,6 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\torgLimits, err := client.Organization.Limits.Update(context.TODO(), kernel.OrganizationLimitUpdateParams{\n\t\tUpdateOrgLimitsRequest: kernel.UpdateOrgLimitsRequestParam{},\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", orgLimits.DefaultProjectMaxConcurrentSessions)\n}\n"
 components:
-  responses:
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
     OrgLimits:
       type: object
@@ -114,13 +89,6 @@ components:
           nullable: true
           description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
           example: 10
-    UpdateOrgLimitsRequest:
-      type: object
-      properties:
-        default_project_max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
     ErrorDetail:
       type: object
       properties:
@@ -153,6 +121,38 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
+    UpdateOrgLimitsRequest:
+      type: object
+      properties:
+        default_project_max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

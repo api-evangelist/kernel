@@ -468,26 +468,18 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Computer.WriteClipboard(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserComputerWriteClipboardParams{\n\t\t\tText: \"text\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    ScreenshotRegion:
+    MousePositionResponse:
       type: object
       required:
       - x
       - y
-      - width
-      - height
       properties:
         x:
           type: integer
-          description: X coordinate of the region's top-left corner
+          description: X coordinate of the cursor
         y:
           type: integer
-          description: Y coordinate of the region's top-left corner
-        width:
-          type: integer
-          description: Width of the region in pixels
-        height:
-          type: integer
-          description: Height of the region in pixels
+          description: Y coordinate of the cursor
       additionalProperties: false
     SleepAction:
       type: object
@@ -500,132 +492,6 @@ components:
           description: Duration to sleep in milliseconds.
           minimum: 0
           maximum: 30000
-      additionalProperties: false
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    MoveMouseRequest:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        x:
-          type: integer
-          description: X coordinate to move the cursor to
-        y:
-          type: integer
-          description: Y coordinate to move the cursor to
-        hold_keys:
-          type: array
-          description: Modifier keys to hold during the move
-          items:
-            type: string
-        smooth:
-          type: boolean
-          description: Use human-like Bezier curve path instead of instant mouse movement.
-          default: true
-        duration_ms:
-          type: integer
-          description: Target total duration in milliseconds for the mouse movement when smooth=true. Omit for automatic timing based on distance.
-          minimum: 50
-          maximum: 5000
-      additionalProperties: false
-    ClipboardContent:
-      type: object
-      required:
-      - text
-      properties:
-        text:
-          type: string
-          description: Current clipboard text content
-      additionalProperties: false
-    TypeTextRequest:
-      type: object
-      required:
-      - text
-      properties:
-        text:
-          type: string
-          description: Text to type on the browser instance
-        delay:
-          type: integer
-          description: Delay in milliseconds between keystrokes
-          minimum: 0
-          default: 0
-      additionalProperties: false
-    PressKeyRequest:
-      type: object
-      required:
-      - keys
-      properties:
-        keys:
-          type: array
-          description: 'List of key symbols to press. Each item should be a key symbol supported by xdotool
-
-            (see X11 keysym definitions). Examples include "Return", "Shift", "Ctrl", "Alt", "F5".
-
-            Items in this list could also be combinations, e.g. "Ctrl+t" or "Ctrl+Shift+Tab".
-
-            '
-          items:
-            type: string
-        duration:
-          type: integer
-          description: Duration to hold the keys down in milliseconds. If omitted or 0, keys are tapped.
-          minimum: 0
-          default: 0
-        hold_keys:
-          type: array
-          description: Optional modifier keys to hold during the key press sequence.
-          items:
-            type: string
-      additionalProperties: false
-    ClickMouseRequest:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        button:
-          type: string
-          description: Mouse button to interact with
-          enum:
-          - left
-          - right
-          - middle
-          - back
-          - forward
-        click_type:
-          type: string
-          description: Type of click action
-          enum:
-          - down
-          - up
-          - click
-        x:
-          type: integer
-          description: X coordinate of the click position
-        y:
-          type: integer
-          description: Y coordinate of the click position
-        hold_keys:
-          type: array
-          description: Modifier keys to hold during the click
-          items:
-            type: string
-        num_clicks:
-          type: integer
-          description: Number of times to repeat the click
-          default: 1
       additionalProperties: false
     DragMouseRequest:
       type: object
@@ -679,39 +545,6 @@ components:
           minimum: 50
           maximum: 10000
       additionalProperties: false
-    MousePositionResponse:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        x:
-          type: integer
-          description: X coordinate of the cursor
-        y:
-          type: integer
-          description: Y coordinate of the cursor
-      additionalProperties: false
-    SetCursorRequest:
-      type: object
-      required:
-      - hidden
-      properties:
-        hidden:
-          type: boolean
-          description: Whether the cursor should be hidden or visible
-      additionalProperties: false
-    OkResponse:
-      type: object
-      description: Generic OK response.
-      required:
-      - ok
-      properties:
-        ok:
-          type: boolean
-          description: Indicates success.
-          default: true
-      additionalProperties: false
     ScrollRequest:
       type: object
       required:
@@ -735,6 +568,130 @@ components:
         hold_keys:
           type: array
           description: Modifier keys to hold during the scroll
+          items:
+            type: string
+      additionalProperties: false
+    MoveMouseRequest:
+      type: object
+      required:
+      - x
+      - y
+      properties:
+        x:
+          type: integer
+          description: X coordinate to move the cursor to
+        y:
+          type: integer
+          description: Y coordinate to move the cursor to
+        hold_keys:
+          type: array
+          description: Modifier keys to hold during the move
+          items:
+            type: string
+        smooth:
+          type: boolean
+          description: Use human-like Bezier curve path instead of instant mouse movement.
+          default: true
+        duration_ms:
+          type: integer
+          description: Target total duration in milliseconds for the mouse movement when smooth=true. Omit for automatic timing based on distance.
+          minimum: 50
+          maximum: 5000
+      additionalProperties: false
+    ScreenshotRequest:
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ScreenshotRegion'
+      additionalProperties: false
+    ClipboardContent:
+      type: object
+      required:
+      - text
+      properties:
+        text:
+          type: string
+          description: Current clipboard text content
+      additionalProperties: false
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    WriteClipboardRequest:
+      type: object
+      required:
+      - text
+      properties:
+        text:
+          type: string
+          description: Text to write to the system clipboard
+      additionalProperties: false
+    BatchComputerActionRequest:
+      type: object
+      description: A batch of computer actions to execute sequentially.
+      required:
+      - actions
+      properties:
+        actions:
+          type: array
+          description: Ordered list of actions to execute. Execution stops on the first error.
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ComputerAction'
+      additionalProperties: false
+    PressKeyRequest:
+      type: object
+      required:
+      - keys
+      properties:
+        keys:
+          type: array
+          description: 'List of key symbols to press. Each item should be a key symbol supported by xdotool
+
+            (see X11 keysym definitions). Examples include "Return", "Shift", "Ctrl", "Alt", "F5".
+
+            Items in this list could also be combinations, e.g. "Ctrl+t" or "Ctrl+Shift+Tab".
+
+            '
+          items:
+            type: string
+        duration:
+          type: integer
+          description: Duration to hold the keys down in milliseconds. If omitted or 0, keys are tapped.
+          minimum: 0
+          default: 0
+        hold_keys:
+          type: array
+          description: Optional modifier keys to hold during the key press sequence.
           items:
             type: string
       additionalProperties: false
@@ -779,55 +736,98 @@ components:
         sleep:
           $ref: '#/components/schemas/SleepAction'
       additionalProperties: false
-    Error:
+    SetCursorRequest:
       type: object
       required:
-      - code
-      - message
+      - hidden
       properties:
-        code:
+        hidden:
+          type: boolean
+          description: Whether the cursor should be hidden or visible
+      additionalProperties: false
+    ClickMouseRequest:
+      type: object
+      required:
+      - x
+      - y
+      properties:
+        button:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
+          description: Mouse button to interact with
+          enum:
+          - left
+          - right
+          - middle
+          - back
+          - forward
+        click_type:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
+          description: Type of click action
+          enum:
+          - down
+          - up
+          - click
+        x:
+          type: integer
+          description: X coordinate of the click position
+        y:
+          type: integer
+          description: Y coordinate of the click position
+        hold_keys:
           type: array
-          description: Additional error details (for multiple errors)
+          description: Modifier keys to hold during the click
           items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    WriteClipboardRequest:
+            type: string
+        num_clicks:
+          type: integer
+          description: Number of times to repeat the click
+          default: 1
+      additionalProperties: false
+    ScreenshotRegion:
+      type: object
+      required:
+      - x
+      - y
+      - width
+      - height
+      properties:
+        x:
+          type: integer
+          description: X coordinate of the region's top-left corner
+        y:
+          type: integer
+          description: Y coordinate of the region's top-left corner
+        width:
+          type: integer
+          description: Width of the region in pixels
+        height:
+          type: integer
+          description: Height of the region in pixels
+      additionalProperties: false
+    OkResponse:
+      type: object
+      description: Generic OK response.
+      required:
+      - ok
+      properties:
+        ok:
+          type: boolean
+          description: Indicates success.
+          default: true
+      additionalProperties: false
+    TypeTextRequest:
       type: object
       required:
       - text
       properties:
         text:
           type: string
-          description: Text to write to the system clipboard
-      additionalProperties: false
-    ScreenshotRequest:
-      type: object
-      properties:
-        region:
-          $ref: '#/components/schemas/ScreenshotRegion'
-      additionalProperties: false
-    BatchComputerActionRequest:
-      type: object
-      description: A batch of computer actions to execute sequentially.
-      required:
-      - actions
-      properties:
-        actions:
-          type: array
-          description: Ordered list of actions to execute. Execution stops on the first error.
-          minItems: 1
-          maxItems: 100
-          items:
-            $ref: '#/components/schemas/ComputerAction'
+          description: Text to type on the browser instance
+        delay:
+          type: integer
+          description: Delay in milliseconds between keystrokes
+          minimum: 0
+          default: 0
       additionalProperties: false
   responses:
     BadRequest:

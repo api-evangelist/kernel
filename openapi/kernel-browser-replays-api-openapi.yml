@@ -209,67 +209,7 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Replays.Stop(\n\t\tcontext.TODO(),\n\t\t\"replay_id\",\n\t\tkernel.BrowserReplayStopParams{\n\t\t\tID: \"id\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
-  responses:
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    BrowserReplay:
-      type: object
-      description: Information about a browser replay recording.
-      required:
-      - replay_id
-      properties:
-        replay_id:
-          type: string
-          description: Unique identifier for the replay recording.
-        started_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when replay started
-        finished_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when replay finished
-        replay_view_url:
-          type: string
-          description: URL for viewing the replay recording.
-          example: https://api.onkernel.com/browser/replays?jwt=eyJ0eXAi...&replay_id=7e2c1a9f-1234-4cde-9abc-ffeedd001122
     ErrorDetail:
       type: object
       properties:
@@ -302,6 +242,66 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
+    BrowserReplay:
+      type: object
+      description: Information about a browser replay recording.
+      required:
+      - replay_id
+      properties:
+        replay_id:
+          type: string
+          description: Unique identifier for the replay recording.
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when replay started
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when replay finished
+        replay_view_url:
+          type: string
+          description: URL for viewing the replay recording.
+          example: https://api.onkernel.com/browser/replays?jwt=eyJ0eXAi...&replay_id=7e2c1a9f-1234-4cde-9abc-ffeedd001122
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

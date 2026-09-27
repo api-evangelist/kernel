@@ -294,7 +294,102 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Proxies.Check(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProxyCheckParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.ID)\n}\n"
 components:
+  responses:
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable Entity – request was valid but the operation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    MobileProxyConfig:
+      type: object
+      title: Mobile
+      description: Configuration for mobile proxies.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code
+          example: US
+        city:
+          type: string
+          description: Provider city alias. Mobile carrier routing can make observed geo vary.
+          example: brooklyn
+        state:
+          type: string
+          description: US-only state code. Mobile carrier routing can make observed geo vary.
+          example: NY
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    DatacenterProxyConfig:
+      type: object
+      title: Datacenter
+      description: Configuration for a datacenter proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
     CustomProxyConfig:
       type: object
       title: Custom
@@ -319,6 +414,17 @@ components:
           type: boolean
           description: Whether the proxy has a password.
           example: true
+    ProxyUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
+          minLength: 1
+          maxLength: 255
+          example: my-renamed-proxy
     CreateCustomProxyConfig:
       type: object
       title: Custom
@@ -343,66 +449,6 @@ components:
           type: string
           description: Password for proxy authentication.
           example: secret
-    ResidentialProxyConfig:
-      type: object
-      title: Residential
-      description: Configuration for residential proxies.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code.
-          example: US
-        city:
-          type: string
-          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
-          example: sanfrancisco
-        state:
-          type: string
-          description: Two-letter state code.
-          example: CA
-        zip:
-          type: string
-          description: US ZIP code.
-          example: '94107'
-        asn:
-          type: string
-          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
-          example: AS15169
-        os:
-          type: string
-          description: Operating system of the residential device.
-          deprecated: true
-          x-deprecated-reason: os selection not supported by proxy provider
-          enum:
-          - windows
-          - macos
-          - android
-    MobileProxyConfig:
-      type: object
-      title: Mobile
-      description: Configuration for mobile proxies.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code
-          example: US
-        city:
-          type: string
-          description: Provider city alias. Mobile carrier routing can make observed geo vary.
-          example: brooklyn
-        state:
-          type: string
-          description: US-only state code. Mobile carrier routing can make observed geo vary.
-          example: NY
-    DatacenterProxyConfig:
-      type: object
-      title: Datacenter
-      description: Configuration for a datacenter proxy.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code. Defaults to US if not provided.
-          example: US
     ProxyCreateRequest:
       type: object
       description: Configuration for routing traffic through a proxy.
@@ -451,14 +497,6 @@ components:
           residential: '#/components/schemas/ResidentialProxyConfig'
           mobile: '#/components/schemas/MobileProxyConfig'
           custom: '#/components/schemas/CustomProxyConfig'
-    ProxyCheckRequest:
-      type: object
-      description: Optional parameters for the proxy health check.
-      properties:
-        url:
-          type: string
-          example: https://example.com
-          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
     IspProxyConfig:
       type: object
       title: ISP
@@ -468,17 +506,14 @@ components:
           type: string
           description: ISO 3166 country code. Defaults to US if not provided.
           example: US
-    ErrorDetail:
+    ProxyCheckRequest:
       type: object
+      description: Optional parameters for the proxy health check.
       properties:
-        code:
+        url:
           type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+          example: https://example.com
+          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
     Proxy:
       type: object
       description: Configuration for routing traffic through a proxy.
@@ -543,75 +578,40 @@ components:
           residential: '#/components/schemas/ResidentialProxyConfig'
           mobile: '#/components/schemas/MobileProxyConfig'
           custom: '#/components/schemas/CustomProxyConfig'
-    ProxyUpdateRequest:
+    ResidentialProxyConfig:
       type: object
-      required:
-      - name
+      title: Residential
+      description: Configuration for residential proxies.
       properties:
-        name:
+        country:
           type: string
-          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
-          minLength: 1
-          maxLength: 255
-          example: my-renamed-proxy
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
+          description: ISO 3166 country code.
+          example: US
+        city:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
+          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
+          example: sanfrancisco
+        state:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-  responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    UnprocessableEntity:
-      description: Unprocessable Entity – request was valid but the operation failed
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+          description: Two-letter state code.
+          example: CA
+        zip:
+          type: string
+          description: US ZIP code.
+          example: '94107'
+        asn:
+          type: string
+          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
+          example: AS15169
+        os:
+          type: string
+          description: Operating system of the residential device.
+          deprecated: true
+          x-deprecated-reason: os selection not supported by proxy provider
+          enum:
+          - windows
+          - macos
+          - android
   securitySchemes:
     bearerAuth:
       type: http

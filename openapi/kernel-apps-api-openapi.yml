@@ -102,20 +102,59 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Apps.List(context.TODO(), kernel.AppListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
 components:
-  responses:
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    AppAction:
+      type: object
+      description: An action available on the app
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Name of the action
+          example: analyze
+        input_schema:
+          type: object
+          nullable: true
+          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
+          additionalProperties: true
+        output_schema:
+          type: object
+          nullable: true
+          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
+          additionalProperties: true
     AppVersionSummary:
       type: object
       description: Summary of an application version.
@@ -158,58 +197,19 @@ components:
       - deployment
       - actions
       - env_vars
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    AppAction:
-      type: object
-      description: An action available on the app
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Name of the action
-          example: analyze
-        input_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-        output_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
+  responses:
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

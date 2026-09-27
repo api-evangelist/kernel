@@ -682,49 +682,63 @@ paths:
         source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Fs.UploadZip(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserFUploadZipParams{\n\t\t\tDestPath: \"/J!\",\n\t\t\tZipFile:  io.Reader(bytes.NewBuffer([]byte(\"Example data\"))),\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    CreateDirectoryRequest:
+    MovePathRequest:
       type: object
       required:
-      - path
+      - src_path
+      - dest_path
       properties:
-        path:
+        src_path:
           type: string
-          description: Absolute directory path to create.
+          description: Absolute source path.
           pattern: ^/.*
-        mode:
+        dest_path:
           type: string
-          description: Optional directory mode (octal string, e.g. 755). Defaults to 755.
-          pattern: ^[0-7]{3,4}$
+          description: Absolute destination path.
+          pattern: ^/.*
       additionalProperties: false
-    FileInfo:
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    DeletePathRequest:
       type: object
       required:
-      - name
       - path
-      - size_bytes
-      - is_dir
-      - mod_time
-      - mode
       properties:
-        name:
-          type: string
-          description: Base name of the file or directory.
         path:
           type: string
-          description: Absolute path.
-        size_bytes:
-          type: integer
-          description: Size in bytes. 0 for directories.
-        is_dir:
-          type: boolean
-          description: Whether the path is a directory.
-        mod_time:
+          description: Absolute path to delete.
+          pattern: ^/.*
+      additionalProperties: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
           type: string
-          format: date-time
-          description: Last modification time.
-        mode:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
           type: string
-          description: File mode bits (e.g., "drwxr-xr-x" or "-rw-r--r--").
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
     StartFsWatchRequest:
       type: object
       required:
@@ -759,37 +773,20 @@ components:
           description: File mode bits (octal string, e.g. 644).
           pattern: ^[0-7]{3,4}$
       additionalProperties: false
-    MovePathRequest:
+    CreateDirectoryRequest:
       type: object
       required:
-      - src_path
-      - dest_path
+      - path
       properties:
-        src_path:
+        path:
           type: string
-          description: Absolute source path.
+          description: Absolute directory path to create.
           pattern: ^/.*
-        dest_path:
+        mode:
           type: string
-          description: Absolute destination path.
-          pattern: ^/.*
+          description: Optional directory mode (octal string, e.g. 755). Defaults to 755.
+          pattern: ^[0-7]{3,4}$
       additionalProperties: false
-    ListFiles:
-      type: array
-      description: Array of file or directory information entries.
-      items:
-        $ref: '#/components/schemas/FileInfo'
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
     FileSystemEvent:
       type: object
       description: Filesystem change event.
@@ -814,40 +811,43 @@ components:
         is_dir:
           type: boolean
           description: Whether the affected path is a directory.
-    DeletePathRequest:
+    ListFiles:
+      type: array
+      description: Array of file or directory information entries.
+      items:
+        $ref: '#/components/schemas/FileInfo'
+    FileInfo:
       type: object
       required:
+      - name
       - path
+      - size_bytes
+      - is_dir
+      - mod_time
+      - mode
       properties:
+        name:
+          type: string
+          description: Base name of the file or directory.
         path:
           type: string
-          description: Absolute path to delete.
-          pattern: ^/.*
-      additionalProperties: false
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
+          description: Absolute path.
+        size_bytes:
+          type: integer
+          description: Size in bytes. 0 for directories.
+        is_dir:
+          type: boolean
+          description: Whether the path is a directory.
+        mod_time:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
+          format: date-time
+          description: Last modification time.
+        mode:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
+          description: File mode bits (e.g., "drwxr-xr-x" or "-rw-r--r--").
   responses:
-    NotFound:
-      description: Resource not found
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:
@@ -858,14 +858,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
       content:
         application/json:
           schema:

@@ -181,10 +181,34 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Browsers.Telemetry.Events(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserTelemetryEventsParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
 components:
   schemas:
-    BrowserMonitorReconnectFailedEvent:
+    BrowserEventContext:
       type: object
-      title: monitor_reconnect_failed
-      description: The CDP connection to Chrome could not be re-established after exhausting all reconnection attempts. No further telemetry events will arrive on this session.
+      description: Browser event context stamped by the browser monitor onto all CDP-sourced events. Identifies the target, frame, and navigation epoch in which the event occurred.
+      properties:
+        session_id:
+          type: string
+          description: CDP session identifier for the target connection.
+        target_id:
+          type: string
+          description: Browser target identifier (stable across navigations within a tab).
+        target_type:
+          $ref: '#/components/schemas/BrowserTargetType'
+        frame_id:
+          type: string
+          description: CDP frame identifier within the target.
+        loader_id:
+          type: string
+          description: CDP document loader identifier, reset on each navigation.
+        url:
+          type: string
+          description: URL relevant to this event — page URL for navigation and page events, request URL for network events.
+        nav_seq:
+          type: integer
+          format: int64
+          description: Monotonically increasing navigation sequence number, incremented on each top-level navigation within the target.
+    BrowserLiveViewDisconnectEvent:
+      type: object
+      description: A live view client disconnected from the headful browser's WebRTC server. Pair with live_view_connect by session_id.
       required:
       - ts
       - type
@@ -197,24 +221,79 @@ components:
           description: Event timestamp in Unix microseconds.
         type:
           type: string
-          const: monitor_reconnect_failed
+          const: live_view_disconnect
         category:
           type: string
-          const: monitor
+          const: connection
         source:
           $ref: '#/components/schemas/BrowserEventSource'
         data:
           type: object
           additionalProperties: false
+          required:
+          - session_id
+          - duration_ms
           properties:
-            reason:
+            session_id:
               type: string
-              description: 'Reason for the reconnection failure. reconnect_exhausted: all retry attempts were used up without successfully restoring the CDP connection.'
-              enum:
-              - reconnect_exhausted
+              description: Live view session identifier; matches the corresponding live_view_connect event.
+            duration_ms:
+              type: number
+              description: Wall-clock duration of the connection in milliseconds.
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
+    BrowserCdpDisconnectEvent:
+      type: object
+      description: An external client disconnected from the CDP WebSocket proxy on this VM. Pair with the immediately preceding cdp_connect on the same stream.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: cdp_disconnect
+        category:
+          type: string
+          const: connection
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - duration_ms
+          - message_count
+          - reason
+          properties:
+            duration_ms:
+              type: number
+              description: Wall-clock duration of the connection in milliseconds.
+            message_count:
+              type: integer
+              description: Number of CDP messages relayed across the connection in either direction.
+            reason:
+              type: string
+              x-go-type: string
+              description: 'Why the connection ended. client_close: the client initiated the close. upstream_changed: Chromium restarted mid-session and the proxy tore down so the client could reconnect against the new upstream. upstream_error: upstream dial or message pump errored. context_cancelled: the request context was cancelled (typically server shutdown).'
+              enum:
+              - client_close
+              - upstream_changed
+              - upstream_error
+              - context_cancelled
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserHttpHeaders:
+      type: object
+      description: HTTP headers map forwarded as-is from CDP without normalization. Values are typically strings but may be any JSON type.
+      additionalProperties: true
     BrowserMonitorInitFailedEvent:
       type: object
       title: monitor_init_failed
@@ -247,14 +326,10 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
-    BrowserHttpHeaders:
+    BrowserPageLoadEvent:
       type: object
-      description: HTTP headers map forwarded as-is from CDP without normalization. Values are typically strings but may be any JSON type.
-      additionalProperties: true
-    BrowserNetworkIdleEvent:
-      type: object
-      title: network_idle
-      description: A browser network idle event emitted after a 500ms quiet period with no in-flight HTTP requests.
+      title: page_load
+      description: A browser page load event (CDP Page.loadEventFired).
       required:
       - ts
       - type
@@ -267,14 +342,200 @@ components:
           description: Event timestamp in Unix microseconds.
         type:
           type: string
-          const: network_idle
+          const: page_load
+        category:
+          type: string
+          const: page
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              cdp_timestamp:
+                type: number
+                description: Chrome monotonic clock value in seconds at which the load event fired, relative to browser process start (not Unix epoch). Use ts for wall-clock time.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserMonitorDisconnectedEvent:
+      type: object
+      title: monitor_disconnected
+      description: The CDP connection to Chrome was lost. Telemetry events may be dropped until monitor_reconnected arrives. Treat any in-progress computed state (network_idle, page_layout_settled) as unreliable until then.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: monitor_disconnected
+        category:
+          type: string
+          const: monitor
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              description: 'Reason for the disconnection. chrome_restarted: Chrome process restarted.'
+              enum:
+              - chrome_restarted
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserNetworkLoadingFailedEvent:
+      type: object
+      title: network_loading_failed
+      description: A browser network loading failed event. If the request was already in flight when CDP attached (no prior network_request was emitted for it), url, frame_id, loader_id, and resource_type are absent; BrowserEventContext is partially populated in that case.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: network_loading_failed
         category:
           type: string
           const: network
         source:
           $ref: '#/components/schemas/BrowserEventSource'
         data:
-          $ref: '#/components/schemas/BrowserEventContext'
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              request_id:
+                type: string
+                description: CDP request identifier matching the originating network_request event.
+              error_text:
+                type: string
+                description: Network error description (e.g. net::ERR_CONNECTION_REFUSED).
+              canceled:
+                type: boolean
+                description: True if the request was canceled by the browser or page script.
+              resource_type:
+                type: string
+                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserInteractionClickEvent:
+      type: object
+      title: interaction_click
+      description: A browser user click event captured via injected page script.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: interaction_click
+        category:
+          type: string
+          const: interaction
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              x:
+                type: integer
+                description: Viewport x-coordinate of the click in CSS pixels.
+              y:
+                type: integer
+                description: Viewport y-coordinate of the click in CSS pixels.
+              selector:
+                type: string
+                description: CSS selector path to the clicked element.
+              tag:
+                type: string
+                description: HTML tag name of the clicked element in uppercase (e.g. BUTTON, A, DIV).
+              text:
+                type: string
+                description: Visible text content of the clicked element, trimmed.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserPageLcpEvent:
+      type: object
+      title: page_lcp
+      description: A browser Largest Contentful Paint (LCP) event from the Performance Timeline API.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: page_lcp
+        category:
+          type: string
+          const: page
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              source_frame_id:
+                type: string
+                description: CDP frame identifier of the frame where the LCP element was rendered.
+              time:
+                type: number
+                description: Performance Timeline timestamp of the LCP entry in milliseconds.
+              lcp_details:
+                type: object
+                additionalProperties: false
+                description: LargestContentfulPaint attributes from the Performance Timeline entry.
+                properties:
+                  render_time:
+                    type: number
+                    description: Render time of the LCP element in milliseconds; 0 for cross-origin images without Timing-Allow-Origin.
+                  load_time:
+                    type: number
+                    description: Load time of the LCP element in milliseconds.
+                  size:
+                    type: number
+                    description: Visible area of the LCP element in pixels squared.
+                  element_id:
+                    type: string
+                    description: id attribute of the LCP element, if present.
+                  url:
+                    type: string
+                    description: URL of the LCP element for image or video elements.
+                  node_id:
+                    type: integer
+                    description: CDP DOM node identifier of the LCP element.
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
@@ -308,6 +569,56 @@ components:
             session_id:
               type: string
               description: Live view session identifier. Stable across reconnects, so a transient network blip can emit two events with the same session_id.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserPageLayoutShiftEvent:
+      type: object
+      title: page_layout_shift
+      description: A browser cumulative layout shift (CLS) event from the Performance Timeline API.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: page_layout_shift
+        category:
+          type: string
+          const: page
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              source_frame_id:
+                type: string
+                description: CDP frame identifier of the frame where the layout shift occurred.
+              time:
+                type: number
+                description: Performance Timeline timestamp of the layout shift in milliseconds.
+              duration:
+                type: number
+                description: Duration of the layout shift entry in milliseconds (always 0 for layout shifts per spec).
+              layout_shift_details:
+                type: object
+                additionalProperties: false
+                description: PerformanceLayoutShift attributes from the Performance Timeline entry.
+                properties:
+                  value:
+                    type: number
+                    description: Layout shift score for this entry (contribution to CLS).
+                  had_recent_input:
+                    type: boolean
+                    description: True if the layout shift was preceded by user input within 500ms, excluding it from CLS.
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
@@ -354,12 +665,10 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
-    BrowserConsoleErrorEvent:
+    BrowserMonitorReconnectedEvent:
       type: object
-      title: console_error
-      description: 'A browser console error or uncaught JavaScript exception event. Emitted from two distinct CDP sources with different data shapes. Runtime.consoleAPICalled (console.error calls) produces level, text, args, and stack_trace. Runtime.exceptionThrown (uncaught exceptions) produces text, line, column, source_url, and stack_trace. Fields not applicable to the source are absent.
-
-        '
+      title: monitor_reconnected
+      description: The CDP connection to Chrome was successfully re-established after a disconnection. Events emitted during the gap are lost. Computed state is reset, so navigation and network tracking restart fresh from this point.
       required:
       - ts
       - type
@@ -372,43 +681,190 @@ components:
           description: Event timestamp in Unix microseconds.
         type:
           type: string
-          const: console_error
+          const: monitor_reconnected
         category:
           type: string
-          const: console
+          const: monitor
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            reconnect_duration_ms:
+              type: integer
+              format: int64
+              description: Wall-clock time in milliseconds taken to reconnect after the disconnection.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserNetworkResponseEvent:
+      type: object
+      title: network_response
+      description: A browser network response received event. Fired after the response body is fully received, not when headers arrive.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: network_response
+        category:
+          type: string
+          const: network
         source:
           $ref: '#/components/schemas/BrowserEventSource'
         data:
           allOf:
           - $ref: '#/components/schemas/BrowserEventContext'
           - type: object
-            required:
-            - text
             properties:
-              text:
+              request_id:
                 type: string
-                description: 'Human-readable error text, as the browser console would display it. For console.error() calls, the first argument coerced to a string. For uncaught exceptions, the prefix and error message, e.g. "Uncaught Error: boom" or "Uncaught (in promise) TypeError: x is not a function".
-
-                  '
-              stack_trace:
-                $ref: '#/components/schemas/BrowserCallStack'
-              level:
+                description: CDP request identifier matching the originating network_request event.
+              method:
                 type: string
-                description: CDP console type value, always "error". Present only when sourced from Runtime.consoleAPICalled.
-              args:
-                type: array
-                description: All console arguments coerced to strings. Present only when sourced from Runtime.consoleAPICalled.
-                items:
-                  type: string
-              line:
+                description: HTTP method of the original request.
+              status:
                 type: integer
-                description: Line number in the script where the exception was thrown. Present only when sourced from Runtime.exceptionThrown.
-              column:
-                type: integer
-                description: Column number in the script where the exception was thrown. Present only when sourced from Runtime.exceptionThrown.
-              source_url:
+                description: HTTP response status code.
+              status_text:
                 type: string
-                description: URL of the script file that threw the exception. Present only when sourced from Runtime.exceptionThrown.
+                description: HTTP response status text (e.g. OK, Not Found).
+              headers:
+                $ref: '#/components/schemas/BrowserHttpHeaders'
+                description: Response headers.
+              mime_type:
+                type: string
+                description: MIME type of the response (e.g. text/html, application/json).
+              resource_type:
+                type: string
+                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
+              body:
+                type: string
+                description: Truncated response body, present only for text MIME types.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserCaptchaSolveResultEvent:
+      type: object
+      description: A captcha solve attempt reached a terminal outcome.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: captcha_solve_result
+        category:
+          type: string
+          const: captcha
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - captcha_type
+          - status
+          - duration_ms
+          properties:
+            captcha_type:
+              type: string
+              x-go-type: string
+              description: Captcha vendor family. Provider-specific task names are normalized into this set; anything not covered is reported as other.
+              enum:
+              - hcaptcha
+              - recaptcha_v2
+              - recaptcha_v3
+              - turnstile
+              - geetest
+              - other
+            status:
+              type: string
+              x-go-type: string
+              description: 'Terminal outcome. success: solver returned a usable solution. failure: solver returned an error (see error_code). timeout: solver did not return within the caller''s wait budget. abandoned: caller cancelled or the page navigated away mid-solve.'
+              enum:
+              - success
+              - failure
+              - timeout
+              - abandoned
+            duration_ms:
+              type: number
+              description: Wall-clock duration from solve start to terminal outcome.
+            task_id:
+              type: string
+              description: Solver-assigned identifier. Opaque, useful for support cross-references.
+            website_host:
+              type: string
+              description: Host of the page where the captcha was solved.
+            website_path:
+              type: string
+              description: Path of the page where the captcha was solved. Query string excluded.
+            error_code:
+              type: string
+              description: Solver-specific error code on failure (e.g. ERROR_CAPTCHA_UNSOLVABLE). Absent on success.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserEventSource:
+      type: object
+      description: Provenance metadata identifying which producer emitted the event.
+      required:
+      - kind
+      properties:
+        kind:
+          type: string
+          enum:
+          - cdp
+          - kernel_api
+          - extension
+          - local_process
+          description: 'Event producer. cdp: Chrome DevTools Protocol events from the browser. kernel_api: Kernel API server. extension: injected Chrome extension. local_process: system process running alongside the browser.'
+        event:
+          type: string
+          description: Producer-specific event name (e.g. Runtime.consoleAPICalled for CDP-sourced console events, Runtime.exceptionThrown for uncaught exceptions).
+        metadata:
+          type: object
+          description: Producer-specific context (e.g. CDP target/session/frame IDs).
+          additionalProperties:
+            type: string
+    BrowserNetworkIdleEvent:
+      type: object
+      title: network_idle
+      description: A browser network idle event emitted after a 500ms quiet period with no in-flight HTTP requests.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: network_idle
+        category:
+          type: string
+          const: network
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          $ref: '#/components/schemas/BrowserEventContext'
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
@@ -476,15 +932,6 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
-    BrowserTargetType:
-      type: string
-      description: CDP target type of the page that produced the event.
-      enum:
-      - page
-      - background_page
-      - service_worker
-      - shared_worker
-      - other
     ErrorDetail:
       type: object
       properties:
@@ -496,45 +943,6 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    BrowserInteractionKeyEvent:
-      type: object
-      title: interaction_key
-      description: A browser keyboard event captured via injected page script.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: interaction_key
-        category:
-          type: string
-          const: interaction
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              key:
-                type: string
-                description: Key value from the KeyboardEvent (e.g. Enter, Backspace, a).
-              selector:
-                type: string
-                description: CSS selector path to the element that had focus when the key was pressed.
-              tag:
-                type: string
-                description: HTML tag name of the focused element in uppercase (e.g. INPUT, TEXTAREA, DIV).
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
     BrowserConsoleLogEvent:
       type: object
       title: console_log
@@ -578,6 +986,285 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    BrowserPageNavigationEvent:
+      type: object
+      title: page_navigation
+      description: A browser page navigation started event (CDP Page.frameNavigated). Carries nav context fields inline but not nav_seq, as this event resets the navigation epoch.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: page_navigation
+        category:
+          type: string
+          const: page
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            url:
+              type: string
+              description: URL navigated to.
+            frame_id:
+              type: string
+              description: CDP frame identifier of the navigated frame.
+            parent_frame_id:
+              type: string
+              description: Parent frame identifier for subframe navigations; absent for top-level navigations.
+            loader_id:
+              type: string
+              description: New CDP document loader identifier assigned for this navigation.
+            session_id:
+              type: string
+              description: CDP session identifier.
+            target_id:
+              type: string
+              description: Browser target identifier.
+            target_type:
+              $ref: '#/components/schemas/BrowserTargetType'
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserMonitorReconnectFailedEvent:
+      type: object
+      title: monitor_reconnect_failed
+      description: The CDP connection to Chrome could not be re-established after exhausting all reconnection attempts. No further telemetry events will arrive on this session.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: monitor_reconnect_failed
+        category:
+          type: string
+          const: monitor
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              description: 'Reason for the reconnection failure. reconnect_exhausted: all retry attempts were used up without successfully restoring the CDP connection.'
+              enum:
+              - reconnect_exhausted
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserInteractionScrollSettledEvent:
+      type: object
+      title: interaction_scroll_settled
+      description: A browser scroll settled event emitted after scroll position stops changing, captured via injected page script.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: interaction_scroll_settled
+        category:
+          type: string
+          const: interaction
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              from_x:
+                type: integer
+                description: Scroll x-position at the start of the scroll gesture in CSS pixels.
+              from_y:
+                type: integer
+                description: Scroll y-position at the start of the scroll gesture in CSS pixels.
+              to_x:
+                type: integer
+                description: Final scroll x-position after the gesture settled in CSS pixels.
+              to_y:
+                type: integer
+                description: Final scroll y-position after the gesture settled in CSS pixels.
+              target_selector:
+                type: string
+                description: CSS selector path to the scrolled element.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserConsoleErrorEvent:
+      type: object
+      title: console_error
+      description: 'A browser console error or uncaught JavaScript exception event. Emitted from two distinct CDP sources with different data shapes. Runtime.consoleAPICalled (console.error calls) produces level, text, args, and stack_trace. Runtime.exceptionThrown (uncaught exceptions) produces text, line, column, source_url, and stack_trace. Fields not applicable to the source are absent.
+
+        '
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: console_error
+        category:
+          type: string
+          const: console
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            required:
+            - text
+            properties:
+              text:
+                type: string
+                description: 'Human-readable error text, as the browser console would display it. For console.error() calls, the first argument coerced to a string. For uncaught exceptions, the prefix and error message, e.g. "Uncaught Error: boom" or "Uncaught (in promise) TypeError: x is not a function".
+
+                  '
+              stack_trace:
+                $ref: '#/components/schemas/BrowserCallStack'
+              level:
+                type: string
+                description: CDP console type value, always "error". Present only when sourced from Runtime.consoleAPICalled.
+              args:
+                type: array
+                description: All console arguments coerced to strings. Present only when sourced from Runtime.consoleAPICalled.
+                items:
+                  type: string
+              line:
+                type: integer
+                description: Line number in the script where the exception was thrown. Present only when sourced from Runtime.exceptionThrown.
+              column:
+                type: integer
+                description: Column number in the script where the exception was thrown. Present only when sourced from Runtime.exceptionThrown.
+              source_url:
+                type: string
+                description: URL of the script file that threw the exception. Present only when sourced from Runtime.exceptionThrown.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserCallStack:
+      type: object
+      description: CDP Runtime.StackTrace representing the JavaScript call stack at the time of an event. Fields use CDP naming conventions rather than snake_case to match the Chrome DevTools Protocol wire format.
+      required:
+      - callFrames
+      properties:
+        description:
+          type: string
+          description: Optional label for the stack trace (e.g. async cause).
+        callFrames:
+          type: array
+          description: Ordered list of call frames, outermost first.
+          items:
+            type: object
+            required:
+            - functionName
+            - scriptId
+            - url
+            - lineNumber
+            - columnNumber
+            properties:
+              functionName:
+                type: string
+                description: JavaScript function name, or empty string for anonymous functions.
+              scriptId:
+                type: string
+                description: CDP script identifier.
+              url:
+                type: string
+                description: URL or name of the script file.
+              lineNumber:
+                type: integer
+                description: Zero-based line number within the script.
+              columnNumber:
+                type: integer
+                description: Zero-based column number within the line.
+        parent:
+          $ref: '#/components/schemas/BrowserCallStack'
+          description: Parent stack trace for async stacks.
+    BrowserMonitorScreenshotEvent:
+      type: object
+      title: monitor_screenshot
+      description: A periodic screenshot of the browser viewport.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: monitor_screenshot
+        category:
+          type: string
+          const: screenshot
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            png:
+              type: string
+              contentEncoding: base64
+              description: Base64-encoded PNG screenshot of the browser viewport.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
     BrowserPageLayoutSettledEvent:
       type: object
       title: page_layout_settled
@@ -602,6 +1289,126 @@ components:
           $ref: '#/components/schemas/BrowserEventSource'
         data:
           $ref: '#/components/schemas/BrowserEventContext'
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserCdpConnectEvent:
+      type: object
+      description: An external client (e.g. customer SDK, Playwright, Puppeteer) connected to the CDP WebSocket proxy on this VM.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: cdp_connect
+        category:
+          type: string
+          const: connection
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserNetworkRequestEvent:
+      type: object
+      title: network_request
+      description: A browser network request sent event.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: network_request
+        category:
+          type: string
+          const: network
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              request_id:
+                type: string
+                description: CDP request identifier, unique within the session.
+              method:
+                type: string
+                description: HTTP method as sent on the wire (e.g. GET, POST).
+              document_url:
+                type: string
+                description: URL of the document that initiated the request.
+              headers:
+                $ref: '#/components/schemas/BrowserHttpHeaders'
+                description: Request headers.
+              resource_type:
+                type: string
+                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
+              initiator_type:
+                type: string
+                description: CDP Initiator.type indicating what caused the request, passed through as-is from Chrome. Known values include script, parser, preload, and other.
+              post_data:
+                type: string
+                description: Request body for POST/PUT requests, if available.
+              is_redirect:
+                type: boolean
+                description: True if this request is the result of a redirect.
+              redirect_url:
+                type: string
+                description: Original URL before the redirect, present when is_redirect is true.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserInteractionKeyEvent:
+      type: object
+      title: interaction_key
+      description: A browser keyboard event captured via injected page script.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: interaction_key
+        category:
+          type: string
+          const: interaction
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          allOf:
+          - $ref: '#/components/schemas/BrowserEventContext'
+          - type: object
+            properties:
+              key:
+                type: string
+                description: Key value from the KeyboardEvent (e.g. Enter, Backspace, a).
+              selector:
+                type: string
+                description: CSS selector path to the element that had focus when the key was pressed.
+              tag:
+                type: string
+                description: HTML tag name of the focused element in uppercase (e.g. INPUT, TEXTAREA, DIV).
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
@@ -673,9 +1480,9 @@ components:
       description: 'Union type representing any browser telemetry event. Discriminated on `type`. Each event''s `category` determines when it is captured. The CDP collector-health events (monitor_disconnected, monitor_reconnected, monitor_reconnect_failed, monitor_init_failed) use the `monitor` category, which is not user-configurable: it flows automatically whenever any CDP category (console, network, page, interaction) is captured, and is silent otherwise. monitor_screenshot uses the opt-in `screenshot` category. All other event types are controlled by their per-category enable/disable flags.
 
         '
-    BrowserCaptchaSolveResultEvent:
+    BrowserApiCallEvent:
       type: object
-      description: A captcha solve attempt reached a terminal outcome.
+      description: An agent-driven HTTP call handled by the in-VM API server.
       required:
       - ts
       - type
@@ -688,55 +1495,69 @@ components:
           description: Event timestamp in Unix microseconds.
         type:
           type: string
-          const: captcha_solve_result
+          const: api_call
         category:
           type: string
-          const: captcha
+          const: control
         source:
           $ref: '#/components/schemas/BrowserEventSource'
         data:
           type: object
           additionalProperties: false
           required:
-          - captcha_type
+          - request_id
+          - operation_id
           - status
           - duration_ms
           properties:
-            captcha_type:
+            request_id:
               type: string
-              x-go-type: string
-              description: Captcha vendor family. Provider-specific task names are normalized into this set; anything not covered is reported as other.
-              enum:
-              - hcaptcha
-              - recaptcha_v2
-              - recaptcha_v3
-              - turnstile
-              - geetest
-              - other
+              description: Per-request identifier from the in-VM API request middleware.
+            operation_id:
+              type: string
+              description: OpenAPI operationId of the matched route (e.g. processExec, takeScreenshot).
             status:
-              type: string
-              x-go-type: string
-              description: 'Terminal outcome. success: solver returned a usable solution. failure: solver returned an error (see error_code). timeout: solver did not return within the caller''s wait budget. abandoned: caller cancelled or the page navigated away mid-solve.'
-              enum:
-              - success
-              - failure
-              - timeout
-              - abandoned
+              type: integer
+              description: HTTP response status code.
             duration_ms:
               type: number
-              description: Wall-clock duration from solve start to terminal outcome.
-            task_id:
-              type: string
-              description: Solver-assigned identifier. Opaque, useful for support cross-references.
-            website_host:
-              type: string
-              description: Host of the page where the captcha was solved.
-            website_path:
-              type: string
-              description: Path of the page where the captcha was solved. Query string excluded.
-            error_code:
-              type: string
-              description: Solver-specific error code on failure (e.g. ERROR_CAPTCHA_UNSOLVABLE). Absent on success.
+              description: Wall-clock duration of the handler in milliseconds.
+        truncated:
+          type: boolean
+          description: True if the data field was truncated due to size limits.
+    BrowserTargetType:
+      type: string
+      description: CDP target type of the page that produced the event.
+      enum:
+      - page
+      - background_page
+      - service_worker
+      - shared_worker
+      - other
+    BrowserPageNavigationSettledEvent:
+      type: object
+      title: page_navigation_settled
+      description: Emitted when page_dom_content_loaded and page_layout_settled have both fired for the same navigation, indicating the page is loaded and visually stable. Independent of network_idle; a single pending request does not block it.
+      required:
+      - ts
+      - type
+      - category
+      - source
+      properties:
+        ts:
+          type: integer
+          format: int64
+          description: Event timestamp in Unix microseconds.
+        type:
+          type: string
+          const: page_navigation_settled
+        category:
+          type: string
+          const: page
+        source:
+          $ref: '#/components/schemas/BrowserEventSource'
+        data:
+          $ref: '#/components/schemas/BrowserEventContext'
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
@@ -823,97 +1644,6 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
-    BrowserNetworkResponseEvent:
-      type: object
-      title: network_response
-      description: A browser network response received event. Fired after the response body is fully received, not when headers arrive.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: network_response
-        category:
-          type: string
-          const: network
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              request_id:
-                type: string
-                description: CDP request identifier matching the originating network_request event.
-              method:
-                type: string
-                description: HTTP method of the original request.
-              status:
-                type: integer
-                description: HTTP response status code.
-              status_text:
-                type: string
-                description: HTTP response status text (e.g. OK, Not Found).
-              headers:
-                $ref: '#/components/schemas/BrowserHttpHeaders'
-                description: Response headers.
-              mime_type:
-                type: string
-                description: MIME type of the response (e.g. text/html, application/json).
-              resource_type:
-                type: string
-                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
-              body:
-                type: string
-                description: Truncated response body, present only for text MIME types.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserLiveViewDisconnectEvent:
-      type: object
-      description: A live view client disconnected from the headful browser's WebRTC server. Pair with live_view_connect by session_id.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: live_view_disconnect
-        category:
-          type: string
-          const: connection
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          required:
-          - session_id
-          - duration_ms
-          properties:
-            session_id:
-              type: string
-              description: Live view session identifier; matches the corresponding live_view_connect event.
-            duration_ms:
-              type: number
-              description: Wall-clock duration of the connection in milliseconds.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
     BrowserPageDomContentLoadedEvent:
       type: object
       title: page_dom_content_loaded
@@ -947,739 +1677,15 @@ components:
         truncated:
           type: boolean
           description: True if the data field was truncated due to size limits.
-    BrowserCallStack:
-      type: object
-      description: CDP Runtime.StackTrace representing the JavaScript call stack at the time of an event. Fields use CDP naming conventions rather than snake_case to match the Chrome DevTools Protocol wire format.
-      required:
-      - callFrames
-      properties:
-        description:
-          type: string
-          description: Optional label for the stack trace (e.g. async cause).
-        callFrames:
-          type: array
-          description: Ordered list of call frames, outermost first.
-          items:
-            type: object
-            required:
-            - functionName
-            - scriptId
-            - url
-            - lineNumber
-            - columnNumber
-            properties:
-              functionName:
-                type: string
-                description: JavaScript function name, or empty string for anonymous functions.
-              scriptId:
-                type: string
-                description: CDP script identifier.
-              url:
-                type: string
-                description: URL or name of the script file.
-              lineNumber:
-                type: integer
-                description: Zero-based line number within the script.
-              columnNumber:
-                type: integer
-                description: Zero-based column number within the line.
-        parent:
-          $ref: '#/components/schemas/BrowserCallStack'
-          description: Parent stack trace for async stacks.
-    BrowserMonitorScreenshotEvent:
-      type: object
-      title: monitor_screenshot
-      description: A periodic screenshot of the browser viewport.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: monitor_screenshot
-        category:
-          type: string
-          const: screenshot
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          properties:
-            png:
-              type: string
-              contentEncoding: base64
-              description: Base64-encoded PNG screenshot of the browser viewport.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserPageLayoutShiftEvent:
-      type: object
-      title: page_layout_shift
-      description: A browser cumulative layout shift (CLS) event from the Performance Timeline API.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: page_layout_shift
-        category:
-          type: string
-          const: page
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              source_frame_id:
-                type: string
-                description: CDP frame identifier of the frame where the layout shift occurred.
-              time:
-                type: number
-                description: Performance Timeline timestamp of the layout shift in milliseconds.
-              duration:
-                type: number
-                description: Duration of the layout shift entry in milliseconds (always 0 for layout shifts per spec).
-              layout_shift_details:
-                type: object
-                additionalProperties: false
-                description: PerformanceLayoutShift attributes from the Performance Timeline entry.
-                properties:
-                  value:
-                    type: number
-                    description: Layout shift score for this entry (contribution to CLS).
-                  had_recent_input:
-                    type: boolean
-                    description: True if the layout shift was preceded by user input within 500ms, excluding it from CLS.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserCdpConnectEvent:
-      type: object
-      description: An external client (e.g. customer SDK, Playwright, Puppeteer) connected to the CDP WebSocket proxy on this VM.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: cdp_connect
-        category:
-          type: string
-          const: connection
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserInteractionScrollSettledEvent:
-      type: object
-      title: interaction_scroll_settled
-      description: A browser scroll settled event emitted after scroll position stops changing, captured via injected page script.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: interaction_scroll_settled
-        category:
-          type: string
-          const: interaction
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              from_x:
-                type: integer
-                description: Scroll x-position at the start of the scroll gesture in CSS pixels.
-              from_y:
-                type: integer
-                description: Scroll y-position at the start of the scroll gesture in CSS pixels.
-              to_x:
-                type: integer
-                description: Final scroll x-position after the gesture settled in CSS pixels.
-              to_y:
-                type: integer
-                description: Final scroll y-position after the gesture settled in CSS pixels.
-              target_selector:
-                type: string
-                description: CSS selector path to the scrolled element.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserPageLcpEvent:
-      type: object
-      title: page_lcp
-      description: A browser Largest Contentful Paint (LCP) event from the Performance Timeline API.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: page_lcp
-        category:
-          type: string
-          const: page
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              source_frame_id:
-                type: string
-                description: CDP frame identifier of the frame where the LCP element was rendered.
-              time:
-                type: number
-                description: Performance Timeline timestamp of the LCP entry in milliseconds.
-              lcp_details:
-                type: object
-                additionalProperties: false
-                description: LargestContentfulPaint attributes from the Performance Timeline entry.
-                properties:
-                  render_time:
-                    type: number
-                    description: Render time of the LCP element in milliseconds; 0 for cross-origin images without Timing-Allow-Origin.
-                  load_time:
-                    type: number
-                    description: Load time of the LCP element in milliseconds.
-                  size:
-                    type: number
-                    description: Visible area of the LCP element in pixels squared.
-                  element_id:
-                    type: string
-                    description: id attribute of the LCP element, if present.
-                  url:
-                    type: string
-                    description: URL of the LCP element for image or video elements.
-                  node_id:
-                    type: integer
-                    description: CDP DOM node identifier of the LCP element.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserNetworkLoadingFailedEvent:
-      type: object
-      title: network_loading_failed
-      description: A browser network loading failed event. If the request was already in flight when CDP attached (no prior network_request was emitted for it), url, frame_id, loader_id, and resource_type are absent; BrowserEventContext is partially populated in that case.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: network_loading_failed
-        category:
-          type: string
-          const: network
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              request_id:
-                type: string
-                description: CDP request identifier matching the originating network_request event.
-              error_text:
-                type: string
-                description: Network error description (e.g. net::ERR_CONNECTION_REFUSED).
-              canceled:
-                type: boolean
-                description: True if the request was canceled by the browser or page script.
-              resource_type:
-                type: string
-                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserNetworkRequestEvent:
-      type: object
-      title: network_request
-      description: A browser network request sent event.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: network_request
-        category:
-          type: string
-          const: network
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              request_id:
-                type: string
-                description: CDP request identifier, unique within the session.
-              method:
-                type: string
-                description: HTTP method as sent on the wire (e.g. GET, POST).
-              document_url:
-                type: string
-                description: URL of the document that initiated the request.
-              headers:
-                $ref: '#/components/schemas/BrowserHttpHeaders'
-                description: Request headers.
-              resource_type:
-                type: string
-                description: CDP Network.ResourceType for the request, passed through as-is from Chrome. Known values include Document, Fetch, XHR, Script, Stylesheet, Image, Media, Font, TextTrack, EventSource, WebSocket, Manifest, Prefetch, Other, and more.
-              initiator_type:
-                type: string
-                description: CDP Initiator.type indicating what caused the request, passed through as-is from Chrome. Known values include script, parser, preload, and other.
-              post_data:
-                type: string
-                description: Request body for POST/PUT requests, if available.
-              is_redirect:
-                type: boolean
-                description: True if this request is the result of a redirect.
-              redirect_url:
-                type: string
-                description: Original URL before the redirect, present when is_redirect is true.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserInteractionClickEvent:
-      type: object
-      title: interaction_click
-      description: A browser user click event captured via injected page script.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: interaction_click
-        category:
-          type: string
-          const: interaction
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              x:
-                type: integer
-                description: Viewport x-coordinate of the click in CSS pixels.
-              y:
-                type: integer
-                description: Viewport y-coordinate of the click in CSS pixels.
-              selector:
-                type: string
-                description: CSS selector path to the clicked element.
-              tag:
-                type: string
-                description: HTML tag name of the clicked element in uppercase (e.g. BUTTON, A, DIV).
-              text:
-                type: string
-                description: Visible text content of the clicked element, trimmed.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserEventSource:
-      type: object
-      description: Provenance metadata identifying which producer emitted the event.
-      required:
-      - kind
-      properties:
-        kind:
-          type: string
-          enum:
-          - cdp
-          - kernel_api
-          - extension
-          - local_process
-          description: 'Event producer. cdp: Chrome DevTools Protocol events from the browser. kernel_api: Kernel API server. extension: injected Chrome extension. local_process: system process running alongside the browser.'
-        event:
-          type: string
-          description: Producer-specific event name (e.g. Runtime.consoleAPICalled for CDP-sourced console events, Runtime.exceptionThrown for uncaught exceptions).
-        metadata:
-          type: object
-          description: Producer-specific context (e.g. CDP target/session/frame IDs).
-          additionalProperties:
-            type: string
-    BrowserMonitorReconnectedEvent:
-      type: object
-      title: monitor_reconnected
-      description: The CDP connection to Chrome was successfully re-established after a disconnection. Events emitted during the gap are lost. Computed state is reset, so navigation and network tracking restart fresh from this point.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: monitor_reconnected
-        category:
-          type: string
-          const: monitor
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          properties:
-            reconnect_duration_ms:
-              type: integer
-              format: int64
-              description: Wall-clock time in milliseconds taken to reconnect after the disconnection.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    BrowserApiCallEvent:
-      type: object
-      description: An agent-driven HTTP call handled by the in-VM API server.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: api_call
-        category:
-          type: string
-          const: control
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          required:
-          - request_id
-          - operation_id
-          - status
-          - duration_ms
-          properties:
-            request_id:
-              type: string
-              description: Per-request identifier from the in-VM API request middleware.
-            operation_id:
-              type: string
-              description: OpenAPI operationId of the matched route (e.g. processExec, takeScreenshot).
-            status:
-              type: integer
-              description: HTTP response status code.
-            duration_ms:
-              type: number
-              description: Wall-clock duration of the handler in milliseconds.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserPageLoadEvent:
-      type: object
-      title: page_load
-      description: A browser page load event (CDP Page.loadEventFired).
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: page_load
-        category:
-          type: string
-          const: page
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          allOf:
-          - $ref: '#/components/schemas/BrowserEventContext'
-          - type: object
-            properties:
-              cdp_timestamp:
-                type: number
-                description: Chrome monotonic clock value in seconds at which the load event fired, relative to browser process start (not Unix epoch). Use ts for wall-clock time.
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserPageNavigationEvent:
-      type: object
-      title: page_navigation
-      description: A browser page navigation started event (CDP Page.frameNavigated). Carries nav context fields inline but not nav_seq, as this event resets the navigation epoch.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: page_navigation
-        category:
-          type: string
-          const: page
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          properties:
-            url:
-              type: string
-              description: URL navigated to.
-            frame_id:
-              type: string
-              description: CDP frame identifier of the navigated frame.
-            parent_frame_id:
-              type: string
-              description: Parent frame identifier for subframe navigations; absent for top-level navigations.
-            loader_id:
-              type: string
-              description: New CDP document loader identifier assigned for this navigation.
-            session_id:
-              type: string
-              description: CDP session identifier.
-            target_id:
-              type: string
-              description: Browser target identifier.
-            target_type:
-              $ref: '#/components/schemas/BrowserTargetType'
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserMonitorDisconnectedEvent:
-      type: object
-      title: monitor_disconnected
-      description: The CDP connection to Chrome was lost. Telemetry events may be dropped until monitor_reconnected arrives. Treat any in-progress computed state (network_idle, page_layout_settled) as unreliable until then.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: monitor_disconnected
-        category:
-          type: string
-          const: monitor
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          properties:
-            reason:
-              type: string
-              description: 'Reason for the disconnection. chrome_restarted: Chrome process restarted.'
-              enum:
-              - chrome_restarted
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserCdpDisconnectEvent:
-      type: object
-      description: An external client disconnected from the CDP WebSocket proxy on this VM. Pair with the immediately preceding cdp_connect on the same stream.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: cdp_disconnect
-        category:
-          type: string
-          const: connection
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          type: object
-          additionalProperties: false
-          required:
-          - duration_ms
-          - message_count
-          - reason
-          properties:
-            duration_ms:
-              type: number
-              description: Wall-clock duration of the connection in milliseconds.
-            message_count:
-              type: integer
-              description: Number of CDP messages relayed across the connection in either direction.
-            reason:
-              type: string
-              x-go-type: string
-              description: 'Why the connection ended. client_close: the client initiated the close. upstream_changed: Chromium restarted mid-session and the proxy tore down so the client could reconnect against the new upstream. upstream_error: upstream dial or message pump errored. context_cancelled: the request context was cancelled (typically server shutdown).'
-              enum:
-              - client_close
-              - upstream_changed
-              - upstream_error
-              - context_cancelled
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserPageNavigationSettledEvent:
-      type: object
-      title: page_navigation_settled
-      description: Emitted when page_dom_content_loaded and page_layout_settled have both fired for the same navigation, indicating the page is loaded and visually stable. Independent of network_idle; a single pending request does not block it.
-      required:
-      - ts
-      - type
-      - category
-      - source
-      properties:
-        ts:
-          type: integer
-          format: int64
-          description: Event timestamp in Unix microseconds.
-        type:
-          type: string
-          const: page_navigation_settled
-        category:
-          type: string
-          const: page
-        source:
-          $ref: '#/components/schemas/BrowserEventSource'
-        data:
-          $ref: '#/components/schemas/BrowserEventContext'
-        truncated:
-          type: boolean
-          description: True if the data field was truncated due to size limits.
-    BrowserEventContext:
-      type: object
-      description: Browser event context stamped by the browser monitor onto all CDP-sourced events. Identifies the target, frame, and navigation epoch in which the event occurred.
-      properties:
-        session_id:
-          type: string
-          description: CDP session identifier for the target connection.
-        target_id:
-          type: string
-          description: Browser target identifier (stable across navigations within a tab).
-        target_type:
-          $ref: '#/components/schemas/BrowserTargetType'
-        frame_id:
-          type: string
-          description: CDP frame identifier within the target.
-        loader_id:
-          type: string
-          description: CDP document loader identifier, reset on each navigation.
-        url:
-          type: string
-          description: URL relevant to this event — page URL for navigation and page events, request URL for network events.
-        nav_seq:
-          type: integer
-          format: int64
-          description: Monotonically increasing navigation sequence number, incremented on each top-level navigation within the target.
   responses:
     Unauthorized:
       description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
       content:
         application/json:
           schema:
@@ -1698,12 +1704,6 @@ components:
             $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
       content:
         application/json:
           schema:

@@ -304,101 +304,6 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Deployments.FollowStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.DeploymentFollowParams{},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    LogEvent:
-      type: object
-      description: A log entry from the application.
-      required:
-      - event
-      - message
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: log
-          description: Event type identifier (always "log").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the log entry was produced.
-        message:
-          type: string
-          description: Log message text.
-    DeploymentEvent:
-      oneOf:
-      - $ref: '#/components/schemas/LogEvent'
-      - $ref: '#/components/schemas/DeploymentStateEvent'
-      - $ref: '#/components/schemas/AppVersionSummaryEvent'
-      - $ref: '#/components/schemas/ErrorEvent'
-      - $ref: '#/components/schemas/SSEHeartbeatEvent'
-      discriminator:
-        propertyName: event
-        mapping:
-          log: '#/components/schemas/LogEvent'
-          deployment_state: '#/components/schemas/DeploymentStateEvent'
-          app_version_summary: '#/components/schemas/AppVersionSummary'
-          error: '#/components/schemas/InternalError'
-          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
-      description: Union type representing any deployment event.
-    ErrorEvent:
-      type: object
-      description: An error event from the application.
-      required:
-      - event
-      - timestamp
-      - error
-      properties:
-        event:
-          type: string
-          const: error
-          description: Event type identifier (always "error").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the error occurred.
-        error:
-          $ref: '#/components/schemas/Error'
-    DeploymentRequest:
-      type: object
-      description: App deployment request. Provide either file+entrypoint_rel_path or source.
-      properties:
-        version:
-          type: string
-          description: Version of the application. Can be any string.
-          example: 1.0.0
-          default: latest
-        file:
-          type: string
-          format: binary
-          description: ZIP file containing the application source directory
-          example: '@path/to/file.zip'
-        entrypoint_rel_path:
-          type: string
-          description: Relative path to the entrypoint of the application
-          example: src/app.py
-        source:
-          $ref: '#/components/schemas/DeploymentSource'
-        region:
-          type: string
-          description: Region for deployment. Currently we only support "aws.us-east-1a"
-          example: aws.us-east-1a
-          default: aws.us-east-1a
-          const: aws.us-east-1a
-        force:
-          type: boolean
-          description: Allow overwriting an existing app version
-          example: false
-          default: false
-        env_vars:
-          type: object
-          description: Map of environment variables to set for the deployed application. Each key-value pair represents an environment variable.
-          additionalProperties:
-            type: string
-      oneOf:
-      - required:
-        - file
-        - entrypoint_rel_path
-      - required:
-        - source
     AppVersionSummaryEvent:
       type: object
       description: Summary of an application version.
@@ -446,55 +351,6 @@ components:
           description: Environment variables configured for this app version. Not currently populated on streamed app_version_summary events.
           additionalProperties:
             type: string
-    DeploymentSource:
-      type: object
-      description: Source from which to fetch application code.
-      properties:
-        type:
-          type: string
-          description: Source type identifier.
-          enum:
-          - github
-          example: github
-        url:
-          type: string
-          description: Base repository URL (without blob/tree suffixes).
-          example: https://github.com/org/repo
-        ref:
-          type: string
-          description: Git ref (branch, tag, or commit SHA) to fetch.
-          example: main
-        path:
-          type: string
-          description: Path within the repo to deploy (omit to use repo root).
-          example: apps/api
-        entrypoint:
-          type: string
-          description: Relative path to the application entrypoint within the selected path.
-          example: src/index.ts
-        auth:
-          type: object
-          description: Authentication for private repositories.
-          properties:
-            method:
-              type: string
-              enum:
-              - github_token
-              description: Auth method
-              example: github_token
-            token:
-              type: string
-              format: password
-              description: GitHub PAT or installation access token
-              example: ghs_***
-          required:
-          - method
-          - token
-      required:
-      - type
-      - url
-      - ref
-      - entrypoint
     DeploymentStateEvent:
       type: object
       description: An event representing the current state of a deployment.
@@ -524,21 +380,69 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    SSEHeartbeatEvent:
+    DeploymentRequest:
       type: object
-      description: Heartbeat event sent periodically to keep SSE connection alive.
-      required:
-      - event
-      - timestamp
+      description: App deployment request. Provide either file+entrypoint_rel_path or source.
       properties:
-        event:
+        version:
           type: string
-          const: sse_heartbeat
-          description: Event type identifier (always "sse_heartbeat").
-        timestamp:
+          description: Version of the application. Can be any string.
+          example: 1.0.0
+          default: latest
+        file:
           type: string
-          format: date-time
-          description: Time the heartbeat was sent.
+          format: binary
+          description: ZIP file containing the application source directory
+          example: '@path/to/file.zip'
+        entrypoint_rel_path:
+          type: string
+          description: Relative path to the entrypoint of the application
+          example: src/app.py
+        source:
+          $ref: '#/components/schemas/DeploymentSource'
+        region:
+          type: string
+          description: Region for deployment. Currently we only support "aws.us-east-1a"
+          example: aws.us-east-1a
+          default: aws.us-east-1a
+          const: aws.us-east-1a
+        force:
+          type: boolean
+          description: Allow overwriting an existing app version
+          example: false
+          default: false
+        env_vars:
+          type: object
+          description: Map of environment variables to set for the deployed application. Each key-value pair represents an environment variable.
+          additionalProperties:
+            type: string
+      oneOf:
+      - required:
+        - file
+        - entrypoint_rel_path
+      - required:
+        - source
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
     Deployment:
       type: object
       description: Deployment record information.
@@ -613,6 +517,58 @@ components:
       - status
       - region
       - created_at
+    ErrorEvent:
+      type: object
+      description: An error event from the application.
+      required:
+      - event
+      - timestamp
+      - error
+      properties:
+        event:
+          type: string
+          const: error
+          description: Event type identifier (always "error").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the error occurred.
+        error:
+          $ref: '#/components/schemas/Error'
+    SSEHeartbeatEvent:
+      type: object
+      description: Heartbeat event sent periodically to keep SSE connection alive.
+      required:
+      - event
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the heartbeat was sent.
+    LogEvent:
+      type: object
+      description: A log entry from the application.
+      required:
+      - event
+      - message
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: log
+          description: Event type identifier (always "log").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the log entry was produced.
+        message:
+          type: string
+          description: Log message text.
     AppAction:
       type: object
       description: An action available on the app
@@ -633,30 +589,74 @@ components:
           nullable: true
           description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
           additionalProperties: true
-    Error:
+    DeploymentEvent:
+      oneOf:
+      - $ref: '#/components/schemas/LogEvent'
+      - $ref: '#/components/schemas/DeploymentStateEvent'
+      - $ref: '#/components/schemas/AppVersionSummaryEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          log: '#/components/schemas/LogEvent'
+          deployment_state: '#/components/schemas/DeploymentStateEvent'
+          app_version_summary: '#/components/schemas/AppVersionSummary'
+          error: '#/components/schemas/InternalError'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any deployment event.
+    DeploymentSource:
       type: object
-      required:
-      - code
-      - message
+      description: Source from which to fetch application code.
       properties:
-        code:
+        type:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
+          description: Source type identifier.
+          enum:
+          - github
+          example: github
+        url:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
+          description: Base repository URL (without blob/tree suffixes).
+          example: https://github.com/org/repo
+        ref:
+          type: string
+          description: Git ref (branch, tag, or commit SHA) to fetch.
+          example: main
+        path:
+          type: string
+          description: Path within the repo to deploy (omit to use repo root).
+          example: apps/api
+        entrypoint:
+          type: string
+          description: Relative path to the application entrypoint within the selected path.
+          example: src/index.ts
+        auth:
+          type: object
+          description: Authentication for private repositories.
+          properties:
+            method:
+              type: string
+              enum:
+              - github_token
+              description: Auth method
+              example: github_token
+            token:
+              type: string
+              format: password
+              description: GitHub PAT or installation access token
+              example: ghs_***
+          required:
+          - method
+          - token
+      required:
+      - type
+      - url
+      - ref
+      - entrypoint
   responses:
-    NotFound:
-      description: Resource not found
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:
@@ -667,14 +667,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
       content:
         application/json:
           schema:

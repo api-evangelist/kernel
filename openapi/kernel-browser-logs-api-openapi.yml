@@ -81,25 +81,6 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Browsers.Logs.StreamStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserLogStreamParams{\n\t\t\tSource: kernel.BrowserLogStreamParamsSourcePath,\n\t\t},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    LogEvent:
-      type: object
-      description: A log entry from the application.
-      required:
-      - event
-      - message
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: log
-          description: Event type identifier (always "log").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the log entry was produced.
-        message:
-          type: string
-          description: Log message text.
     ErrorDetail:
       type: object
       properties:
@@ -132,7 +113,32 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
+    LogEvent:
+      type: object
+      description: A log entry from the application.
+      required:
+      - event
+      - message
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: log
+          description: Event type identifier (always "log").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the log entry was produced.
+        message:
+          type: string
+          description: Log message text.
   responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     InternalError:
       description: Internal Server Error
       content:
@@ -141,12 +147,6 @@ components:
             $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
       content:
         application/json:
           schema:
