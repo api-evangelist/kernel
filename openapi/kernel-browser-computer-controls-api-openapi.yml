@@ -468,19 +468,6 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.Computer.WriteClipboard(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserComputerWriteClipboardParams{\n\t\t\tText: \"text\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
   schemas:
-    MousePositionResponse:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        x:
-          type: integer
-          description: X coordinate of the cursor
-        y:
-          type: integer
-          description: Y coordinate of the cursor
-      additionalProperties: false
     SleepAction:
       type: object
       description: Pause execution for a specified duration.
@@ -493,6 +480,87 @@ components:
           minimum: 0
           maximum: 30000
       additionalProperties: false
+    BatchComputerActionRequest:
+      type: object
+      description: A batch of computer actions to execute sequentially.
+      required:
+      - actions
+      properties:
+        actions:
+          type: array
+          description: Ordered list of actions to execute. Execution stops on the first error.
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ComputerAction'
+      additionalProperties: false
+    TypeTextRequest:
+      type: object
+      required:
+      - text
+      properties:
+        text:
+          type: string
+          description: Text to type on the browser instance
+        delay:
+          type: integer
+          description: Delay in milliseconds between keystrokes
+          minimum: 0
+          default: 0
+      additionalProperties: false
+    OkResponse:
+      type: object
+      description: Generic OK response.
+      required:
+      - ok
+      properties:
+        ok:
+          type: boolean
+          description: Indicates success.
+          default: true
+      additionalProperties: false
+    ScreenshotRegion:
+      type: object
+      required:
+      - x
+      - y
+      - width
+      - height
+      properties:
+        x:
+          type: integer
+          description: X coordinate of the region's top-left corner
+        y:
+          type: integer
+          description: Y coordinate of the region's top-left corner
+        width:
+          type: integer
+          description: Width of the region in pixels
+        height:
+          type: integer
+          description: Height of the region in pixels
+      additionalProperties: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
     DragMouseRequest:
       type: object
       required:
@@ -545,106 +613,6 @@ components:
           minimum: 50
           maximum: 10000
       additionalProperties: false
-    ScrollRequest:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        x:
-          type: integer
-          description: X coordinate at which to perform the scroll
-        y:
-          type: integer
-          description: Y coordinate at which to perform the scroll
-        delta_x:
-          type: integer
-          description: Horizontal scroll amount in xdotool "wheel units." Positive scrolls right, negative scrolls left.
-          default: 0
-        delta_y:
-          type: integer
-          description: Vertical scroll amount in xdotool "wheel units." Positive scrolls down, negative scrolls up.
-          default: 0
-        hold_keys:
-          type: array
-          description: Modifier keys to hold during the scroll
-          items:
-            type: string
-      additionalProperties: false
-    MoveMouseRequest:
-      type: object
-      required:
-      - x
-      - y
-      properties:
-        x:
-          type: integer
-          description: X coordinate to move the cursor to
-        y:
-          type: integer
-          description: Y coordinate to move the cursor to
-        hold_keys:
-          type: array
-          description: Modifier keys to hold during the move
-          items:
-            type: string
-        smooth:
-          type: boolean
-          description: Use human-like Bezier curve path instead of instant mouse movement.
-          default: true
-        duration_ms:
-          type: integer
-          description: Target total duration in milliseconds for the mouse movement when smooth=true. Omit for automatic timing based on distance.
-          minimum: 50
-          maximum: 5000
-      additionalProperties: false
-    ScreenshotRequest:
-      type: object
-      properties:
-        region:
-          $ref: '#/components/schemas/ScreenshotRegion'
-      additionalProperties: false
-    ClipboardContent:
-      type: object
-      required:
-      - text
-      properties:
-        text:
-          type: string
-          description: Current clipboard text content
-      additionalProperties: false
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
     WriteClipboardRequest:
       type: object
       required:
@@ -653,20 +621,6 @@ components:
         text:
           type: string
           description: Text to write to the system clipboard
-      additionalProperties: false
-    BatchComputerActionRequest:
-      type: object
-      description: A batch of computer actions to execute sequentially.
-      required:
-      - actions
-      properties:
-        actions:
-          type: array
-          description: Ordered list of actions to execute. Execution stops on the first error.
-          minItems: 1
-          maxItems: 100
-          items:
-            $ref: '#/components/schemas/ComputerAction'
       additionalProperties: false
     PressKeyRequest:
       type: object
@@ -695,6 +649,119 @@ components:
           items:
             type: string
       additionalProperties: false
+    ClipboardContent:
+      type: object
+      required:
+      - text
+      properties:
+        text:
+          type: string
+          description: Current clipboard text content
+      additionalProperties: false
+    ClickMouseRequest:
+      type: object
+      required:
+      - x
+      - y
+      properties:
+        button:
+          type: string
+          description: Mouse button to interact with
+          enum:
+          - left
+          - right
+          - middle
+          - back
+          - forward
+        click_type:
+          type: string
+          description: Type of click action
+          enum:
+          - down
+          - up
+          - click
+        x:
+          type: integer
+          description: X coordinate of the click position
+        y:
+          type: integer
+          description: Y coordinate of the click position
+        hold_keys:
+          type: array
+          description: Modifier keys to hold during the click
+          items:
+            type: string
+        num_clicks:
+          type: integer
+          description: Number of times to repeat the click
+          default: 1
+      additionalProperties: false
+    ScreenshotRequest:
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ScreenshotRegion'
+      additionalProperties: false
+    MousePositionResponse:
+      type: object
+      required:
+      - x
+      - y
+      properties:
+        x:
+          type: integer
+          description: X coordinate of the cursor
+        y:
+          type: integer
+          description: Y coordinate of the cursor
+      additionalProperties: false
+    MoveMouseRequest:
+      type: object
+      required:
+      - x
+      - y
+      properties:
+        x:
+          type: integer
+          description: X coordinate to move the cursor to
+        y:
+          type: integer
+          description: Y coordinate to move the cursor to
+        hold_keys:
+          type: array
+          description: Modifier keys to hold during the move
+          items:
+            type: string
+        smooth:
+          type: boolean
+          description: Use human-like Bezier curve path instead of instant mouse movement.
+          default: true
+        duration_ms:
+          type: integer
+          description: Target total duration in milliseconds for the mouse movement when smooth=true. Omit for automatic timing based on distance.
+          minimum: 50
+          maximum: 5000
+      additionalProperties: false
+    SetCursorRequest:
+      type: object
+      required:
+      - hidden
+      properties:
+        hidden:
+          type: boolean
+          description: Whether the cursor should be hidden or visible
+      additionalProperties: false
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
     ComputerAction:
       type: object
       description: 'A single computer action to execute as part of a batch. The `type` field selects which
@@ -736,100 +803,39 @@ components:
         sleep:
           $ref: '#/components/schemas/SleepAction'
       additionalProperties: false
-    SetCursorRequest:
-      type: object
-      required:
-      - hidden
-      properties:
-        hidden:
-          type: boolean
-          description: Whether the cursor should be hidden or visible
-      additionalProperties: false
-    ClickMouseRequest:
+    ScrollRequest:
       type: object
       required:
       - x
       - y
       properties:
-        button:
-          type: string
-          description: Mouse button to interact with
-          enum:
-          - left
-          - right
-          - middle
-          - back
-          - forward
-        click_type:
-          type: string
-          description: Type of click action
-          enum:
-          - down
-          - up
-          - click
         x:
           type: integer
-          description: X coordinate of the click position
+          description: X coordinate at which to perform the scroll
         y:
           type: integer
-          description: Y coordinate of the click position
+          description: Y coordinate at which to perform the scroll
+        delta_x:
+          type: integer
+          description: Horizontal scroll amount in xdotool "wheel units." Positive scrolls right, negative scrolls left.
+          default: 0
+        delta_y:
+          type: integer
+          description: Vertical scroll amount in xdotool "wheel units." Positive scrolls down, negative scrolls up.
+          default: 0
         hold_keys:
           type: array
-          description: Modifier keys to hold during the click
+          description: Modifier keys to hold during the scroll
           items:
             type: string
-        num_clicks:
-          type: integer
-          description: Number of times to repeat the click
-          default: 1
-      additionalProperties: false
-    ScreenshotRegion:
-      type: object
-      required:
-      - x
-      - y
-      - width
-      - height
-      properties:
-        x:
-          type: integer
-          description: X coordinate of the region's top-left corner
-        y:
-          type: integer
-          description: Y coordinate of the region's top-left corner
-        width:
-          type: integer
-          description: Width of the region in pixels
-        height:
-          type: integer
-          description: Height of the region in pixels
-      additionalProperties: false
-    OkResponse:
-      type: object
-      description: Generic OK response.
-      required:
-      - ok
-      properties:
-        ok:
-          type: boolean
-          description: Indicates success.
-          default: true
-      additionalProperties: false
-    TypeTextRequest:
-      type: object
-      required:
-      - text
-      properties:
-        text:
-          type: string
-          description: Text to type on the browser instance
-        delay:
-          type: integer
-          description: Delay in milliseconds between keystrokes
-          minimum: 0
-          default: 0
       additionalProperties: false
   responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     BadRequest:
       description: Bad Request – invalid input
       content:
@@ -838,12 +844,6 @@ components:
             $ref: '#/components/schemas/Error'
     InternalError:
       description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
       content:
         application/json:
           schema:

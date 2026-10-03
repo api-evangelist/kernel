@@ -266,18 +266,6 @@ components:
           description: URL for viewing the replay recording.
           example: https://api.onkernel.com/browser/replays?jwt=eyJ0eXAi...&replay_id=7e2c1a9f-1234-4cde-9abc-ffeedd001122
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -290,14 +278,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
       description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
       content:
         application/json:
           schema:

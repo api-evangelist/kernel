@@ -330,34 +330,6 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    RotateApiKeyRequest:
-      type: object
-      properties:
-        days_to_expire:
-          type: integer
-          description: Lifetime in days for the new key, up to 3650. Omit to reuse the rotated key's original lifetime, or never-expires if it had none.
-          minimum: 1
-          maximum: 3650
-          example: 30
-          nullable: true
-        expire_in_days:
-          type: integer
-          description: Grace period in days before the rotated key expires. Use 0 to expire it immediately. Omit for the default grace period of 7 days.
-          minimum: 0
-          maximum: 3650
-          example: 7
-          nullable: true
-    UpdateApiKeyRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: New API key name
-          minLength: 1
-          maxLength: 255
-          example: new-api-name
     Error:
       type: object
       required:
@@ -379,18 +351,27 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    CreatedApiKey:
-      description: API key returned immediately after creation. Includes the plaintext key once.
-      allOf:
-      - $ref: '#/components/schemas/ApiKey'
-      - type: object
-        required:
-        - key
-        properties:
-          key:
-            type: string
-            description: Plaintext API key. Only returned once when the key is created.
-            example: sk_1234abcd
+    ApiKeyCreator:
+      type: object
+      required:
+      - id
+      - email
+      - name
+      properties:
+        id:
+          type: string
+          description: Kernel user ID of the creator.
+          example: user-abc123
+        email:
+          type: string
+          format: email
+          description: Email address of the creator.
+          example: user@example.com
+        name:
+          type: string
+          nullable: true
+          description: Display name of the creator, if available.
+          example: Jane Doe
     ApiKey:
       type: object
       required:
@@ -442,6 +423,35 @@ components:
           type: string
           description: Masked version of the API key
           example: sk_1234...abcd
+    CreatedApiKey:
+      description: API key returned immediately after creation. Includes the plaintext key once.
+      allOf:
+      - $ref: '#/components/schemas/ApiKey'
+      - type: object
+        required:
+        - key
+        properties:
+          key:
+            type: string
+            description: Plaintext API key. Only returned once when the key is created.
+            example: sk_1234abcd
+    RotateApiKeyRequest:
+      type: object
+      properties:
+        days_to_expire:
+          type: integer
+          description: Lifetime in days for the new key, up to 3650. Omit to reuse the rotated key's original lifetime, or never-expires if it had none.
+          minimum: 1
+          maximum: 3650
+          example: 30
+          nullable: true
+        expire_in_days:
+          type: integer
+          description: Grace period in days before the rotated key expires. Use 0 to expire it immediately. Omit for the default grace period of 7 days.
+          minimum: 0
+          maximum: 3650
+          example: 7
+          nullable: true
     CreateApiKeyRequest:
       type: object
       required:
@@ -465,40 +475,18 @@ components:
           description: Unique project identifier
           example: proj_abc123
           nullable: true
-    ApiKeyCreator:
+    UpdateApiKeyRequest:
       type: object
       required:
-      - id
-      - email
       - name
       properties:
-        id:
-          type: string
-          description: Kernel user ID of the creator.
-          example: user-abc123
-        email:
-          type: string
-          format: email
-          description: Email address of the creator.
-          example: user@example.com
         name:
           type: string
-          nullable: true
-          description: Display name of the creator, if available.
-          example: Jane Doe
+          description: New API key name
+          minLength: 1
+          maxLength: 255
+          example: new-api-name
   responses:
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -507,6 +495,18 @@ components:
             $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:

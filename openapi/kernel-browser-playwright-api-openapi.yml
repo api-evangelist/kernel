@@ -60,30 +60,6 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Playwright.Execute(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserPlaywrightExecuteParams{\n\t\t\tCode: \"code\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Success)\n}\n"
 components:
   schemas:
-    ExecutePlaywrightRequest:
-      type: object
-      description: Request to execute Playwright code
-      required:
-      - code
-      properties:
-        code:
-          type: string
-          description: 'TypeScript/JavaScript code to execute. The code has access to ''page'', ''context'', and ''browser'' variables.
-
-            It runs within a function, so you can use a return statement at the end to return a value.
-
-            This value is returned as the `result` property in the response.
-
-            Example: "await page.goto(''https://example.com''); return await page.title();"
-
-            '
-        timeout_sec:
-          type: integer
-          description: Maximum execution time in seconds. Default is 60.
-          default: 60
-          minimum: 1
-          maximum: 300
-      additionalProperties: false
     ErrorDetail:
       type: object
       properties:
@@ -116,6 +92,30 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
+    ExecutePlaywrightRequest:
+      type: object
+      description: Request to execute Playwright code
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: 'TypeScript/JavaScript code to execute. The code has access to ''page'', ''context'', and ''browser'' variables.
+
+            It runs within a function, so you can use a return statement at the end to return a value.
+
+            This value is returned as the `result` property in the response.
+
+            Example: "await page.goto(''https://example.com''); return await page.title();"
+
+            '
+        timeout_sec:
+          type: integer
+          description: Maximum execution time in seconds. Default is 60.
+          default: 60
+          minimum: 1
+          maximum: 300
+      additionalProperties: false
     ExecutePlaywrightResult:
       type: object
       description: Result of Playwright code execution
@@ -138,14 +138,14 @@ components:
           description: Standard error from the execution
       additionalProperties: false
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
+    InternalError:
+      description: Internal Server Error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:

@@ -133,8 +133,8 @@ components:
           type: string
           description: Log message text.
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:
@@ -145,8 +145,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:

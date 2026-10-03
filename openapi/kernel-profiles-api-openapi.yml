@@ -296,14 +296,32 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Profiles.Download(context.TODO(), \"id_or_name\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
 components:
   schemas:
-    ProfileRequest:
+    Profile:
       type: object
-      description: Request body for creating a profile.
+      description: Browser profile metadata.
       properties:
+        id:
+          type: string
+          description: Unique identifier for the profile
         name:
           type: string
-          description: Optional name of the profile. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
-      required: []
+          nullable: true
+          description: Optional, easier-to-reference name for the profile
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last updated
+        last_used_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last used
+      required:
+      - id
+      - created_at
     ErrorDetail:
       type: object
       properties:
@@ -336,6 +354,14 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
+    ProfileRequest:
+      type: object
+      description: Request body for creating a profile.
+      properties:
+        name:
+          type: string
+          description: Optional name of the profile. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
+      required: []
     ProfileUpdateRequest:
       type: object
       required:
@@ -347,45 +373,7 @@ components:
           minLength: 1
           maxLength: 255
           example: my-renamed-profile
-    Profile:
-      type: object
-      description: Browser profile metadata.
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the profile
-        name:
-          type: string
-          nullable: true
-          description: Optional, easier-to-reference name for the profile
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was created
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last updated
-        last_used_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last used
-      required:
-      - id
-      - created_at
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -398,14 +386,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
       description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
       content:
         application/json:
           schema:

@@ -369,18 +369,6 @@ components:
       - created_at
       - size_bytes
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -393,14 +381,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
+    InternalError:
+      description: Internal Server Error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
       description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
       content:
         application/json:
           schema:
