@@ -76,18 +76,44 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\torgLimits, err := client.Organization.Limits.Update(context.TODO(), kernel.OrganizationLimitUpdateParams{\n\t\tUpdateOrgLimitsRequest: kernel.UpdateOrgLimitsRequestParam{},\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", orgLimits.DefaultProjectMaxConcurrentSessions)\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    ErrorDetail:
+    OrgLimits:
       type: object
       properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+        max_concurrent_sessions:
+          type: integer
+          description: The organization's effective concurrency limit — the maximum browsers running at once, covering both on-demand sessions and browser pool reservations — from its plan or an override. Read-only and shared across all projects in the org; a per-project default cannot exceed it.
+          example: 100
+        default_project_max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
+          example: 10
     Error:
       type: object
       required:
@@ -116,43 +142,17 @@ components:
           type: integer
           nullable: true
           description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
-    OrgLimits:
+    ErrorDetail:
       type: object
       properties:
-        max_concurrent_sessions:
-          type: integer
-          description: The organization's effective concurrency limit — the maximum browsers running at once, covering both on-demand sessions and browser pool reservations — from its plan or an override. Read-only and shared across all projects in the org; a per-project default cannot exceed it.
-          example: 100
-        default_project_max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
-          example: 10
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
   securitySchemes:
     bearerAuth:
       type: http

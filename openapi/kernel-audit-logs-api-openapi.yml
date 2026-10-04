@@ -277,18 +277,47 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"time\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.AuditLogs.ExportChunk(context.TODO(), kernel.AuditLogExportChunkParams{\n\t\tEnd:   time.Now(),\n\t\tStart: time.Now(),\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    ErrorDetail:
+    Error:
       type: object
+      required:
+      - code
+      - message
       properties:
         code:
           type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
+          description: Application-specific error code (machine-readable)
+          example: bad_request
         message:
           type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
     AuditLogEntry:
       type: object
       required:
@@ -342,46 +371,17 @@ components:
         user_agent:
           type: string
           description: User agent header.
-    Error:
+    ErrorDetail:
       type: object
-      required:
-      - code
-      - message
       properties:
         code:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
         message:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
   securitySchemes:
     bearerAuth:
       type: http

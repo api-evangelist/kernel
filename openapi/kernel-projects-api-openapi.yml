@@ -610,7 +610,81 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tprojectLimits, err := client.Projects.Limits.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProjectLimitUpdateParams{\n\t\t\tUpdateProjectLimitsRequest: kernel.UpdateProjectLimitsRequestParam{},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", projectLimits.MaxConcurrentInvocations)\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    UpdateProjectLimitsRequest:
+      type: object
+      properties:
+        max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Maximum concurrent browsers for this project, covering both on-demand sessions and browser pool reservations. Set to 0 to remove the cap; omit to leave unchanged.
+        max_concurrent_invocations:
+          type: integer
+          nullable: true
+          description: Maximum concurrent app invocations for this project. Set to 0 to remove the cap; omit to leave unchanged.
+        max_pooled_sessions:
+          type: integer
+          nullable: true
+          deprecated: true
+          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Requests that set this field are rejected with a 400 once the unified concurrency limit is enabled for your organization.'
     Project:
       type: object
       required:
@@ -643,6 +717,34 @@ components:
           type: string
           format: date-time
           description: When the project was last updated
+    ProjectLimits:
+      type: object
+      properties:
+        max_concurrent_sessions:
+          type: integer
+          nullable: true
+          description: Maximum concurrent browsers for this project, covering both on-demand sessions (`browsers.create()`) and browser pool reservations. Null means no project-level cap.
+          example: 10
+        max_concurrent_invocations:
+          type: integer
+          nullable: true
+          description: Maximum concurrent app invocations for this project. Null means no project-level cap.
+          example: 20
+        max_pooled_sessions:
+          type: integer
+          nullable: true
+          deprecated: true
+          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Always null once the unified concurrency limit is enabled for your organization.'
+          example: 50
+    CreateProjectRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Project name (1-255 characters)
+          example: staging
     ErrorDetail:
       type: object
       properties:
@@ -666,108 +768,6 @@ components:
           - active
           - archived
           description: New project status
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    CreateProjectRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Project name (1-255 characters)
-          example: staging
-    UpdateProjectLimitsRequest:
-      type: object
-      properties:
-        max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Maximum concurrent browsers for this project, covering both on-demand sessions and browser pool reservations. Set to 0 to remove the cap; omit to leave unchanged.
-        max_concurrent_invocations:
-          type: integer
-          nullable: true
-          description: Maximum concurrent app invocations for this project. Set to 0 to remove the cap; omit to leave unchanged.
-        max_pooled_sessions:
-          type: integer
-          nullable: true
-          deprecated: true
-          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Requests that set this field are rejected with a 400 once the unified concurrency limit is enabled for your organization.'
-    ProjectLimits:
-      type: object
-      properties:
-        max_concurrent_sessions:
-          type: integer
-          nullable: true
-          description: Maximum concurrent browsers for this project, covering both on-demand sessions (`browsers.create()`) and browser pool reservations. Null means no project-level cap.
-          example: 10
-        max_concurrent_invocations:
-          type: integer
-          nullable: true
-          description: Maximum concurrent app invocations for this project. Null means no project-level cap.
-          example: 20
-        max_pooled_sessions:
-          type: integer
-          nullable: true
-          deprecated: true
-          description: 'Deprecated: pooled browsers now count toward `max_concurrent_sessions`. Always null once the unified concurrency limit is enabled for your organization.'
-          example: 50
-  responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

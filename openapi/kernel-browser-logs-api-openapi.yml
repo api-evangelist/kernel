@@ -80,18 +80,45 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Browsers.Logs.StreamStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserLogStreamParams{\n\t\t\tSource: kernel.BrowserLogStreamParamsSourcePath,\n\t\t},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    ErrorDetail:
+    LogEvent:
       type: object
+      description: A log entry from the application.
+      required:
+      - event
+      - message
+      - timestamp
       properties:
-        code:
+        event:
           type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
+          const: log
+          description: Event type identifier (always "log").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the log entry was produced.
         message:
           type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+          description: Log message text.
     Error:
       type: object
       required:
@@ -113,44 +140,17 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    LogEvent:
+    ErrorDetail:
       type: object
-      description: A log entry from the application.
-      required:
-      - event
-      - message
-      - timestamp
       properties:
-        event:
+        code:
           type: string
-          const: log
-          description: Event type identifier (always "log").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the log entry was produced.
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
         message:
           type: string
-          description: Log message text.
-  responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
   securitySchemes:
     bearerAuth:
       type: http

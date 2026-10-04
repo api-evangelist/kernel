@@ -324,14 +324,47 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Process.Resize(\n\t\tcontext.TODO(),\n\t\t\"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e\",\n\t\tkernel.BrowserProcessResizeParams{\n\t\t\tID:   \"id\",\n\t\t\tCols: 1,\n\t\t\tRows: 1,\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Ok)\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    ProcessStdinResult:
+    ProcessStreamEvent:
       type: object
-      description: Result of writing to stdin.
+      description: SSE payload representing process output or lifecycle events.
       properties:
-        written_bytes:
+        stream:
+          type: string
+          description: Source stream of the data chunk.
+          enum:
+          - stdout
+          - stderr
+        data_b64:
+          type: string
+          description: Base64-encoded data from the process stream.
+        event:
+          type: string
+          description: Lifecycle event type.
+          enum:
+          - exit
+        exit_code:
           type: integer
-          description: Number of bytes written.
+          description: Exit code when the event is "exit".
       additionalProperties: false
     ProcessExecRequest:
       type: object
@@ -372,6 +405,144 @@ components:
           description: Maximum execution time in seconds.
           nullable: true
       additionalProperties: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ProcessExecResult:
+      type: object
+      description: Result of a synchronous command execution.
+      properties:
+        exit_code:
+          type: integer
+          description: Process exit code.
+        stdout_b64:
+          type: string
+          description: Base64-encoded stdout buffer.
+        stderr_b64:
+          type: string
+          description: Base64-encoded stderr buffer.
+        duration_ms:
+          type: integer
+          description: Execution duration in milliseconds.
+      additionalProperties: false
+    OkResponse:
+      type: object
+      description: Generic OK response.
+      required:
+      - ok
+      properties:
+        ok:
+          type: boolean
+          description: Indicates success.
+          default: true
+      additionalProperties: false
+    ProcessStdinRequest:
+      type: object
+      description: Data to write to the process standard input.
+      required:
+      - data_b64
+      properties:
+        data_b64:
+          type: string
+          description: Base64-encoded data to write.
+      additionalProperties: false
+    ProcessKillRequest:
+      type: object
+      description: Signal to send to the process.
+      required:
+      - signal
+      properties:
+        signal:
+          type: string
+          enum:
+          - TERM
+          - KILL
+          - INT
+          - HUP
+          default: TERM
+          description: Signal to send.
+      additionalProperties: false
+    ProcessStdinResult:
+      type: object
+      description: Result of writing to stdin.
+      properties:
+        written_bytes:
+          type: integer
+          description: Number of bytes written.
+      additionalProperties: false
+    ProcessSpawnResult:
+      type: object
+      description: Information about a spawned process.
+      properties:
+        process_id:
+          type: string
+          format: uuid
+          description: Server-assigned identifier for the process.
+        pid:
+          type: integer
+          description: OS process ID.
+        started_at:
+          type: string
+          format: date-time
+          description: Timestamp when the process started.
+      additionalProperties: false
+    ProcessResizeRequest:
+      type: object
+      description: Resize a PTY-backed process terminal.
+      required:
+      - rows
+      - cols
+      properties:
+        rows:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: New terminal rows.
+        cols:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: New terminal columns.
+      additionalProperties: false
+    ProcessStatus:
+      type: object
+      description: Current status of a process.
+      properties:
+        state:
+          type: string
+          enum:
+          - running
+          - exited
+          description: Process state.
+        exit_code:
+          type: integer
+          nullable: true
+          description: Exit code if the process has exited.
+        cpu_pct:
+          type: number
+          description: Estimated CPU usage percentage.
+        mem_bytes:
+          type: integer
+          description: Estimated resident memory usage in bytes.
+      additionalProperties: false
     ProcessSpawnRequest:
       allOf:
       - $ref: '#/components/schemas/ProcessExecRequest'
@@ -402,177 +573,6 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    ProcessStreamEvent:
-      type: object
-      description: SSE payload representing process output or lifecycle events.
-      properties:
-        stream:
-          type: string
-          description: Source stream of the data chunk.
-          enum:
-          - stdout
-          - stderr
-        data_b64:
-          type: string
-          description: Base64-encoded data from the process stream.
-        event:
-          type: string
-          description: Lifecycle event type.
-          enum:
-          - exit
-        exit_code:
-          type: integer
-          description: Exit code when the event is "exit".
-      additionalProperties: false
-    ProcessResizeRequest:
-      type: object
-      description: Resize a PTY-backed process terminal.
-      required:
-      - rows
-      - cols
-      properties:
-        rows:
-          type: integer
-          minimum: 1
-          maximum: 65535
-          description: New terminal rows.
-        cols:
-          type: integer
-          minimum: 1
-          maximum: 65535
-          description: New terminal columns.
-      additionalProperties: false
-    ProcessSpawnResult:
-      type: object
-      description: Information about a spawned process.
-      properties:
-        process_id:
-          type: string
-          format: uuid
-          description: Server-assigned identifier for the process.
-        pid:
-          type: integer
-          description: OS process ID.
-        started_at:
-          type: string
-          format: date-time
-          description: Timestamp when the process started.
-      additionalProperties: false
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    ProcessStdinRequest:
-      type: object
-      description: Data to write to the process standard input.
-      required:
-      - data_b64
-      properties:
-        data_b64:
-          type: string
-          description: Base64-encoded data to write.
-      additionalProperties: false
-    ProcessStatus:
-      type: object
-      description: Current status of a process.
-      properties:
-        state:
-          type: string
-          enum:
-          - running
-          - exited
-          description: Process state.
-        exit_code:
-          type: integer
-          nullable: true
-          description: Exit code if the process has exited.
-        cpu_pct:
-          type: number
-          description: Estimated CPU usage percentage.
-        mem_bytes:
-          type: integer
-          description: Estimated resident memory usage in bytes.
-      additionalProperties: false
-    ProcessKillRequest:
-      type: object
-      description: Signal to send to the process.
-      required:
-      - signal
-      properties:
-        signal:
-          type: string
-          enum:
-          - TERM
-          - KILL
-          - INT
-          - HUP
-          default: TERM
-          description: Signal to send.
-      additionalProperties: false
-    OkResponse:
-      type: object
-      description: Generic OK response.
-      required:
-      - ok
-      properties:
-        ok:
-          type: boolean
-          description: Indicates success.
-          default: true
-      additionalProperties: false
-    ProcessExecResult:
-      type: object
-      description: Result of a synchronous command execution.
-      properties:
-        exit_code:
-          type: integer
-          description: Process exit code.
-        stdout_b64:
-          type: string
-          description: Base64-encoded stdout buffer.
-        stderr_b64:
-          type: string
-          description: Base64-encoded stderr buffer.
-        duration_ms:
-          type: integer
-          description: Execution duration in milliseconds.
-      additionalProperties: false
-  responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

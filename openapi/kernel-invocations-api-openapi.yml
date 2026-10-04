@@ -418,82 +418,49 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Invocations.FollowStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.InvocationFollowParams{},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
 components:
+  responses:
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    CapacityExhausted:
+      description: Capacity exhausted, unable to fulfill request at this time
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    Tags:
-      type: object
-      maxProperties: 50
-      description: User-defined key-value tags.
-      propertyNames:
-        type: string
-        minLength: 1
-        maxLength: 128
-        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
-      additionalProperties:
-        type: string
-        minLength: 0
-        maxLength: 256
-        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
-      example:
-        team: backend
-        env: staging
-    InvokeResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the invocation
-          example: rr33xuugxj9h0bkf1rdt2bet
-        action_name:
-          type: string
-          description: Name of the action invoked
-          example: analyze
-        status:
-          type: string
-          description: Status of the invocation
-          enum:
-          - queued
-          - running
-          - succeeded
-          - failed
-          example: queued
-        status_reason:
-          type: string
-          description: Status reason
-          example: Invocation queued for execution
-        output:
-          type: string
-          description: 'The return value of the action that was invoked, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
-          example: '{"result":"success","data":"processed input"}'
-      required:
-      - id
-      - action_name
-      - status
-    Profile:
-      type: object
-      description: Browser profile metadata.
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the profile
-        name:
-          type: string
-          nullable: true
-          description: Optional, easier-to-reference name for the profile
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was created
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last updated
-        last_used_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last used
-      required:
-      - id
-      - created_at
     Browser:
       type: object
       properties:
@@ -584,6 +551,56 @@ components:
       - stealth
       - headless
       - timeout_seconds
+    InvocationStateEvent:
+      type: object
+      description: An event representing the current state of an invocation.
+      required:
+      - event
+      - invocation
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: invocation_state
+          description: Event type identifier (always "invocation_state").
+        invocation:
+          $ref: '#/components/schemas/Invocation'
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the state was reported.
+    SSEHeartbeatEvent:
+      type: object
+      description: Heartbeat event sent periodically to keep SSE connection alive.
+      required:
+      - event
+      - timestamp
+      properties:
+        event:
+          type: string
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the heartbeat was sent.
+    Tags:
+      type: object
+      maxProperties: 50
+      description: User-defined key-value tags.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+      additionalProperties:
+        type: string
+        minLength: 0
+        maxLength: 256
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+      example:
+        team: backend
+        env: staging
     LogEvent:
       type: object
       description: A log entry from the application.
@@ -612,6 +629,20 @@ components:
           description: Time in milliseconds the session was actively running.
       required:
       - uptime_ms
+    InvocationEvent:
+      oneOf:
+      - $ref: '#/components/schemas/LogEvent'
+      - $ref: '#/components/schemas/InvocationStateEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          log: '#/components/schemas/LogEvent'
+          invocation_state: '#/components/schemas/InvocationStateEvent'
+          error: '#/components/schemas/ErrorEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any invocation event.
     BrowserViewport:
       type: object
       description: 'Initial browser window size in pixels with optional refresh rate.
@@ -656,27 +687,24 @@ components:
       required:
       - width
       - height
-    Error:
+    ErrorEvent:
       type: object
+      description: An error event from the application.
       required:
-      - code
-      - message
+      - event
+      - timestamp
+      - error
       properties:
-        code:
+        event:
           type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
+          const: error
+          description: Event type identifier (always "error").
+        timestamp:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
+          format: date-time
+          description: Time the error occurred.
+        error:
+          $ref: '#/components/schemas/Error'
     BrowserTelemetryCategoriesConfig:
       type: object
       description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
@@ -708,13 +736,98 @@ components:
         captcha:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
           description: Captcha solve attempt outcomes. On by default.
-    BrowserTelemetryConfig:
+    InvocationUpdateRequest:
       type: object
-      description: Active telemetry configuration for a browser session.
+      description: Request body for updating an invocation.
       properties:
-        browser:
-          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
-          description: Per-category enable/disable flags.
+        status:
+          type: string
+          description: New status for the invocation.
+          enum:
+          - succeeded
+          - failed
+        output:
+          type: string
+          description: Updated output of the invocation rendered as JSON string.
+      required:
+      - status
+    BrowserPoolRef:
+      type: object
+      description: Browser pool this session was acquired from, if any.
+      properties:
+        id:
+          type: string
+          description: Browser pool ID
+        name:
+          type: string
+          description: Browser pool name, if set
+      required:
+      - id
+    BrowserTelemetryCategoryConfig:
+      type: object
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    Profile:
+      type: object
+      description: Browser profile metadata.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the profile
+        name:
+          type: string
+          nullable: true
+          description: Optional, easier-to-reference name for the profile
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last updated
+        last_used_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last used
+      required:
+      - id
+      - created_at
     Invocation:
       type: object
       properties:
@@ -773,158 +886,45 @@ components:
       - action_name
       - started_at
       - status
-    InvocationEvent:
-      oneOf:
-      - $ref: '#/components/schemas/LogEvent'
-      - $ref: '#/components/schemas/InvocationStateEvent'
-      - $ref: '#/components/schemas/ErrorEvent'
-      - $ref: '#/components/schemas/SSEHeartbeatEvent'
-      discriminator:
-        propertyName: event
-        mapping:
-          log: '#/components/schemas/LogEvent'
-          invocation_state: '#/components/schemas/InvocationStateEvent'
-          error: '#/components/schemas/ErrorEvent'
-          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
-      description: Union type representing any invocation event.
-    InvocationStateEvent:
+    BrowserTelemetryConfig:
       type: object
-      description: An event representing the current state of an invocation.
-      required:
-      - event
-      - invocation
-      - timestamp
+      description: Active telemetry configuration for a browser session.
       properties:
-        event:
-          type: string
-          const: invocation_state
-          description: Event type identifier (always "invocation_state").
-        invocation:
-          $ref: '#/components/schemas/Invocation'
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the state was reported.
-    BrowserPoolRef:
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category enable/disable flags.
+    InvokeResponse:
       type: object
-      description: Browser pool this session was acquired from, if any.
       properties:
         id:
           type: string
-          description: Browser pool ID
-        name:
+          description: ID of the invocation
+          example: rr33xuugxj9h0bkf1rdt2bet
+        action_name:
           type: string
-          description: Browser pool name, if set
-      required:
-      - id
-    SSEHeartbeatEvent:
-      type: object
-      description: Heartbeat event sent periodically to keep SSE connection alive.
-      required:
-      - event
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: sse_heartbeat
-          description: Event type identifier (always "sse_heartbeat").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the heartbeat was sent.
-    InvocationUpdateRequest:
-      type: object
-      description: Request body for updating an invocation.
-      properties:
+          description: Name of the action invoked
+          example: analyze
         status:
           type: string
-          description: New status for the invocation.
+          description: Status of the invocation
           enum:
+          - queued
+          - running
           - succeeded
           - failed
+          example: queued
+        status_reason:
+          type: string
+          description: Status reason
+          example: Invocation queued for execution
         output:
           type: string
-          description: Updated output of the invocation rendered as JSON string.
+          description: 'The return value of the action that was invoked, rendered as a JSON string. This could be: string, number, boolean, array, object, or null.'
+          example: '{"result":"success","data":"processed input"}'
       required:
+      - id
+      - action_name
       - status
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    BrowserTelemetryCategoryConfig:
-      type: object
-      description: Per-category telemetry configuration.
-      properties:
-        enabled:
-          type: boolean
-          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
-    ErrorEvent:
-      type: object
-      description: An error event from the application.
-      required:
-      - event
-      - timestamp
-      - error
-      properties:
-        event:
-          type: string
-          const: error
-          description: Event type identifier (always "error").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the error occurred.
-        error:
-          $ref: '#/components/schemas/Error'
-  responses:
-    TooManyRequests:
-      description: Too Many Requests – rate limit exceeded
-      headers:
-        Retry-After:
-          description: Seconds to wait before retrying
-          schema:
-            type: integer
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    CapacityExhausted:
-      description: Capacity exhausted, unable to fulfill request at this time
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

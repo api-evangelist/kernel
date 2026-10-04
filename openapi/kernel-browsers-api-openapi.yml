@@ -399,49 +399,81 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Curl(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserCurlParams{\n\t\t\tURL: \"url\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Body)\n}\n"
 components:
   schemas:
-    Tags:
+    BrowserRequest:
       type: object
-      maxProperties: 50
-      description: User-defined key-value tags.
-      propertyNames:
-        type: string
-        minLength: 1
-        maxLength: 128
-        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
-      additionalProperties:
-        type: string
-        minLength: 0
-        maxLength: 256
-        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
-      example:
-        team: backend
-        env: staging
-    Profile:
-      type: object
-      description: Browser profile metadata.
+      description: 'Parameters for creating a browser session.
+
+        '
       properties:
-        id:
+        invocation_id:
           type: string
-          description: Unique identifier for the profile
+          description: action invocation ID
+          example: rr33xuugxj9h0bkf1rdt2bet
         name:
           type: string
+          description: 'Optional human-readable name for the browser session, used to find it later in the dashboard. Must be unique among active sessions within the project. Can be changed later via PATCH /browsers/{id_or_name}.
+
+            '
+          minLength: 1
+          maxLength: 255
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          example: checkout-flow-1
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: 'Optional user-defined key-value tags for the browser session, used to find and group sessions later. Can be changed later via PATCH /browsers/{id_or_name}. Up to 50 pairs.
+
+            '
+        stealth:
+          type: boolean
+          description: If true, launches the browser in stealth mode to reduce detection by anti-bot mechanisms.
+          example: true
+        headless:
+          type: boolean
+          description: If true, launches the browser using a headless image (no VNC/GUI). Defaults to false.
+          example: false
+        gpu:
+          type: boolean
+          description: If true, enables GPU acceleration for the browser session. Requires Start-Up or Enterprise plan and headless=false.
+          example: false
+        timeout_seconds:
+          type: integer
+          description: The number of seconds of inactivity before the browser session is terminated. Activity includes CDP connections and live view connections. Defaults to 60 seconds. Minimum allowed is 10 seconds. Maximum allowed is 259200 (72 hours). We check for inactivity every 5 seconds, so the actual timeout behavior you will see is +/- 5 seconds around the specified value.
+          minimum: 10
+          maximum: 259200
+        profile:
+          $ref: '#/components/schemas/BrowserProfile'
+        extensions:
+          type: array
+          description: List of browser extensions to load into the session. Provide each by id or name.
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/BrowserExtension'
+        proxy_id:
+          type: string
+          description: Optional proxy to associate to the browser session. Must reference a proxy in the same project as the browser session.
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+        kiosk_mode:
+          type: boolean
+          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view.
+          example: true
+        start_url:
+          type: string
+          description: Optional URL to open when the browser session is created. Navigation is best-effort, so navigation failures do not prevent the session from being created.
+          example: https://example.com
+        chrome_policy:
+          type: object
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides applied to this browser session. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/
+
+            '
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
           nullable: true
-          description: Optional, easier-to-reference name for the profile
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was created
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last updated
-        last_used_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last used
-      required:
-      - id
-      - created_at
+          description: 'Telemetry configuration for the browser session. Set enabled to true to start capture using VM defaults, or provide browser category settings. If omitted, null, set to an empty object ({}), set to enabled: false without browser category settings, or all four categories are explicitly disabled, capture is not started.
+
+            '
+      required: []
     BrowserExtension:
       type: object
       description: 'Extension selection for the browser session. Provide either id or name of an extension uploaded to Kernel.
@@ -462,6 +494,16 @@ components:
         - id
       - required:
         - name
+    BrowserTelemetryRequestConfig:
+      type: object
+      description: Telemetry request configuration for a browser session.
+      properties:
+        enabled:
+          type: boolean
+          description: Request shortcut for browser telemetry capture. True enables capture; with no browser category settings it captures the default set (control, connection, system, captcha), and any browser category settings are layered onto that default set. On update, enabled=true resolves the config fresh from the default set plus any provided categories, replacing the session's current selection rather than merging onto it; omit enabled to merge categories onto the current selection instead. False stops capture on update and starts no capture on create. enabled=false cannot be combined with browser category settings.
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category capture flags. The operational categories (control, connection, system, captcha) are captured whenever telemetry is enabled; set one to enabled=false to opt out. The CDP categories (console, network, page, interaction) and screenshot are off by default; set enabled=true to opt in. On create, provided categories layer onto the default set. On update, provided categories merge onto the session's current config; when no telemetry is active this falls back to the default set (matching create). If browser is omitted or empty, the default set is used. A browser config that disables every category stops capture on update and starts no capture on create.
     Browser:
       type: object
       properties:
@@ -552,32 +594,39 @@ components:
       - stealth
       - headless
       - timeout_seconds
-    BrowserCurlResult:
+    BrowserViewportUpdate:
+      description: Viewport configuration for updating a browser session. Extends BrowserViewport with update-only options.
+      allOf:
+      - $ref: '#/components/schemas/BrowserViewport'
+      - type: object
+        properties:
+          force:
+            type: boolean
+            default: false
+            description: 'If true, allow the viewport change even when a live view or recording/replay is active.
+
+              Active recordings will be gracefully stopped and restarted at the new resolution as
+
+              separate segments. If false (default), the resize is refused when a live view or recording is active.
+
+              '
+    Tags:
       type: object
-      description: Structured response from the browser curl request.
-      required:
-      - status
-      - headers
-      - body
-      - duration_ms
-      properties:
-        status:
-          type: integer
-          description: HTTP status code from target.
-        headers:
-          type: object
-          description: Response headers (multi-value).
-          additionalProperties:
-            type: array
-            items:
-              type: string
-        body:
-          type: string
-          description: Response body (UTF-8 string or base64 depending on request).
-        duration_ms:
-          type: integer
-          description: Total request duration in milliseconds.
-      additionalProperties: false
+      maxProperties: 50
+      description: User-defined key-value tags.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+      additionalProperties:
+        type: string
+        minLength: 0
+        maxLength: 256
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+      example:
+        team: backend
+        env: staging
     BrowserUsage:
       type: object
       description: Session usage metrics.
@@ -587,6 +636,49 @@ components:
           description: Time in milliseconds the session was actively running.
       required:
       - uptime_ms
+    BrowserCurlRequest:
+      type: object
+      description: Request to make an HTTP request through the browser's network stack.
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          description: Target URL (must be http or https).
+        method:
+          type: string
+          description: HTTP method.
+          enum:
+          - GET
+          - HEAD
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+          default: GET
+        headers:
+          type: object
+          description: Custom headers merged with browser defaults.
+          additionalProperties:
+            type: string
+        body:
+          type: string
+          description: Request body (for POST/PUT/PATCH).
+        timeout_ms:
+          type: integer
+          description: Request timeout in milliseconds.
+          minimum: 1000
+          maximum: 60000
+          default: 30000
+        response_encoding:
+          type: string
+          description: Encoding for the response body. Use base64 for binary content.
+          enum:
+          - utf8
+          - base64
+          default: utf8
+      additionalProperties: false
     BrowserViewport:
       type: object
       description: 'Initial browser window size in pixels with optional refresh rate.
@@ -631,6 +723,67 @@ components:
       required:
       - width
       - height
+    BrowserTelemetryCategoriesConfig:
+      type: object
+      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
+      properties:
+        console:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Console output (log, warn, error) and uncaught exceptions. CDP category; off by default.
+        page:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
+        interaction:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: User interaction events including clicks, keydowns, and scroll-settled events. CDP category; off by default.
+        network:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: HTTP request and response metadata including URL, method, status code, and timing. Request post data is forwarded as-is from CDP. Text response bodies are truncated at 8 KB for structured types (JSON, XML, form data) and 4 KB for other text types. Binary responses (images, fonts, media) are excluded. CDP category; off by default.
+        control:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Agent-driven actions against the browser, such as inbound calls to the in-VM API. On by default.
+        connection:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
+        system:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
+        screenshot:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Periodic base64-encoded viewport screenshots. High volume; off by default and must be opted into.
+        captcha:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Captcha solve attempt outcomes. On by default.
+    BrowserPoolRef:
+      type: object
+      description: Browser pool this session was acquired from, if any.
+      properties:
+        id:
+          type: string
+          description: Browser pool ID
+        name:
+          type: string
+          description: Browser pool name, if set
+      required:
+      - id
+    BrowserTelemetryCategoryConfig:
+      type: object
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
     BrowserProfile:
       type: object
       description: 'Profile selection for the browser session. Provide either id or name. If specified, the
@@ -696,48 +849,31 @@ components:
           description: 'Telemetry configuration. Omit, set to null, or set to an empty object ({}) to leave the existing configuration unchanged. Set enabled to true to enable capture using VM defaults. Set enabled to false to stop capture. Provide browser category settings for per-category updates. Explicitly disabling all four categories also stops capture.
 
             '
-    BrowserCurlRequest:
+    BrowserCurlResult:
       type: object
-      description: Request to make an HTTP request through the browser's network stack.
+      description: Structured response from the browser curl request.
       required:
-      - url
+      - status
+      - headers
+      - body
+      - duration_ms
       properties:
-        url:
-          type: string
-          description: Target URL (must be http or https).
-        method:
-          type: string
-          description: HTTP method.
-          enum:
-          - GET
-          - HEAD
-          - POST
-          - PUT
-          - PATCH
-          - DELETE
-          - OPTIONS
-          default: GET
+        status:
+          type: integer
+          description: HTTP status code from target.
         headers:
           type: object
-          description: Custom headers merged with browser defaults.
+          description: Response headers (multi-value).
           additionalProperties:
-            type: string
+            type: array
+            items:
+              type: string
         body:
           type: string
-          description: Request body (for POST/PUT/PATCH).
-        timeout_ms:
+          description: Response body (UTF-8 string or base64 depending on request).
+        duration_ms:
           type: integer
-          description: Request timeout in milliseconds.
-          minimum: 1000
-          maximum: 60000
-          default: 30000
-        response_encoding:
-          type: string
-          description: Encoding for the response body. Use base64 for binary content.
-          enum:
-          - utf8
-          - base64
-          default: utf8
+          description: Total request duration in milliseconds.
       additionalProperties: false
     Error:
       type: object
@@ -760,158 +896,32 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    BrowserTelemetryCategoriesConfig:
+    Profile:
       type: object
-      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
-      properties:
-        console:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Console output (log, warn, error) and uncaught exceptions. CDP category; off by default.
-        page:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
-        interaction:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: User interaction events including clicks, keydowns, and scroll-settled events. CDP category; off by default.
-        network:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: HTTP request and response metadata including URL, method, status code, and timing. Request post data is forwarded as-is from CDP. Text response bodies are truncated at 8 KB for structured types (JSON, XML, form data) and 4 KB for other text types. Binary responses (images, fonts, media) are excluded. CDP category; off by default.
-        control:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Agent-driven actions against the browser, such as inbound calls to the in-VM API. On by default.
-        connection:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
-        system:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
-        screenshot:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Periodic base64-encoded viewport screenshots. High volume; off by default and must be opted into.
-        captcha:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Captcha solve attempt outcomes. On by default.
-    BrowserTelemetryConfig:
-      type: object
-      description: Active telemetry configuration for a browser session.
-      properties:
-        browser:
-          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
-          description: Per-category enable/disable flags.
-    BrowserPoolRef:
-      type: object
-      description: Browser pool this session was acquired from, if any.
+      description: Browser profile metadata.
       properties:
         id:
           type: string
-          description: Browser pool ID
+          description: Unique identifier for the profile
         name:
           type: string
-          description: Browser pool name, if set
+          nullable: true
+          description: Optional, easier-to-reference name for the profile
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last updated
+        last_used_at:
+          type: string
+          format: date-time
+          description: Timestamp when the profile was last used
       required:
       - id
-    BrowserRequest:
-      type: object
-      description: 'Parameters for creating a browser session.
-
-        '
-      properties:
-        invocation_id:
-          type: string
-          description: action invocation ID
-          example: rr33xuugxj9h0bkf1rdt2bet
-        name:
-          type: string
-          description: 'Optional human-readable name for the browser session, used to find it later in the dashboard. Must be unique among active sessions within the project. Can be changed later via PATCH /browsers/{id_or_name}.
-
-            '
-          minLength: 1
-          maxLength: 255
-          pattern: ^[a-zA-Z0-9._-]{1,255}$
-          example: checkout-flow-1
-        tags:
-          $ref: '#/components/schemas/Tags'
-          description: 'Optional user-defined key-value tags for the browser session, used to find and group sessions later. Can be changed later via PATCH /browsers/{id_or_name}. Up to 50 pairs.
-
-            '
-        stealth:
-          type: boolean
-          description: If true, launches the browser in stealth mode to reduce detection by anti-bot mechanisms.
-          example: true
-        headless:
-          type: boolean
-          description: If true, launches the browser using a headless image (no VNC/GUI). Defaults to false.
-          example: false
-        gpu:
-          type: boolean
-          description: If true, enables GPU acceleration for the browser session. Requires Start-Up or Enterprise plan and headless=false.
-          example: false
-        timeout_seconds:
-          type: integer
-          description: The number of seconds of inactivity before the browser session is terminated. Activity includes CDP connections and live view connections. Defaults to 60 seconds. Minimum allowed is 10 seconds. Maximum allowed is 259200 (72 hours). We check for inactivity every 5 seconds, so the actual timeout behavior you will see is +/- 5 seconds around the specified value.
-          minimum: 10
-          maximum: 259200
-        profile:
-          $ref: '#/components/schemas/BrowserProfile'
-        extensions:
-          type: array
-          description: List of browser extensions to load into the session. Provide each by id or name.
-          maxItems: 20
-          items:
-            $ref: '#/components/schemas/BrowserExtension'
-        proxy_id:
-          type: string
-          description: Optional proxy to associate to the browser session. Must reference a proxy in the same project as the browser session.
-        viewport:
-          $ref: '#/components/schemas/BrowserViewport'
-        kiosk_mode:
-          type: boolean
-          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view.
-          example: true
-        start_url:
-          type: string
-          description: Optional URL to open when the browser session is created. Navigation is best-effort, so navigation failures do not prevent the session from being created.
-          example: https://example.com
-        chrome_policy:
-          type: object
-          additionalProperties: true
-          description: 'Custom Chrome enterprise policy overrides applied to this browser session. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/
-
-            '
-        telemetry:
-          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
-          nullable: true
-          description: 'Telemetry configuration for the browser session. Set enabled to true to start capture using VM defaults, or provide browser category settings. If omitted, null, set to an empty object ({}), set to enabled: false without browser category settings, or all four categories are explicitly disabled, capture is not started.
-
-            '
-      required: []
-    BrowserViewportUpdate:
-      description: Viewport configuration for updating a browser session. Extends BrowserViewport with update-only options.
-      allOf:
-      - $ref: '#/components/schemas/BrowserViewport'
-      - type: object
-        properties:
-          force:
-            type: boolean
-            default: false
-            description: 'If true, allow the viewport change even when a live view or recording/replay is active.
-
-              Active recordings will be gracefully stopped and restarted at the new resolution as
-
-              separate segments. If false (default), the resize is refused when a live view or recording is active.
-
-              '
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
+      - created_at
     BrowserCurlTransportError:
       type: object
       description: Transport-level error when the request could not complete.
@@ -928,24 +938,44 @@ components:
           type: string
           description: Chromium net error name.
       additionalProperties: false
-    BrowserTelemetryCategoryConfig:
+    BrowserTelemetryConfig:
       type: object
-      description: Per-category telemetry configuration.
+      description: Active telemetry configuration for a browser session.
       properties:
-        enabled:
-          type: boolean
-          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
-    BrowserTelemetryRequestConfig:
-      type: object
-      description: Telemetry request configuration for a browser session.
-      properties:
-        enabled:
-          type: boolean
-          description: Request shortcut for browser telemetry capture. True enables capture; with no browser category settings it captures the default set (control, connection, system, captcha), and any browser category settings are layered onto that default set. On update, enabled=true resolves the config fresh from the default set plus any provided categories, replacing the session's current selection rather than merging onto it; omit enabled to merge categories onto the current selection instead. False stops capture on update and starts no capture on create. enabled=false cannot be combined with browser category settings.
         browser:
           $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
-          description: Per-category capture flags. The operational categories (control, connection, system, captcha) are captured whenever telemetry is enabled; set one to enabled=false to opt out. The CDP categories (console, network, page, interaction) and screenshot are off by default; set enabled=true to opt in. On create, provided categories layer onto the default set. On update, provided categories merge onto the session's current config; when no telemetry is active this falls back to the default set (matching create). If browser is omitted or empty, the default set is used. A browser config that disables every category stops capture on update and starts no capture on create.
+          description: Per-category enable/disable flags.
   responses:
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict – resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     TooManyRequests:
       description: Too Many Requests – rate limit exceeded
       headers:
@@ -957,44 +987,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     CapacityExhausted:
       description: Capacity exhausted, unable to fulfill request at this time
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:

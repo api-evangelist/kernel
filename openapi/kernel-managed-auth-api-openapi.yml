@@ -516,110 +516,69 @@ paths:
           $ref: '#/components/responses/InternalError'
 components:
   schemas:
-    ManagedAuthStateEvent:
+    ManagedAuthUpdateRequest:
       type: object
-      description: An event representing the current state of a managed auth flow.
-      required:
-      - event
-      - timestamp
-      - flow_status
-      - flow_step
+      description: Request to update an auth connection's configuration
       properties:
-        event:
-          type: string
-          const: managed_auth_state
-          description: Event type identifier (always "managed_auth_state").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the state was reported.
-        flow_status:
-          type: string
-          enum:
-          - IN_PROGRESS
-          - SUCCESS
-          - FAILED
-          - EXPIRED
-          - CANCELED
-          description: Current flow status.
-        flow_step:
-          type: string
-          enum:
-          - DISCOVERING
-          - AWAITING_INPUT
-          - AWAITING_EXTERNAL_ACTION
-          - SUBMITTING
-          - COMPLETED
-          description: Current step in the flow.
-        flow_type:
-          type: string
-          enum:
-          - LOGIN
-          - REAUTH
-          description: Type of the current flow.
-        fields:
-          type: array
-          description: Canonical fields awaiting input. Prefer this over discovered_fields when present.
-          items:
-            $ref: '#/components/schemas/ManagedAuthField'
-        choices:
-          type: array
-          description: Canonical choices awaiting selection. Prefer this over pending_sso_buttons, mfa_options, and sign_in_options when present.
-          items:
-            $ref: '#/components/schemas/ManagedAuthChoice'
-        discovered_fields:
-          type: array
-          description: Fields awaiting input (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
-          items:
-            $ref: '#/components/schemas/DiscoveredField'
-        mfa_options:
-          type: array
-          description: MFA method options (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
-          items:
-            $ref: '#/components/schemas/MFAOption'
-        sign_in_options:
-          type: array
-          description: Non-MFA choices presented during the auth flow, such as account selection or org pickers (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
-          items:
-            $ref: '#/components/schemas/SignInOption'
-        pending_sso_buttons:
-          type: array
-          description: SSO buttons available (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
-          items:
-            $ref: '#/components/schemas/SSOButton'
-        external_action_message:
-          type: string
-          description: Instructions for external action (present when flow_step=AWAITING_EXTERNAL_ACTION).
-        website_error:
-          type: string
-          description: Visible error message from the website (e.g., 'Incorrect password'). Present when the website displays an error during login.
-        error_message:
-          type: string
-          description: Error message (present when flow_status=FAILED).
-        error_code:
-          type: string
-          description: Machine-readable error code (present when flow_status=FAILED).
-        post_login_url:
+        login_url:
           type: string
           format: uri
-          description: URL where the browser landed after successful login.
-        live_view_url:
-          type: string
-          format: uri
-          description: Browser live view URL for debugging.
-        hosted_url:
-          type: string
-          format: uri
-          description: URL to redirect user to for hosted login.
-    SubmitFieldsResponse:
-      type: object
-      description: Response from submitting field values
-      required:
-      - accepted
-      properties:
-        accepted:
+          description: Login page URL. Set to empty string to clear.
+          example: https://netflix.com/login
+        credential:
+          $ref: '#/components/schemas/CredentialReference'
+        allowed_domains:
+          type: array
+          items:
+            type: string
+          description: Additional domains valid for this auth flow (replaces existing list)
+          example:
+          - login.netflix.com
+          - auth.netflix.com
+        health_check_interval:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          description: Interval in seconds between automatic health checks
+          example: 3600
+        health_checks:
           type: boolean
-          description: Whether the submission was accepted for processing
+          description: 'Whether periodic health checks are enabled. When set to false, the system will not
+
+            automatically verify authentication status, and `auto_reauth` has no effect on the
+
+            automatic flow (since re-auth is only triggered by a failed scheduled health check).
+
+            '
+          example: true
+        auto_reauth:
+          type: boolean
+          description: 'Whether automatic re-authentication is permitted for this connection. This is an opt-in
+
+            flag only — it does not check whether re-auth is actually feasible. Even when true,
+
+            re-auth only runs when the system has what it needs to perform it (for example, saved
+
+            credentials for the required login fields), and only after a scheduled health check
+
+            detects an expired session — so this flag has no effect when `health_checks` is false.
+
+            When false, expired sessions detected by a health check are marked as `NEEDS_AUTH`
+
+            instead of attempting re-auth.
+
+            '
+          example: true
+        save_credentials:
+          type: boolean
+          description: Whether to save credentials after every successful login
+          example: true
+        record_session:
+          type: boolean
+          description: Whether to record browser sessions for this connection by default
+          example: false
+        proxy:
+          $ref: '#/components/schemas/ProxyRef'
       additionalProperties: false
     ManagedAuthCreateRequest:
       type: object
@@ -735,27 +694,104 @@ components:
           description: Whether to record browser sessions for this connection by default. Useful for debugging. Can be overridden per-login. Defaults to false.
           example: false
       additionalProperties: false
-    SignInOption:
+    ProxyRef:
       type: object
-      description: A non-MFA choice presented during the auth flow (e.g. account selection, org picker)
+      description: 'Proxy selection. Provide either id or name. The proxy must be in the same project as the resource referencing it.
+
+        When selecting by name, the name must match exactly one active proxy in the project. Ambiguous names return a 400; use id for stable references.
+
+        '
       properties:
         id:
           type: string
-          description: Unique identifier for this option (used to submit selection back)
-          example: work-account
-        label:
+          description: Proxy ID
+        name:
           type: string
-          description: Display text for the option
-          example: Work Account (user@company.com)
-        description:
+          description: Proxy name
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+    SSEHeartbeatEvent:
+      type: object
+      description: Heartbeat event sent periodically to keep SSE connection alive.
+      required:
+      - event
+      - timestamp
+      properties:
+        event:
           type: string
-          nullable: true
-          description: Additional context such as email address or org name
-          example: user@company.com
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the heartbeat was sent.
+    ManagedAuthExchangeRequest:
+      type: object
+      description: Request to exchange handoff code for JWT
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Handoff code from start endpoint
+          example: abc123xyz
+      additionalProperties: false
+    ManagedAuthField:
+      type: object
+      description: Canonical field awaiting user input.
       required:
       - id
-      - label
+      - ref
+      - type
+      properties:
+        id:
+          type: string
+          description: Stable field identifier for canonical submit.
+          example: field_email
+        ref:
+          type: string
+          description: Credential reference name to store the submitted value under.
+          example: email
+        type:
+          type: string
+          enum:
+          - identifier
+          - password
+          - code
+          - totp_code
+          - totp_secret
+          - text
+          description: Managed-auth field type.
+          example: identifier
+        label:
+          type: string
+          description: Human-readable label shown to the user.
+          example: Email address
+        required:
+          type: boolean
+          description: Whether this field is required.
+          default: true
+        observed_selector:
+          type: string
+          nullable: true
+          description: Selector for the visible field, when available.
+          example: input[name="identifier"]
       additionalProperties: false
+    ManagedAuthEvent:
+      oneOf:
+      - $ref: '#/components/schemas/ManagedAuthStateEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      - $ref: '#/components/schemas/SSEHeartbeatEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          managed_auth_state: '#/components/schemas/ManagedAuthStateEvent'
+          error: '#/components/schemas/ErrorEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+      description: Union type representing any managed auth event.
     ManagedAuthChoice:
       type: object
       description: Canonical auth-flow choice awaiting user selection.
@@ -794,45 +830,86 @@ components:
           description: Selector for the visible choice, when available.
           example: button:has-text("Google")
       additionalProperties: false
-    LoginResponse:
+    CredentialReference:
       type: object
-      description: Response from starting a login flow
-      required:
-      - id
-      - flow_type
-      - hosted_url
-      - flow_expires_at
+      description: 'Reference to credentials for the auth connection. Use one of:
+
+        - { name } for Kernel credentials
+
+        - { provider, path } for external provider item
+
+        - { provider, auto: true } for external provider domain lookup
+
+        '
       properties:
-        id:
+        name:
           type: string
-          description: Auth connection ID
-          example: ma_abc123xyz
-        flow_type:
+          description: Kernel credential name
+          example: my-netflix-creds
+        provider:
           type: string
-          enum:
-          - LOGIN
-          - REAUTH
-          description: Type of login flow started
-          example: LOGIN
-        hosted_url:
+          description: External provider name (e.g., "my-1p")
+          example: my-1p
+        path:
           type: string
-          format: uri
-          description: URL to redirect user to for login
-          example: https://auth.kernel.com/login/abc123xyz
-        flow_expires_at:
+          description: Provider-specific path (e.g., "VaultName/ItemName" for 1Password)
+          example: Personal/Netflix
+        auto:
+          type: boolean
+          description: If true, lookup by domain from the specified provider
+          example: true
+      additionalProperties: false
+    SubmitFieldsResponse:
+      type: object
+      description: Response from submitting field values
+      required:
+      - accepted
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the submission was accepted for processing
+      additionalProperties: false
+    ErrorEvent:
+      type: object
+      description: An error event from the application.
+      required:
+      - event
+      - timestamp
+      - error
+      properties:
+        event:
+          type: string
+          const: error
+          description: Event type identifier (always "error").
+        timestamp:
           type: string
           format: date-time
-          description: When the login flow expires
-          example: '2025-11-05T20:00:00Z'
-        handoff_code:
+          description: Time the error occurred.
+        error:
+          $ref: '#/components/schemas/Error'
+    MFAOption:
+      type: object
+      description: An MFA method option for verification
+      properties:
+        type:
+          $ref: '#/components/schemas/MFAType'
+        label:
           type: string
-          description: One-time code for handoff (internal use)
-          example: aBcD123EfGh456IjKl789MnOp012QrStUvWxYzAbCdEf
-        live_view_url:
+          description: The visible option text
+          example: Text me a code
+        target:
           type: string
-          format: uri
-          description: Browser live view URL for watching the login flow
-          example: https://live.onkernel.com/abc123xyz
+          nullable: true
+          description: The masked destination (phone/email) if shown
+          example: '***-***-5678'
+        description:
+          type: string
+          nullable: true
+          description: Additional instructions from the site
+          example: We'll send a 6-digit code to your phone
+      required:
+      - type
+      - label
       additionalProperties: false
     ManagedAuthTimelineEvent:
       type: object
@@ -911,6 +988,123 @@ components:
           type: string
           format: date-time
           description: When the event was last updated. Present for login/reauth events.
+    LoginRequest:
+      type: object
+      description: Request to start a login flow
+      properties:
+        proxy:
+          $ref: '#/components/schemas/ProxyRef'
+        record_session:
+          type: boolean
+          description: Override the connection's default for recording this login's browser session. When omitted, the connection's record_session default is used.
+          example: true
+      additionalProperties: false
+    ManagedAuthStateEvent:
+      type: object
+      description: An event representing the current state of a managed auth flow.
+      required:
+      - event
+      - timestamp
+      - flow_status
+      - flow_step
+      properties:
+        event:
+          type: string
+          const: managed_auth_state
+          description: Event type identifier (always "managed_auth_state").
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the state was reported.
+        flow_status:
+          type: string
+          enum:
+          - IN_PROGRESS
+          - SUCCESS
+          - FAILED
+          - EXPIRED
+          - CANCELED
+          description: Current flow status.
+        flow_step:
+          type: string
+          enum:
+          - DISCOVERING
+          - AWAITING_INPUT
+          - AWAITING_EXTERNAL_ACTION
+          - SUBMITTING
+          - COMPLETED
+          description: Current step in the flow.
+        flow_type:
+          type: string
+          enum:
+          - LOGIN
+          - REAUTH
+          description: Type of the current flow.
+        fields:
+          type: array
+          description: Canonical fields awaiting input. Prefer this over discovered_fields when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthField'
+        choices:
+          type: array
+          description: Canonical choices awaiting selection. Prefer this over pending_sso_buttons, mfa_options, and sign_in_options when present.
+          items:
+            $ref: '#/components/schemas/ManagedAuthChoice'
+        discovered_fields:
+          type: array
+          description: Fields awaiting input (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/DiscoveredField'
+        mfa_options:
+          type: array
+          description: MFA method options (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/MFAOption'
+        sign_in_options:
+          type: array
+          description: Non-MFA choices presented during the auth flow, such as account selection or org pickers (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/SignInOption'
+        pending_sso_buttons:
+          type: array
+          description: SSO buttons available (present when flow_step=AWAITING_INPUT; may also be present with AWAITING_EXTERNAL_ACTION as fallback actions).
+          items:
+            $ref: '#/components/schemas/SSOButton'
+        external_action_message:
+          type: string
+          description: Instructions for external action (present when flow_step=AWAITING_EXTERNAL_ACTION).
+        website_error:
+          type: string
+          description: Visible error message from the website (e.g., 'Incorrect password'). Present when the website displays an error during login.
+        error_message:
+          type: string
+          description: Error message (present when flow_status=FAILED).
+        error_code:
+          type: string
+          description: Machine-readable error code (present when flow_status=FAILED).
+        post_login_url:
+          type: string
+          format: uri
+          description: URL where the browser landed after successful login.
+        live_view_url:
+          type: string
+          format: uri
+          description: Browser live view URL for debugging.
+        hosted_url:
+          type: string
+          format: uri
+          description: URL to redirect user to for hosted login.
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
     Error:
       type: object
       required:
@@ -932,70 +1126,6 @@ components:
             $ref: '#/components/schemas/ErrorDetail'
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    CredentialReference:
-      type: object
-      description: 'Reference to credentials for the auth connection. Use one of:
-
-        - { name } for Kernel credentials
-
-        - { provider, path } for external provider item
-
-        - { provider, auto: true } for external provider domain lookup
-
-        '
-      properties:
-        name:
-          type: string
-          description: Kernel credential name
-          example: my-netflix-creds
-        provider:
-          type: string
-          description: External provider name (e.g., "my-1p")
-          example: my-1p
-        path:
-          type: string
-          description: Provider-specific path (e.g., "VaultName/ItemName" for 1Password)
-          example: Personal/Netflix
-        auto:
-          type: boolean
-          description: If true, lookup by domain from the specified provider
-          example: true
-      additionalProperties: false
-    MFAOption:
-      type: object
-      description: An MFA method option for verification
-      properties:
-        type:
-          $ref: '#/components/schemas/MFAType'
-        label:
-          type: string
-          description: The visible option text
-          example: Text me a code
-        target:
-          type: string
-          nullable: true
-          description: The masked destination (phone/email) if shown
-          example: '***-***-5678'
-        description:
-          type: string
-          nullable: true
-          description: Additional instructions from the site
-          example: We'll send a 6-digit code to your phone
-      required:
-      - type
-      - label
-      additionalProperties: false
-    LoginRequest:
-      type: object
-      description: Request to start a login flow
-      properties:
-        proxy:
-          $ref: '#/components/schemas/ProxyRef'
-        record_session:
-          type: boolean
-          description: Override the connection's default for recording this login's browser session. When omitted, the connection's record_session default is used.
-          example: true
-      additionalProperties: false
     SSOButton:
       type: object
       description: An SSO button for signing in with an external identity provider
@@ -1017,121 +1147,58 @@ components:
       - provider
       - label
       additionalProperties: false
-    ManagedAuthUpdateRequest:
+    MFAType:
+      type: string
+      enum:
+      - sms
+      - call
+      - email
+      - totp
+      - push
+      - password
+      - switch
+      description: The MFA delivery method type. Includes 'password' for auth method selection pages and 'switch' for generic method-switcher links like "Use another method" that do not name a specific method.
+      example: sms
+    SubmitFieldsRequest:
       type: object
-      description: Request to update an auth connection's configuration
+      description: Request to submit field values, click an SSO button, select an MFA method, or select a sign-in option. Prefer canonical selected_choice_id/field_values when the API returns fields/choices; legacy fields/sso_button_selector/sso_provider/mfa_option_id/sign_in_option_id remain supported during deprecation.
       properties:
-        login_url:
-          type: string
-          format: uri
-          description: Login page URL. Set to empty string to clear.
-          example: https://netflix.com/login
-        credential:
-          $ref: '#/components/schemas/CredentialReference'
-        allowed_domains:
-          type: array
-          items:
+        field_values:
+          type: object
+          additionalProperties:
             type: string
-          description: Additional domains valid for this auth flow (replaces existing list)
+          description: Canonical map of field ID to submitted value.
           example:
-          - login.netflix.com
-          - auth.netflix.com
-        health_check_interval:
-          type: integer
-          minimum: 300
-          maximum: 86400
-          description: Interval in seconds between automatic health checks
-          example: 3600
-        health_checks:
-          type: boolean
-          description: 'Whether periodic health checks are enabled. When set to false, the system will not
-
-            automatically verify authentication status, and `auto_reauth` has no effect on the
-
-            automatic flow (since re-auth is only triggered by a failed scheduled health check).
-
-            '
-          example: true
-        auto_reauth:
-          type: boolean
-          description: 'Whether automatic re-authentication is permitted for this connection. This is an opt-in
-
-            flag only — it does not check whether re-auth is actually feasible. Even when true,
-
-            re-auth only runs when the system has what it needs to perform it (for example, saved
-
-            credentials for the required login fields), and only after a scheduled health check
-
-            detects an expired session — so this flag has no effect when `health_checks` is false.
-
-            When false, expired sessions detected by a health check are marked as `NEEDS_AUTH`
-
-            instead of attempting re-auth.
-
-            '
-          example: true
-        save_credentials:
-          type: boolean
-          description: Whether to save credentials after every successful login
-          example: true
-        record_session:
-          type: boolean
-          description: Whether to record browser sessions for this connection by default
-          example: false
-        proxy:
-          $ref: '#/components/schemas/ProxyRef'
-      additionalProperties: false
-    DiscoveredField:
-      type: object
-      description: A discovered form field
-      properties:
-        name:
+            field_email: user@example.com
+            field_password: secret
+        selected_choice_id:
           type: string
-          description: Field name
-          example: email
-        type:
+          description: Canonical choice ID selected by the user.
+          example: google
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of field name to value
+          example:
+            email: user@example.com
+            password: secret
+        sso_button_selector:
           type: string
-          enum:
-          - text
-          - email
-          - password
-          - tel
-          - number
-          - url
-          - code
-          - totp
-          description: Field type
-          example: email
-        label:
+          description: XPath selector for the SSO button to click (ODA). Use sso_provider instead for CUA.
+          example: xpath=//button[contains(text(), 'Continue with Google')]
+        sso_provider:
           type: string
-          description: Field label
-          example: Email address
-        placeholder:
+          description: SSO provider to click, matching the provider field from pending_sso_buttons (e.g., "google", "github"). Cannot be used with sso_button_selector.
+          example: google
+        mfa_option_id:
           type: string
-          description: Field placeholder
-          example: you@example.com
-        required:
-          type: boolean
-          description: Whether field is required
-          default: true
-          example: true
-        selector:
+          description: The MFA method type to select (when mfa_options were returned)
+          example: sms
+        sign_in_option_id:
           type: string
-          description: CSS selector for the field
-          example: input#email
-        linked_mfa_type:
-          $ref: '#/components/schemas/MFAType'
-          nullable: true
-          description: If this field is associated with an MFA option, the type of that option (e.g., password field linked to "Enter password" option)
-        hint:
-          type: string
-          description: Contextual help text near the field that tells the user what to enter (e.g., "Enter the phone ending in (***) ***-**92")
-          example: Enter the phone ending in (***) ***-**92
-      required:
-      - name
-      - type
-      - label
-      - selector
+          description: The sign-in option ID to select (when sign_in_options were returned)
+          example: work-account
       additionalProperties: false
     ManagedAuthExchangeResponse:
       type: object
@@ -1149,18 +1216,6 @@ components:
           description: JWT token with invocation_id claim (30 minute TTL)
           example: eyJ0eXAi...
       additionalProperties: false
-    ManagedAuthEvent:
-      oneOf:
-      - $ref: '#/components/schemas/ManagedAuthStateEvent'
-      - $ref: '#/components/schemas/ErrorEvent'
-      - $ref: '#/components/schemas/SSEHeartbeatEvent'
-      discriminator:
-        propertyName: event
-        mapping:
-          managed_auth_state: '#/components/schemas/ManagedAuthStateEvent'
-          error: '#/components/schemas/ErrorEvent'
-          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
-      description: Union type representing any managed auth event.
     ManagedAuth:
       type: object
       description: Managed authentication that keeps a profile logged into a specific domain. Flow fields (flow_status, flow_step, discovered_fields, mfa_options) reflect the most recent login flow and are null when no flow has been initiated.
@@ -1445,195 +1500,122 @@ components:
           description: Whether to record browser session replays for this connection by default. Useful for debugging login flows. Can be overridden per-login.
           example: false
       additionalProperties: false
-    ManagedAuthExchangeRequest:
+    DiscoveredField:
       type: object
-      description: Request to exchange handoff code for JWT
-      required:
-      - code
+      description: A discovered form field
       properties:
-        code:
+        name:
           type: string
-          description: Handoff code from start endpoint
-          example: abc123xyz
-      additionalProperties: false
-    SSEHeartbeatEvent:
-      type: object
-      description: Heartbeat event sent periodically to keep SSE connection alive.
-      required:
-      - event
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: sse_heartbeat
-          description: Event type identifier (always "sse_heartbeat").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the heartbeat was sent.
-    ManagedAuthField:
-      type: object
-      description: Canonical field awaiting user input.
-      required:
-      - id
-      - ref
-      - type
-      properties:
-        id:
-          type: string
-          description: Stable field identifier for canonical submit.
-          example: field_email
-        ref:
-          type: string
-          description: Credential reference name to store the submitted value under.
+          description: Field name
           example: email
         type:
           type: string
           enum:
-          - identifier
-          - password
-          - code
-          - totp_code
-          - totp_secret
           - text
-          description: Managed-auth field type.
-          example: identifier
+          - email
+          - password
+          - tel
+          - number
+          - url
+          - code
+          - totp
+          description: Field type
+          example: email
         label:
           type: string
-          description: Human-readable label shown to the user.
+          description: Field label
           example: Email address
+        placeholder:
+          type: string
+          description: Field placeholder
+          example: you@example.com
         required:
           type: boolean
-          description: Whether this field is required.
+          description: Whether field is required
           default: true
-        observed_selector:
+          example: true
+        selector:
           type: string
+          description: CSS selector for the field
+          example: input#email
+        linked_mfa_type:
+          $ref: '#/components/schemas/MFAType'
           nullable: true
-          description: Selector for the visible field, when available.
-          example: input[name="identifier"]
+          description: If this field is associated with an MFA option, the type of that option (e.g., password field linked to "Enter password" option)
+        hint:
+          type: string
+          description: Contextual help text near the field that tells the user what to enter (e.g., "Enter the phone ending in (***) ***-**92")
+          example: Enter the phone ending in (***) ***-**92
+      required:
+      - name
+      - type
+      - label
+      - selector
       additionalProperties: false
-    MFAType:
-      type: string
-      enum:
-      - sms
-      - call
-      - email
-      - totp
-      - push
-      - password
-      - switch
-      description: The MFA delivery method type. Includes 'password' for auth method selection pages and 'switch' for generic method-switcher links like "Use another method" that do not name a specific method.
-      example: sms
-    ErrorDetail:
+    SignInOption:
       type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    ProxyRef:
-      type: object
-      description: 'Proxy selection. Provide either id or name. The proxy must be in the same project as the resource referencing it.
-
-        When selecting by name, the name must match exactly one active proxy in the project. Ambiguous names return a 400; use id for stable references.
-
-        '
+      description: A non-MFA choice presented during the auth flow (e.g. account selection, org picker)
       properties:
         id:
           type: string
-          description: Proxy ID
-        name:
+          description: Unique identifier for this option (used to submit selection back)
+          example: work-account
+        label:
           type: string
-          description: Proxy name
-      oneOf:
-      - required:
-        - id
-      - required:
-        - name
-    ErrorEvent:
-      type: object
-      description: An error event from the application.
+          description: Display text for the option
+          example: Work Account (user@company.com)
+        description:
+          type: string
+          nullable: true
+          description: Additional context such as email address or org name
+          example: user@company.com
       required:
-      - event
-      - timestamp
-      - error
+      - id
+      - label
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      description: Response from starting a login flow
+      required:
+      - id
+      - flow_type
+      - hosted_url
+      - flow_expires_at
       properties:
-        event:
+        id:
           type: string
-          const: error
-          description: Event type identifier (always "error").
-        timestamp:
+          description: Auth connection ID
+          example: ma_abc123xyz
+        flow_type:
+          type: string
+          enum:
+          - LOGIN
+          - REAUTH
+          description: Type of login flow started
+          example: LOGIN
+        hosted_url:
+          type: string
+          format: uri
+          description: URL to redirect user to for login
+          example: https://auth.kernel.com/login/abc123xyz
+        flow_expires_at:
           type: string
           format: date-time
-          description: Time the error occurred.
-        error:
-          $ref: '#/components/schemas/Error'
-    SubmitFieldsRequest:
-      type: object
-      description: Request to submit field values, click an SSO button, select an MFA method, or select a sign-in option. Prefer canonical selected_choice_id/field_values when the API returns fields/choices; legacy fields/sso_button_selector/sso_provider/mfa_option_id/sign_in_option_id remain supported during deprecation.
-      properties:
-        field_values:
-          type: object
-          additionalProperties:
-            type: string
-          description: Canonical map of field ID to submitted value.
-          example:
-            field_email: user@example.com
-            field_password: secret
-        selected_choice_id:
+          description: When the login flow expires
+          example: '2025-11-05T20:00:00Z'
+        handoff_code:
           type: string
-          description: Canonical choice ID selected by the user.
-          example: google
-        fields:
-          type: object
-          additionalProperties:
-            type: string
-          description: Map of field name to value
-          example:
-            email: user@example.com
-            password: secret
-        sso_button_selector:
+          description: One-time code for handoff (internal use)
+          example: aBcD123EfGh456IjKl789MnOp012QrStUvWxYzAbCdEf
+        live_view_url:
           type: string
-          description: XPath selector for the SSO button to click (ODA). Use sso_provider instead for CUA.
-          example: xpath=//button[contains(text(), 'Continue with Google')]
-        sso_provider:
-          type: string
-          description: SSO provider to click, matching the provider field from pending_sso_buttons (e.g., "google", "github"). Cannot be used with sso_button_selector.
-          example: google
-        mfa_option_id:
-          type: string
-          description: The MFA method type to select (when mfa_options were returned)
-          example: sms
-        sign_in_option_id:
-          type: string
-          description: The sign-in option ID to select (when sign_in_options were returned)
-          example: work-account
+          format: uri
+          description: Browser live view URL for watching the login flow
+          example: https://live.onkernel.com/abc123xyz
       additionalProperties: false
   responses:
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Gone:
-      description: Resource expired or no longer available
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
       content:
         application/json:
           schema:
@@ -1646,6 +1628,24 @@ components:
             $ref: '#/components/schemas/Error'
     InternalError:
       description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Gone:
+      description: Resource expired or no longer available
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:

@@ -294,7 +294,232 @@ paths:
       - lang: Go
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Proxies.Check(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.ProxyCheckParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.ID)\n}\n"
 components:
+  responses:
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized – missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable Entity – request was valid but the operation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden – insufficient permissions or plan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    CreateCustomProxyConfig:
+      type: object
+      title: Custom
+      description: Configuration for a custom proxy (e.g., private proxy server).
+      required:
+      - host
+      - port
+      properties:
+        host:
+          type: string
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+        port:
+          type: integer
+          description: Proxy port.
+          example: 8080
+        username:
+          type: string
+          description: Username for proxy authentication.
+          example: user123
+        password:
+          type: string
+          description: Password for proxy authentication.
+          example: secret
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ProxyUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
+          minLength: 1
+          maxLength: 255
+          example: my-renamed-proxy
+    IspProxyConfig:
+      type: object
+      title: ISP
+      description: Configuration for an ISP proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
+    ResidentialProxyConfig:
+      type: object
+      title: Residential
+      description: Configuration for residential proxies.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code.
+          example: US
+        city:
+          type: string
+          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
+          example: sanfrancisco
+        state:
+          type: string
+          description: Two-letter state code.
+          example: CA
+        zip:
+          type: string
+          description: US ZIP code.
+          example: '94107'
+        asn:
+          type: string
+          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
+          example: AS15169
+        os:
+          type: string
+          description: Operating system of the residential device.
+          deprecated: true
+          x-deprecated-reason: os selection not supported by proxy provider
+          enum:
+          - windows
+          - macos
+          - android
+    CustomProxyConfig:
+      type: object
+      title: Custom
+      description: Configuration for a custom proxy (e.g., private proxy server).
+      required:
+      - host
+      - port
+      properties:
+        host:
+          type: string
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+        port:
+          type: integer
+          description: Proxy port.
+          example: 8080
+        username:
+          type: string
+          description: Username for proxy authentication.
+          example: user123
+        has_password:
+          type: boolean
+          description: Whether the proxy has a password.
+          example: true
+    ProxyCreateRequest:
+      type: object
+      description: Configuration for routing traffic through a proxy.
+      required:
+      - type
+      properties:
+        name:
+          type: string
+          description: Readable name of the proxy.
+        type:
+          type: string
+          description: 'Proxy type to use. In terms of quality for avoiding bot-detection, from best to worst: `mobile` > `residential` > `isp` > `datacenter`.
+
+            '
+          enum:
+          - datacenter
+          - isp
+          - residential
+          - mobile
+          - custom
+        protocol:
+          type: string
+          description: Protocol to use for the proxy connection.
+          enum:
+          - http
+          - https
+          default: https
+        bypass_hosts:
+          type: array
+          description: Hostnames that should bypass the parent proxy and connect directly.
+          items:
+            type: string
+        config:
+          description: Configuration specific to the selected proxy `type`.
+          oneOf:
+          - $ref: '#/components/schemas/DatacenterProxyConfig'
+          - $ref: '#/components/schemas/IspProxyConfig'
+          - $ref: '#/components/schemas/ResidentialProxyConfig'
+          - $ref: '#/components/schemas/MobileProxyConfig'
+          - $ref: '#/components/schemas/CreateCustomProxyConfig'
+      discriminator:
+        propertyName: type
+        mapping:
+          datacenter: '#/components/schemas/DatacenterProxyConfig'
+          isp: '#/components/schemas/IspProxyConfig'
+          residential: '#/components/schemas/ResidentialProxyConfig'
+          mobile: '#/components/schemas/MobileProxyConfig'
+          custom: '#/components/schemas/CustomProxyConfig'
+    ProxyCheckRequest:
+      type: object
+      description: Optional parameters for the proxy health check.
+      properties:
+        url:
+          type: string
+          example: https://example.com
+          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
+    DatacenterProxyConfig:
+      type: object
+      title: Datacenter
+      description: Configuration for a datacenter proxy.
+      properties:
+        country:
+          type: string
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
     Proxy:
       type: object
       description: Configuration for routing traffic through a proxy.
@@ -359,17 +584,6 @@ components:
           residential: '#/components/schemas/ResidentialProxyConfig'
           mobile: '#/components/schemas/MobileProxyConfig'
           custom: '#/components/schemas/CustomProxyConfig'
-    ProxyUpdateRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: New proxy name. Proxy names are trimmed and length-checked only; duplicates are allowed because proxies are updated by ID, not by name.
-          minLength: 1
-          maxLength: 255
-          example: my-renamed-proxy
     MobileProxyConfig:
       type: object
       title: Mobile
@@ -387,40 +601,6 @@ components:
           type: string
           description: US-only state code. Mobile carrier routing can make observed geo vary.
           example: NY
-    ResidentialProxyConfig:
-      type: object
-      title: Residential
-      description: Configuration for residential proxies.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code.
-          example: US
-        city:
-          type: string
-          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
-          example: sanfrancisco
-        state:
-          type: string
-          description: Two-letter state code.
-          example: CA
-        zip:
-          type: string
-          description: US ZIP code.
-          example: '94107'
-        asn:
-          type: string
-          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
-          example: AS15169
-        os:
-          type: string
-          description: Operating system of the residential device.
-          deprecated: true
-          x-deprecated-reason: os selection not supported by proxy provider
-          enum:
-          - windows
-          - macos
-          - android
     ErrorDetail:
       type: object
       properties:
@@ -432,186 +612,6 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    DatacenterProxyConfig:
-      type: object
-      title: Datacenter
-      description: Configuration for a datacenter proxy.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code. Defaults to US if not provided.
-          example: US
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    CreateCustomProxyConfig:
-      type: object
-      title: Custom
-      description: Configuration for a custom proxy (e.g., private proxy server).
-      required:
-      - host
-      - port
-      properties:
-        host:
-          type: string
-          description: Proxy host address or IP.
-          example: 127.0.0.1
-        port:
-          type: integer
-          description: Proxy port.
-          example: 8080
-        username:
-          type: string
-          description: Username for proxy authentication.
-          example: user123
-        password:
-          type: string
-          description: Password for proxy authentication.
-          example: secret
-    IspProxyConfig:
-      type: object
-      title: ISP
-      description: Configuration for an ISP proxy.
-      properties:
-        country:
-          type: string
-          description: ISO 3166 country code. Defaults to US if not provided.
-          example: US
-    ProxyCheckRequest:
-      type: object
-      description: Optional parameters for the proxy health check.
-      properties:
-        url:
-          type: string
-          example: https://example.com
-          description: An optional URL to test reachability against. If provided, the proxy check will test connectivity to this URL instead of the default test URLs. Only HTTP and HTTPS schemes are allowed, and the URL must resolve to a public IP address. For ISP and datacenter proxies, the exit IP is stable, so a successful check reliably indicates that subsequent browser sessions will reach the target site with the same IP. For residential and mobile proxies, the exit node changes between requests, so a successful check validates proxy configuration but does not guarantee that a subsequent browser session will use the same exit IP or reach the same site — it is useful for verifying credentials and connectivity, not for predicting site-specific behavior. When provided, the check result does not update the proxy's health status, since a failure may indicate a problem with the target site rather than the proxy itself.
-    ProxyCreateRequest:
-      type: object
-      description: Configuration for routing traffic through a proxy.
-      required:
-      - type
-      properties:
-        name:
-          type: string
-          description: Readable name of the proxy.
-        type:
-          type: string
-          description: 'Proxy type to use. In terms of quality for avoiding bot-detection, from best to worst: `mobile` > `residential` > `isp` > `datacenter`.
-
-            '
-          enum:
-          - datacenter
-          - isp
-          - residential
-          - mobile
-          - custom
-        protocol:
-          type: string
-          description: Protocol to use for the proxy connection.
-          enum:
-          - http
-          - https
-          default: https
-        bypass_hosts:
-          type: array
-          description: Hostnames that should bypass the parent proxy and connect directly.
-          items:
-            type: string
-        config:
-          description: Configuration specific to the selected proxy `type`.
-          oneOf:
-          - $ref: '#/components/schemas/DatacenterProxyConfig'
-          - $ref: '#/components/schemas/IspProxyConfig'
-          - $ref: '#/components/schemas/ResidentialProxyConfig'
-          - $ref: '#/components/schemas/MobileProxyConfig'
-          - $ref: '#/components/schemas/CreateCustomProxyConfig'
-      discriminator:
-        propertyName: type
-        mapping:
-          datacenter: '#/components/schemas/DatacenterProxyConfig'
-          isp: '#/components/schemas/IspProxyConfig'
-          residential: '#/components/schemas/ResidentialProxyConfig'
-          mobile: '#/components/schemas/MobileProxyConfig'
-          custom: '#/components/schemas/CustomProxyConfig'
-    CustomProxyConfig:
-      type: object
-      title: Custom
-      description: Configuration for a custom proxy (e.g., private proxy server).
-      required:
-      - host
-      - port
-      properties:
-        host:
-          type: string
-          description: Proxy host address or IP.
-          example: 127.0.0.1
-        port:
-          type: integer
-          description: Proxy port.
-          example: 8080
-        username:
-          type: string
-          description: Username for proxy authentication.
-          example: user123
-        has_password:
-          type: boolean
-          description: Whether the proxy has a password.
-          example: true
-  responses:
-    UnprocessableEntity:
-      description: Unprocessable Entity – request was valid but the operation failed
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http
