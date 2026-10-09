@@ -1,24 +1,32 @@
-generated: '2026-07-19'
+generated: '2026-09-23'
 method: generated
-source: openapi/kernel-openapi-original.yml
+source: openapi/kernel-api-keys-api-openapi.yml, openapi/kernel-apps-api-openapi.yml, openapi/kernel-audit-logs-api-openapi.yml,
+  openapi/kernel-browser-computer-controls-api-openapi.yml, openapi/kernel-browser-filesystem-api-openapi.yml,
+  openapi/kernel-browser-logs-api-openapi.yml, openapi/kernel-browser-playwright-api-openapi.yml,
+  openapi/kernel-browser-pools-api-openapi.yml, openapi/kernel-browser-processes-api-openapi.yml,
+  openapi/kernel-browser-replays-api-openapi.yml, openapi/kernel-browser-telemetry-api-openapi.yml,
+  openapi/kernel-browsers-api-openapi.yml, openapi/kernel-credential-providers-api-openapi.yml,
+  openapi/kernel-credentials-api-openapi.yml, openapi/kernel-deployments-api-openapi.yml, openapi/kernel-extensions-api-openapi.yml,
+  openapi/kernel-invocations-api-openapi.yml, openapi/kernel-managed-auth-api-openapi.yml, openapi/kernel-organization-api-openapi.yml,
+  openapi/kernel-profiles-api-openapi.yml, openapi/kernel-projects-api-openapi.yml, openapi/kernel-proxies-api-openapi.yml
 description: Recommended x-agentic-access execution contracts, classified heuristically from
   the OpenAPI. A governance starting point for exposing this API to AI agents — review and bind
   audience per deployment. See research/curity/agentic-governance/.
 summary:
   operations: 135
   by_action_class:
-    acting: 81
-    connected: 54
+    acting: 80
+    connected: 55
   by_consequence:
     write: 63
-    read: 54
-    safety-critical: 15
+    read: 55
+    safety-critical: 14
     physical: 3
-  human_in_the_loop_required: 15
+  human_in_the_loop_required: 14
 operations:
-- path: /browsers
+- path: /org/api_keys
   method: post
-  operationId: postBrowsers
+  operationId: postApiKeys
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -32,9 +40,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browsers
+- path: /org/api_keys
   method: get
-  operationId: getBrowsers
+  operationId: listApiKeys
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -42,9 +50,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /browsers/{id_or_name}
+- path: /org/api_keys/{id}
   method: get
-  operationId: getBrowsersByIdOrName
+  operationId: getApiKeysById
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -52,9 +60,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /browsers/{id_or_name}
+- path: /org/api_keys/{id}
   method: patch
-  operationId: patchBrowsersByIdOrName
+  operationId: patchApiKeysById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -68,9 +76,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browsers/{id_or_name}
+- path: /org/api_keys/{id}
   method: delete
-  operationId: deleteBrowsersByIdOrName
+  operationId: deleteApiKeysById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -84,9 +92,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browsers/{id}/extensions
+- path: /org/api_keys/{id}/rotate
   method: post
-  operationId: uploadExtensionsToBrowser
+  operationId: rotateApiKey
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -100,22 +108,36 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browsers/{id}/curl
-  method: post
-  operationId: browserCurl
+- path: /apps
+  method: get
+  operationId: getApps
   x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
+    action-class: connected
+    consequence: read
+    subject: optional
     token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
+      max-ttl: 3600
+    audit: none
+- path: /audit-logs
+  method: get
+  operationId: getAuditLogs
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /audit-logs/export/chunk
+  method: get
+  operationId: getAuditLogsExportChunk
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
 - path: /browsers/{id}/computer/click_mouse
   method: post
   operationId: clickMouse
@@ -264,18 +286,12 @@ operations:
   method: post
   operationId: getMousePosition
   x-agentic-access:
-    action-class: acting
-    consequence: safety-critical
-    subject: required
-    audience: null
+    action-class: connected
+    consequence: read
+    subject: optional
     token:
-      max-ttl: 120
-      exchange: true
-      purpose-required: true
-      proof-of-possession: true
-    escalation:
-      human-in-the-loop: required
-    audit: required
+      max-ttl: 3600
+    audit: none
 - path: /browsers/{id}/computer/clipboard/read
   method: post
   operationId: readClipboard
@@ -307,22 +323,6 @@ operations:
       proof-of-possession: true
     escalation:
       human-in-the-loop: required
-    audit: required
-- path: /browsers/{id}/playwright/execute
-  method: post
-  operationId: executePlaywrightCode
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
     audit: required
 - path: /browsers/{id}/fs/read_file
   method: get
@@ -536,6 +536,148 @@ operations:
       - abnormal
       - high-value
     audit: required
+- path: /browsers/{id}/logs/stream
+  method: get
+  operationId: logsStream
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /browsers/{id}/playwright/execute
+  method: post
+  operationId: executePlaywrightCode
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools
+  method: post
+  operationId: postBrowserPools
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools
+  method: get
+  operationId: getBrowserPools
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /browser_pools/{id_or_name}
+  method: get
+  operationId: getBrowserPoolsByIdOrName
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /browser_pools/{id_or_name}
+  method: patch
+  operationId: updateBrowserPoolsByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools/{id_or_name}
+  method: delete
+  operationId: deleteBrowserPoolsByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools/{id_or_name}/acquire
+  method: post
+  operationId: acquireFromBrowserPoolByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools/{id_or_name}/release
+  method: post
+  operationId: releaseToBrowserPoolByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /browser_pools/{id_or_name}/flush
+  method: post
+  operationId: flushBrowserPoolByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
 - path: /browsers/{id}/process/exec
   method: post
   operationId: processExec
@@ -688,16 +830,6 @@ operations:
     escalation:
       human-in-the-loop: required
     audit: required
-- path: /browsers/{id}/logs/stream
-  method: get
-  operationId: logsStream
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
 - path: /browsers/{id}/telemetry/stream
   method: get
   operationId: streamBrowserTelemetry
@@ -718,9 +850,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /profiles
+- path: /browsers
   method: post
-  operationId: postProfiles
+  operationId: postBrowsers
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -734,9 +866,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /profiles
+- path: /browsers
   method: get
-  operationId: getProfiles
+  operationId: getBrowsers
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -744,9 +876,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /profiles/{id_or_name}
+- path: /browsers/{id_or_name}
   method: get
-  operationId: getProfileByIdOrName
+  operationId: getBrowsersByIdOrName
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -754,9 +886,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /profiles/{id_or_name}
+- path: /browsers/{id_or_name}
   method: patch
-  operationId: patchProfileByIdOrName
+  operationId: patchBrowsersByIdOrName
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -770,9 +902,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /profiles/{id_or_name}
+- path: /browsers/{id_or_name}
   method: delete
-  operationId: deleteProfileByIdOrName
+  operationId: deleteBrowsersByIdOrName
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -786,19 +918,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /profiles/{id_or_name}/download
-  method: get
-  operationId: downloadProfileByIdOrName
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /proxies
+- path: /browsers/{id}/extensions
   method: post
-  operationId: postProxies
+  operationId: uploadExtensionsToBrowser
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -812,9 +934,41 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /proxies
+- path: /browsers/{id}/curl
+  method: post
+  operationId: browserCurl
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /org/credential_providers
+  method: post
+  operationId: postCredentialProviders
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /org/credential_providers
   method: get
-  operationId: getProxies
+  operationId: getCredentialProviders
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -822,9 +976,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /proxies/{id}
+- path: /org/credential_providers/{id}
   method: get
-  operationId: getProxiesById
+  operationId: getCredentialProvidersById
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -832,9 +986,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /proxies/{id}
+- path: /org/credential_providers/{id}
   method: patch
-  operationId: patchProxiesById
+  operationId: patchCredentialProvidersById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -848,9 +1002,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /proxies/{id}
+- path: /org/credential_providers/{id}
   method: delete
-  operationId: deleteProxiesById
+  operationId: deleteCredentialProvidersById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -864,9 +1018,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /proxies/{id}/check
+- path: /org/credential_providers/{id}/test
   method: post
-  operationId: postProxiesByIdCheck
+  operationId: testCredentialProviderById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -880,6 +1034,160 @@ operations:
       - abnormal
       - high-value
     audit: required
+- path: /org/credential_providers/{id}/items
+  method: get
+  operationId: getCredentialProviderItems
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /credentials
+  method: post
+  operationId: postCredentials
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /credentials
+  method: get
+  operationId: getCredentials
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /credentials/{id_or_name}
+  method: get
+  operationId: getCredentialByIdOrName
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /credentials/{id_or_name}
+  method: patch
+  operationId: patchCredentialByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /credentials/{id_or_name}
+  method: delete
+  operationId: deleteCredentialByIdOrName
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /credentials/{id_or_name}/totp-code
+  method: get
+  operationId: getCredentialTotpCodeByIdOrName
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /deployments
+  method: post
+  operationId: postDeployments
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /deployments
+  method: get
+  operationId: getDeployments
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /deployments/{id}
+  method: get
+  operationId: getDeploymentsById
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /deployments/{id}
+  method: delete
+  operationId: deleteDeploymentsById
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /deployments/{id}/events
+  method: get
+  operationId: getDeploymentsEventsById
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
 - path: /extensions
   method: post
   operationId: postExtensions
@@ -952,9 +1260,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /browser_pools
+- path: /invocations
   method: post
-  operationId: postBrowserPools
+  operationId: postInvocations
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -968,9 +1276,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browser_pools
+- path: /invocations
   method: get
-  operationId: getBrowserPools
+  operationId: getInvocations
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -978,9 +1286,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /browser_pools/{id_or_name}
+- path: /invocations/{id}
   method: get
-  operationId: getBrowserPoolsByIdOrName
+  operationId: getInvocationsById
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -988,9 +1296,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /browser_pools/{id_or_name}
+- path: /invocations/{id}
   method: patch
-  operationId: updateBrowserPoolsByIdOrName
+  operationId: patchInvocationsById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1004,9 +1312,19 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browser_pools/{id_or_name}
+- path: /invocations/{id}/browsers
+  method: get
+  operationId: getInvocationsBrowsersById
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /invocations/{id}/browsers
   method: delete
-  operationId: deleteBrowserPoolsByIdOrName
+  operationId: deleteInvocationsBrowsersById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1020,54 +1338,16 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /browser_pools/{id_or_name}/acquire
-  method: post
-  operationId: acquireFromBrowserPoolByIdOrName
+- path: /invocations/{id}/events
+  method: get
+  operationId: getInvocationsEventsById
   x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
+    action-class: connected
+    consequence: read
+    subject: optional
     token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /browser_pools/{id_or_name}/release
-  method: post
-  operationId: releaseToBrowserPoolByIdOrName
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /browser_pools/{id_or_name}/flush
-  method: post
-  operationId: flushBrowserPoolByIdOrName
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
+      max-ttl: 3600
+    audit: none
 - path: /auth/connections
   method: post
   operationId: postAuthConnections
@@ -1204,25 +1484,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /credentials
-  method: post
-  operationId: postCredentials
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /credentials
+- path: /org/limits
   method: get
-  operationId: getCredentials
+  operationId: getOrgLimits
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1230,19 +1494,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /credentials/{id_or_name}
-  method: get
-  operationId: getCredentialByIdOrName
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /credentials/{id_or_name}
+- path: /org/limits
   method: patch
-  operationId: patchCredentialByIdOrName
+  operationId: patchOrgLimits
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1256,35 +1510,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /credentials/{id_or_name}
-  method: delete
-  operationId: deleteCredentialByIdOrName
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /credentials/{id_or_name}/totp-code
-  method: get
-  operationId: getCredentialTotpCodeByIdOrName
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /org/credential_providers
+- path: /profiles
   method: post
-  operationId: postCredentialProviders
+  operationId: postProfiles
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1298,9 +1526,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/credential_providers
+- path: /profiles
   method: get
-  operationId: getCredentialProviders
+  operationId: getProfiles
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1308,9 +1536,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /org/credential_providers/{id}
+- path: /profiles/{id_or_name}
   method: get
-  operationId: getCredentialProvidersById
+  operationId: getProfileByIdOrName
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1318,9 +1546,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /org/credential_providers/{id}
+- path: /profiles/{id_or_name}
   method: patch
-  operationId: patchCredentialProvidersById
+  operationId: patchProfileByIdOrName
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1334,9 +1562,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/credential_providers/{id}
+- path: /profiles/{id_or_name}
   method: delete
-  operationId: deleteCredentialProvidersById
+  operationId: deleteProfileByIdOrName
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1350,189 +1578,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/credential_providers/{id}/test
-  method: post
-  operationId: testCredentialProviderById
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /org/credential_providers/{id}/items
+- path: /profiles/{id_or_name}/download
   method: get
-  operationId: getCredentialProviderItems
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /apps
-  method: get
-  operationId: getApps
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /deployments
-  method: post
-  operationId: postDeployments
-  x-agentic-access:
-    action-class: acting
-    consequence: physical
-    subject: required
-    audience: null
-    token:
-      max-ttl: 300
-      exchange: true
-      purpose-required: true
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /deployments
-  method: get
-  operationId: getDeployments
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /deployments/{id}
-  method: get
-  operationId: getDeploymentsById
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /deployments/{id}
-  method: delete
-  operationId: deleteDeploymentsById
-  x-agentic-access:
-    action-class: acting
-    consequence: physical
-    subject: required
-    audience: null
-    token:
-      max-ttl: 300
-      exchange: true
-      purpose-required: true
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /deployments/{id}/events
-  method: get
-  operationId: getDeploymentsEventsById
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /invocations
-  method: post
-  operationId: postInvocations
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /invocations
-  method: get
-  operationId: getInvocations
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /invocations/{id}
-  method: get
-  operationId: getInvocationsById
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /invocations/{id}
-  method: patch
-  operationId: patchInvocationsById
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /invocations/{id}/browsers
-  method: get
-  operationId: getInvocationsBrowsersById
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /invocations/{id}/browsers
-  method: delete
-  operationId: deleteInvocationsBrowsersById
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
-- path: /invocations/{id}/events
-  method: get
-  operationId: getInvocationsEventsById
+  operationId: downloadProfileByIdOrName
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1702,32 +1750,6 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/limits
-  method: get
-  operationId: getOrgLimits
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /org/limits
-  method: patch
-  operationId: patchOrgLimits
-  x-agentic-access:
-    action-class: acting
-    consequence: write
-    subject: required
-    audience: null
-    token:
-      max-ttl: 900
-    escalation:
-      human-in-the-loop: conditional
-      triggers:
-      - abnormal
-      - high-value
-    audit: required
 - path: /org/projects/{id}/limits
   method: get
   operationId: getOrgProjectLimits
@@ -1754,9 +1776,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/api_keys
+- path: /proxies
   method: post
-  operationId: postApiKeys
+  operationId: postProxies
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1770,9 +1792,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/api_keys
+- path: /proxies
   method: get
-  operationId: listApiKeys
+  operationId: getProxies
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1780,9 +1802,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /org/api_keys/{id}
+- path: /proxies/{id}
   method: get
-  operationId: getApiKeysById
+  operationId: getProxiesById
   x-agentic-access:
     action-class: connected
     consequence: read
@@ -1790,9 +1812,9 @@ operations:
     token:
       max-ttl: 3600
     audit: none
-- path: /org/api_keys/{id}
+- path: /proxies/{id}
   method: patch
-  operationId: patchApiKeysById
+  operationId: patchProxiesById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1806,9 +1828,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/api_keys/{id}
+- path: /proxies/{id}
   method: delete
-  operationId: deleteApiKeysById
+  operationId: deleteProxiesById
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1822,9 +1844,9 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /org/api_keys/{id}/rotate
+- path: /proxies/{id}/check
   method: post
-  operationId: rotateApiKey
+  operationId: postProxiesByIdCheck
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -1838,23 +1860,3 @@ operations:
       - abnormal
       - high-value
     audit: required
-- path: /audit-logs
-  method: get
-  operationId: getAuditLogs
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
-- path: /audit-logs/export/chunk
-  method: get
-  operationId: getAuditLogsExportChunk
-  x-agentic-access:
-    action-class: connected
-    consequence: read
-    subject: optional
-    token:
-      max-ttl: 3600
-    audit: none
