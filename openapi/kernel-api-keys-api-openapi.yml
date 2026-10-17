@@ -319,12 +319,6 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tcreatedAPIKey, err := client.APIKeys.Rotate(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyRotateParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", createdAPIKey)\n}\n"
 components:
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Unauthorized – missing or invalid authorization token
       content:
@@ -337,6 +331,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad Request – invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     InternalError:
       description: Internal Server Error
       content:
@@ -344,6 +344,84 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    UpdateApiKeyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New API key name
+          minLength: 1
+          maxLength: 255
+          example: new-api-name
+    CreatedApiKey:
+      description: API key returned immediately after creation. Includes the plaintext key once.
+      allOf:
+      - $ref: '#/components/schemas/ApiKey'
+      - type: object
+        required:
+        - key
+        properties:
+          key:
+            type: string
+            description: Plaintext API key. Only returned once when the key is created.
+            example: sk_1234abcd
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+        message:
+          type: string
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    CreateApiKeyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Label for the API key (1-255 characters). API keys are not addressable by name.
+          minLength: 1
+          maxLength: 255
+          example: staging
+        days_to_expire:
+          type: integer
+          description: Number of days until expiry, up to 3650. Use null for never.
+          minimum: 1
+          maximum: 3650
+          example: 30
+          nullable: true
+        project_id:
+          type: string
+          description: Unique project identifier
+          example: proj_abc123
+          nullable: true
     ApiKey:
       type: object
       required:
@@ -395,27 +473,6 @@ components:
           type: string
           description: Masked version of the API key
           example: sk_1234...abcd
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
     ApiKeyCreator:
       type: object
       required:
@@ -437,40 +494,6 @@ components:
           nullable: true
           description: Display name of the creator, if available.
           example: Jane Doe
-    UpdateApiKeyRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: New API key name
-          minLength: 1
-          maxLength: 255
-          example: new-api-name
-    CreateApiKeyRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: Label for the API key (1-255 characters). API keys are not addressable by name.
-          minLength: 1
-          maxLength: 255
-          example: staging
-        days_to_expire:
-          type: integer
-          description: Number of days until expiry, up to 3650. Use null for never.
-          minimum: 1
-          maximum: 3650
-          example: 30
-          nullable: true
-        project_id:
-          type: string
-          description: Unique project identifier
-          example: proj_abc123
-          nullable: true
     RotateApiKeyRequest:
       type: object
       properties:
@@ -488,29 +511,6 @@ components:
           maximum: 3650
           example: 7
           nullable: true
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    CreatedApiKey:
-      description: API key returned immediately after creation. Includes the plaintext key once.
-      allOf:
-      - $ref: '#/components/schemas/ApiKey'
-      - type: object
-        required:
-        - key
-        properties:
-          key:
-            type: string
-            description: Plaintext API key. Only returned once when the key is created.
-            example: sk_1234abcd
   securitySchemes:
     bearerAuth:
       type: http

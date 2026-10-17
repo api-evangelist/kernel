@@ -296,8 +296,8 @@ paths:
         source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Profiles.Download(context.TODO(), \"id_or_name\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response)\n}\n"
 components:
   responses:
-    BadRequest:
-      description: Bad Request – invalid input
+    Conflict:
+      description: Conflict – resource already exists
       content:
         application/json:
           schema:
@@ -308,20 +308,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
+    BadRequest:
+      description: Bad Request – invalid input
       content:
         application/json:
           schema:
@@ -332,36 +326,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    ProfileRequest:
-      type: object
-      description: Request body for creating a profile.
-      properties:
-        name:
-          type: string
-          description: Optional name of the profile. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
-      required: []
     Profile:
       type: object
       description: Browser profile metadata.
@@ -388,17 +359,6 @@ components:
       required:
       - id
       - created_at
-    ProfileUpdateRequest:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-          description: New profile name. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
-          minLength: 1
-          maxLength: 255
-          example: my-renamed-profile
     ErrorDetail:
       type: object
       properties:
@@ -410,6 +370,46 @@ components:
           type: string
           description: Further detail about the error
           example: Provided version string is not semver compliant
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+        message:
+          type: string
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+        details:
+          type: array
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ProfileUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: New profile name. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
+          minLength: 1
+          maxLength: 255
+          example: my-renamed-profile
+    ProfileRequest:
+      type: object
+      description: Request body for creating a profile.
+      properties:
+        name:
+          type: string
+          description: Optional name of the profile. Must be unique within the logical project; during the default-project migration, unscoped profiles and profiles in the org default project are treated as the same project.
+      required: []
   securitySchemes:
     bearerAuth:
       type: http
