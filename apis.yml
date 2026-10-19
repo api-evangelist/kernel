@@ -304,6 +304,66 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/kernel-proxies-api-openapi.yml
+- aid: kernel:kernel-authentication-api
+  name: Kernel Authentication API
+  description: Inspect the identity and authorization context for the current request.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Authentication
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-authentication-api-openapi.yml
+- aid: kernel:kernel-browser-repl-api
+  name: Kernel Browser REPL API
+  description: Execute JavaScript in the browser instance's persistent Browser REPL.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser REPL
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-repl-api-openapi.yml
+- aid: kernel:kernel-browser-webmcp-api
+  name: Kernel Browser WebMCP API
+  description: Discover and invoke native page tools across the browser instance.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Browser WebMCP
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-browser-webmcp-api-openapi.yml
+- aid: kernel:kernel-config-registry-api
+  name: Kernel Config Registry API
+  description: Resolve browser and proxy recommendations for bot-protected sites.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Config Registry
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-config-registry-api-openapi.yml
+- aid: kernel:kernel-search-api
+  name: Kernel Search API
+  description: Search the web and retrieve content for selected results.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Search
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-search-api-openapi.yml
+- aid: kernel:kernel-vaults-api
+  name: Kernel Vaults API
+  description: The Vaults API from Kernel — 9 operation(s) for vaults.
+  humanURL: https://kernel.sh/docs/api-reference/
+  baseURL: https://api.onkernel.com
+  tags:
+  - Vaults
+  properties:
+  - type: OpenAPI
+    url: openapi/kernel-vaults-api-openapi.yml
 common:
 - type: Overlay
   url: overlays/kernel-openapi-overlay.yaml

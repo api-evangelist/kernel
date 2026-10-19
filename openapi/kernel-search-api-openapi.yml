@@ -1,0 +1,1970 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Search API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- description: Search the web and retrieve content for selected results.
+  name: Search
+paths:
+  /search:
+    post:
+      description: Returns ranked results from one serving provider. The default strategy selects a provider that supports the requested options. The fallback strategy tries providers in the supplied order. Results are not blended across providers. Portable filters may be approximated or omitted according to provider capabilities; warnings describe those outcomes unless strict_params is true. Native options apply only to their selected provider.
+      operationId: postSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Search'
+          description: 'Completed search, including valid zero-result responses. Inline
+
+            retrieval failures are reported per result. Arrays are never null.
+
+            '
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '502':
+          $ref: '#/components/responses/SearchProviderError'
+        '503':
+          $ref: '#/components/responses/SearchUnavailable'
+        '504':
+          $ref: '#/components/responses/SearchTimeout'
+      security:
+      - bearerAuth: []
+      summary: Search the web
+      tags:
+      - Search
+  /search/providers:
+    get:
+      description: 'Lists providers, capabilities, and machine-readable native-option schemas. Auto and fallback
+
+        are strategies, not provider entries. The list is not paginated and contains no latency
+
+        benchmarks. X-Request-Id identifies the request.'
+      operationId: getSearchProviders
+      parameters:
+      - description: Optional concrete provider slug filter. Omit to list every provider. A slug that is not listed returns an empty array.
+        in: query
+        name: slug
+        required: false
+        schema:
+          $ref: '#/components/schemas/SearchProviderSlug'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SearchProvider'
+                type: array
+          description: List of available search providers. Returns an empty array, never null.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/SearchUnavailable'
+      security:
+      - bearerAuth: []
+      summary: List search providers
+      tags:
+      - Search
+  /search/{id}:
+    get:
+      description: 'Returns the retained search resource exactly as it was returned by
+
+        POST /search: results, attempts, warnings, usage, and expires_at. No
+
+        provider is called and nothing is billed. Use it to look up a search
+
+        by ID for debugging, cost review, or to recover result IDs before
+
+        calling the contents endpoint. Inline content fetched at search time
+
+        is included; content fetched later through the contents endpoint is
+
+        not merged in. Missing, expired, or inaccessible searches return 404.'
+      operationId: getSearch
+      parameters:
+      - description: Search resource ID returned by POST /search.
+        example: srch_abc123
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Search'
+          description: The retained search.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/SearchUnavailable'
+      security:
+      - bearerAuth: []
+      summary: Retrieve a search
+      tags:
+      - Search
+  /search/{id}/contents:
+    post:
+      description: 'Retrieves selected results from a retained search. Provide exactly one of
+
+        result_ids or limit; the latter fetches the top results. Content defaults to
+
+        source:auto. Responses preserve result_ids order. Unknown result IDs are rejected before retrieval starts.
+
+        Missing, expired, or inaccessible searches return 404. Once retrieval begins,
+
+        return one outcome per selected result, including timeout entries for work
+
+        unfinished at the overall deadline. Browser retrievals run sequentially in
+
+        result order, so later results may time out when earlier pages are slow.
+
+        X-Request-Id identifies this request separately from the search resource.'
+      operationId: postSearchContents
+      parameters:
+      - description: Search resource ID returned by POST /search.
+        example: srch_abc123
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchContentsRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchContentsResponse'
+          description: One outcome per selected result, even if every fetch fails. Arrays are never null.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/SearchUnavailable'
+      security:
+      - bearerAuth: []
+      summary: Fetch search result content
+      tags:
+      - Search
+components:
+  schemas:
+    SearchContextTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchContextOptions'
+        provider:
+          const: context
+          type: string
+      required:
+      - provider
+      type: object
+    SearchRequest:
+      additionalProperties: false
+      properties:
+        content:
+          description: Optional portable content retrieval. Pass true for defaults or an options object. Omission never starts Kernel browser work; provider-supplied content is still returned when available, including when requested through native options. Both inline and deferred retrieval use the same options schema.
+          oneOf:
+          - description: Pass true to enable default portable content retrieval (auto source, markdown format, 10,000 char cap).
+            enum:
+            - true
+            type: boolean
+          - $ref: '#/components/schemas/SearchContentOptions'
+        country:
+          description: ISO 3166-1 alpha-2 search locale preference.
+          pattern: ^[A-Za-z]{2}$
+          type: string
+        end_date:
+          description: Inclusive publication-date upper bound; must not precede start_date. If recency is also supplied, recency takes precedence with a warning. Unsupported or approximated filtering is reported, or rejected under strict_params.
+          format: date
+          type: string
+        exclude_domains:
+          description: Hostname exclusions, with the same best-effort/strict behavior as include_domains. Provider-specific combinations that cannot be represented are reported via warnings or rejected in strict mode.
+          items:
+            type: string
+          maxItems: 100
+          type: array
+          uniqueItems: true
+        include_domains:
+          description: Hostname inclusion preference, matching a hostname and its subdomains. Empty means unrestricted. Translated, emulated, or dropped with a warning according to provider capability unless strict_params is true. Native boost modes remain advisory and are identified in warnings.
+          items:
+            type: string
+          maxItems: 100
+          type: array
+          uniqueItems: true
+        include_raw:
+          default: false
+          description: Include untouched per-result payloads and the full serving-provider response in raw fields. Off by default; native top-level outputs such as answer remain available without it.
+          type: boolean
+        language:
+          description: BCP 47 search language preference.
+          type: string
+        max_results:
+          default: 10
+          description: Requested result count from 1 through 100. The effective count is clamped to the serving provider's cap with a warning. Effective native counts are the lower of this limit and supplied provider-native count aliases. Strict mode rejects unsupported counts.
+          maximum: 100
+          minimum: 1
+          type: integer
+        query:
+          description: Primary search query. A provider-native multi-query option applies only to that provider; other providers in a fallback chain receive this query.
+          maxLength: 2048
+          minLength: 1
+          type: string
+        recency:
+          description: Relative search window. Takes precedence over start_date/end_date with a warning if both are set. Provider-native recency behavior is retained, including documented hour-to-day widening. Unsupported filters are rejected only in strict mode.
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          - year
+          type: string
+          x-enum-varnames:
+          - SearchRecencyHour
+          - SearchRecencyDay
+          - SearchRecencyWeek
+          - SearchRecencyMonth
+          - SearchRecencyYear
+        safe_search:
+          description: Optional safety preference. Omit to use provider defaults. Unsupported values are dropped with a warning unless strict_params is true. A search filter is not an authorization boundary.
+          enum:
+          - 'off'
+          - moderate
+          - strict
+          type: string
+          x-enum-varnames:
+          - SearchSafeSearchOff
+          - SearchSafeSearchModerate
+          - SearchSafeSearchStrict
+        start_date:
+          description: Inclusive publication-date lower bound. If recency is also supplied, recency takes precedence with a warning. Provider date semantics, precision, and unsupported filters are reported; unknown source dates are not fabricated or universally post-filtered.
+          format: date
+          type: string
+        strategy:
+          $ref: '#/components/schemas/SearchStrategy'
+          default:
+            type: auto
+          description: Omitted strategy defaults to auto.
+        strict_params:
+          default: false
+          description: When false, unsupported portable parameters are omitted and approximations are described in warnings. When true, every supplied portable parameter must be honored exactly. Requests that cannot be served with those parameters are rejected. This does not guarantee identical rankings or document timestamps across indexes. Authentication and project isolation are always enforced.
+          type: boolean
+        timeout_ms:
+          default: 30000
+          description: 'Overall deadline across search attempts and inline retrieval.
+
+            No new attempt starts after the deadline. Completed search results
+
+            survive inline retrieval timeouts.
+
+            '
+          maximum: 120000
+          minimum: 1000
+          type: integer
+      required:
+      - query
+      type: object
+    SearchAttempt:
+      properties:
+        duration_ms:
+          minimum: 0
+          type: integer
+        error_code:
+          type: string
+        outcome:
+          enum:
+          - success
+          - empty
+          - error
+          - timeout
+          type: string
+          x-enum-varnames:
+          - SearchAttemptOutcomeSuccess
+          - SearchAttemptOutcomeEmpty
+          - SearchAttemptOutcomeError
+          - SearchAttemptOutcomeTimeout
+        provider:
+          type: string
+        retryable:
+          type: boolean
+      required:
+      - provider
+      - outcome
+      - duration_ms
+      type: object
+    SearchContentCompleteness:
+      description: 'Describes source coverage before max_chars truncation. Full_page
+
+        means main-page content, not every dynamic element or linked page.
+
+        '
+      enum:
+      - full_page
+      - excerpt
+      - unknown
+      type: string
+      x-enum-varnames:
+      - SearchContentCompletenessFullPage
+      - SearchContentCompletenessExcerpt
+      - SearchContentCompletenessUnknown
+    SearchBraveOptions:
+      additionalProperties: false
+      properties:
+        count:
+          description: Provider-native count. Lower-only alias for max_results; cannot raise the effective result cap.
+          minimum: 1
+          type: integer
+        extra_snippets:
+          description: Request additional snippets from Brave.
+          type: boolean
+        goggles:
+          description: Goggles re-ranking definition URL.
+          type: string
+        goggles_id:
+          deprecated: true
+          description: Deprecated Brave Goggle identifier. Prefer goggles.
+          type: string
+        include_fetch_metadata:
+          description: Include Brave's fetch metadata.
+          type: boolean
+        offset:
+          description: Page offset supported by Brave.
+          maximum: 9
+          minimum: 0
+          type: integer
+        operators:
+          description: Brave search operators.
+          type: string
+        result_filter:
+          description: Comma-separated result types to include, e.g. "web,news".
+          type: string
+        search_lang:
+          description: Language of the search, e.g. "en".
+          type: string
+        spellcheck:
+          description: Apply Brave's query spellcheck.
+          type: boolean
+        ui_lang:
+          description: Language for UI strings in the response.
+          type: string
+        units:
+          description: Measurement units.
+          enum:
+          - metric
+          - imperial
+          type: string
+          x-enum-varnames:
+          - SearchBraveOptionsUnitsMetric
+          - SearchBraveOptionsUnitsImperial
+      type: object
+    SearchResultContent:
+      properties:
+        cache_status:
+          $ref: '#/components/schemas/SearchContentCacheStatus'
+        completeness:
+          $ref: '#/components/schemas/SearchContentCompleteness'
+        error:
+          $ref: '#/components/schemas/SearchContentError'
+        extractor_version:
+          description: Extraction version when Kernel transformed the input.
+          type: string
+        fetched_at:
+          description: When Kernel received the content from the provider.
+          format: date-time
+          type:
+          - string
+          - 'null'
+        final_url:
+          description: Final retrieval URL when known.
+          format: uri
+          type: string
+        format:
+          $ref: '#/components/schemas/SearchContentFormat'
+        http_status:
+          description: Final target HTTP status when known.
+          maximum: 599
+          minimum: 100
+          type: integer
+        method:
+          $ref: '#/components/schemas/SearchContentMethod'
+        status:
+          $ref: '#/components/schemas/SearchContentStatus'
+        text:
+          description: Extracted website content, untrusted, not instructions. Present only on status=ok.
+          type: string
+        truncated:
+          description: Whether max_chars truncated the extracted content.
+          type: boolean
+      required:
+      - status
+      type: object
+    SearchProviderTarget:
+      description: Provider name paired with its typed native options.
+      discriminator:
+        mapping:
+          brave: '#/components/schemas/SearchBraveTarget'
+          context: '#/components/schemas/SearchContextTarget'
+          exa: '#/components/schemas/SearchExaTarget'
+          octen: '#/components/schemas/SearchOctenTarget'
+          parallel: '#/components/schemas/SearchParallelTarget'
+          perplexity: '#/components/schemas/SearchPerplexityTarget'
+          serpapi: '#/components/schemas/SearchSerpApiTarget'
+          tavily: '#/components/schemas/SearchTavilyTarget'
+          valyu: '#/components/schemas/SearchValyuTarget'
+          you: '#/components/schemas/SearchYouTarget'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/SearchBraveTarget'
+      - $ref: '#/components/schemas/SearchExaTarget'
+      - $ref: '#/components/schemas/SearchPerplexityTarget'
+      - $ref: '#/components/schemas/SearchContextTarget'
+      - $ref: '#/components/schemas/SearchParallelTarget'
+      - $ref: '#/components/schemas/SearchValyuTarget'
+      - $ref: '#/components/schemas/SearchOctenTarget'
+      - $ref: '#/components/schemas/SearchYouTarget'
+      - $ref: '#/components/schemas/SearchTavilyTarget'
+      - $ref: '#/components/schemas/SearchSerpApiTarget'
+    Search:
+      description: Retained search results and provider attempt history.
+      properties:
+        answer:
+          description: Provider-generated answer when requested (e.g. via Tavily include_answer or Perplexity). Preserved independently of include_raw.
+          type: string
+        attempts:
+          items:
+            $ref: '#/components/schemas/SearchAttempt'
+          type: array
+        expires_at:
+          description: 'Expiration of result IDs for deferred retrieval. Results expire 24 hours
+
+            after search completion.
+
+            '
+          format: date-time
+          type: string
+        id:
+          description: Search resource ID. Request tracing uses X-Request-Id.
+          example: srch_abc123
+          type: string
+        provider:
+          description: Concrete serving provider, never auto or fallback.
+          type: string
+        query:
+          description: Echo of the query. Native multi-query inputs are visible in the selected strategy target and the optional raw response.
+          type: string
+        raw:
+          description: Full serving-provider response, including top-level metadata that does not belong to a result. Present only with include_raw=true; untrusted provider data.
+        results:
+          items:
+            $ref: '#/components/schemas/SearchResult'
+          type: array
+        usage:
+          $ref: '#/components/schemas/SearchUsage'
+        warnings:
+          items:
+            $ref: '#/components/schemas/SearchWarning'
+          type: array
+      required:
+      - id
+      - expires_at
+      - provider
+      - results
+      - attempts
+      - warnings
+      - query
+      - usage
+      type: object
+    SearchValyuTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchValyuOptions'
+        provider:
+          const: valyu
+          type: string
+      required:
+      - provider
+      type: object
+    SearchExaOptions:
+      additionalProperties: false
+      properties:
+        category:
+          description: Provider data-category hint.
+          type: string
+        compliance:
+          description: Provider-native compliance controls. Requires support and authorization on the provider account.
+          type: string
+        contents:
+          $ref: '#/components/schemas/SearchExaOptionsContents'
+        maxAgeHours:
+          description: Provider-native cache-age control. Unlike content.max_age_hours, this retains Exa semantics, including any native sentinel values. It does not imply a cross-provider freshness guarantee.
+          type: number
+        numResults:
+          description: Provider-native count. Lower-only alias for max_results.
+          minimum: 1
+          type: integer
+        type:
+          default: auto
+          description: Search mode supported by Exa.
+          enum:
+          - auto
+          - fast
+          - instant
+          type: string
+          x-enum-varnames:
+          - SearchExaOptionsTypeAuto
+          - SearchExaOptionsTypeFast
+          - SearchExaOptionsTypeInstant
+      type: object
+    SearchProviderOptionsDiscovery:
+      additionalProperties: false
+      properties:
+        examples:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+        schema:
+          additionalProperties: true
+          description: JSON Schema for the provider-native options accepted by POST /search.
+          type: object
+        schema_ref:
+          description: OpenAPI component name for the matching typed provider-options schema.
+          type: string
+      required:
+      - schema_ref
+      - schema
+      type: object
+    SearchTavilyOptions:
+      additionalProperties: false
+      properties:
+        auto_parameters:
+          description: Allow the provider to choose search parameters. May select a different billing tier; explicit caller values retain provider-native precedence.
+          type: boolean
+        chunks_per_source:
+          description: Provider excerpts per source, up to 500 characters each.
+          maximum: 3
+          minimum: 1
+          type: integer
+        exact_match:
+          description: Require the quoted phrases in the query verbatim, bypassing semantic matches.
+          type: boolean
+        filter_by_language:
+          description: Strictly filter non-matching languages. Requires `language`.
+          type: boolean
+        include_answer:
+          anyOf:
+          - type: boolean
+          - enum:
+            - basic
+            - advanced
+            type: string
+            x-enum-varnames:
+            - SearchTavilyOptionsIncludeAnswerVariant1Basic
+            - SearchTavilyOptionsIncludeAnswerVariant1Advanced
+          description: Request the provider's generated answer. Returned as answer on the search response, independently of include_raw.
+        include_domains_mode:
+          description: Native filter versus ranking boost semantics. Boost influences ranking rather than restricting results to the listed domains. Requires include_domains.
+          enum:
+          - filter
+          - boost
+          type: string
+          x-enum-varnames:
+          - SearchTavilyOptionsIncludeDomainsModeFilter
+          - SearchTavilyOptionsIncludeDomainsModeBoost
+        include_favicon:
+          description: Favicon URL per result.
+          type: boolean
+        include_image_descriptions:
+          description: Describe each image. Needs include_images.
+          type: boolean
+        include_images:
+          description: Query-related images plus per-result images.
+          type: boolean
+        include_raw_content:
+          anyOf:
+          - type: boolean
+          - enum:
+            - markdown
+            - text
+            type: string
+            x-enum-varnames:
+            - SearchTavilyOptionsIncludeRawContentVariant1Markdown
+            - SearchTavilyOptionsIncludeRawContentVariant1Text
+          description: Request native full-page content. Defaults to markdown when omitted for this provider, False disables that native retrieval; it does not disable explicitly requested Kernel browser retrieval.
+        language:
+          description: ISO 639-1 code or English language name. Ranking boost unless filter_by_language.
+          type: string
+        max_results:
+          description: Provider-native count. Lower-only alias for max_results.
+          minimum: 1
+          type: integer
+        search_depth:
+          description: Provider relevance and latency tier. Some tiers cannot be combined with native safe search; conflicts are described in warnings.
+          enum:
+          - advanced
+          - basic
+          - fast
+          - ultra-fast
+          type: string
+          x-enum-varnames:
+          - SearchTavilyOptionsSearchDepthAdvanced
+          - SearchTavilyOptionsSearchDepthBasic
+          - SearchTavilyOptionsSearchDepthFast
+          - SearchTavilyOptionsSearchDepthUltraFast
+        topic:
+          description: Provider corpus selector. Publication metadata depends on the selected topic.
+          enum:
+          - general
+          - news
+          - finance
+          type: string
+          x-enum-varnames:
+          - SearchTavilyOptionsTopicGeneral
+          - SearchTavilyOptionsTopicNews
+          - SearchTavilyOptionsTopicFinance
+      type: object
+    SearchPerplexityTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchPerplexityOptions'
+        provider:
+          const: perplexity
+          type: string
+      required:
+      - provider
+      type: object
+    SearchContentStatus:
+      description: 'Ok means non-empty extracted content, not merely HTTP 200. Blocked
+
+        includes detected challenges or access denials. Detection is
+
+        best-effort, not a guarantee of page completeness. Error details
+
+        are present for non-ok outcomes; text is present only on ok.
+
+        '
+      enum:
+      - ok
+      - unavailable
+      - blocked
+      - timeout
+      - unsupported_type
+      - extraction_failed
+      - error
+      type: string
+      x-enum-varnames:
+      - SearchContentStatusOk
+      - SearchContentStatusUnavailable
+      - SearchContentStatusBlocked
+      - SearchContentStatusTimeout
+      - SearchContentStatusUnsupportedType
+      - SearchContentStatusExtractionFailed
+      - SearchContentStatusError
+    SearchSerpApiOptions:
+      additionalProperties: false
+      properties:
+        device:
+          description: Device profile used for the search.
+          enum:
+          - desktop
+          - mobile
+          - tablet
+          type: string
+        engine:
+          description: SerpApi engine identifier. The Kernel integration currently supports google only.
+          minLength: 1
+          type: string
+        filter:
+          description: Google duplicate-content filter.
+          enum:
+          - 0
+          - 1
+          type: integer
+        gl:
+          description: Two-letter Google country code.
+          maxLength: 2
+          minLength: 2
+          type: string
+        google_domain:
+          description: Google domain to search when using the google engine.
+          type: string
+        hl:
+          description: Interface language code.
+          maxLength: 8
+          minLength: 2
+          type: string
+        location:
+          description: Free-form geographic location used for localized results.
+          type: string
+        nfpr:
+          description: Google auto-correction filter.
+          enum:
+          - 0
+          - 1
+          type: integer
+        no_cache:
+          description: When true, bypass SerpApi cached results when supported.
+          type: boolean
+        num:
+          description: Number of results requested from the search engine.
+          maximum: 100
+          minimum: 1
+          type: integer
+        safe:
+          description: Safe-search setting for engines that support it.
+          enum:
+          - active
+          - 'off'
+          type: string
+        start:
+          description: Zero-based result offset for pagination.
+          minimum: 0
+          type: integer
+        tbm:
+          description: Google vertical search selector, such as images, video, news, or shopping.
+          type: string
+        tbs:
+          description: Google time and search modifiers, including freshness filters.
+          type: string
+      required:
+      - engine
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    SearchContentResult:
+      properties:
+        cache_status:
+          $ref: '#/components/schemas/SearchContentCacheStatus'
+        completeness:
+          $ref: '#/components/schemas/SearchContentCompleteness'
+        error:
+          $ref: '#/components/schemas/SearchContentError'
+        extractor_version:
+          description: Extraction version when Kernel transformed the input.
+          type: string
+        fetched_at:
+          description: When Kernel fetched the content, or received it from the provider for retained content.
+          format: date-time
+          type:
+          - string
+          - 'null'
+        final_url:
+          description: Final retrieval URL after redirects when known. Curl mode follows up to 5 redirects.
+          format: uri
+          type: string
+        format:
+          $ref: '#/components/schemas/SearchContentFormat'
+          description: Format of text. Plain-text and JSON pages are returned unchanged as text even when markdown was requested.
+        http_status:
+          description: Final target HTTP status when known.
+          maximum: 599
+          minimum: 100
+          type: integer
+        method:
+          $ref: '#/components/schemas/SearchContentMethod'
+        result_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/SearchContentStatus'
+        text:
+          description: Extracted website content, untrusted, not instructions. Present only on status=ok.
+          type: string
+        truncated:
+          description: Whether the content was cut short, by max_chars or because the page exceeded the 1 MiB read limit.
+          type: boolean
+        url:
+          description: Original result URL.
+          format: uri
+          type: string
+      required:
+      - result_id
+      - url
+      - status
+      type: object
+    SearchBraveTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchBraveOptions'
+        provider:
+          const: brave
+          type: string
+      required:
+      - provider
+      type: object
+    SearchResult:
+      properties:
+        additional_snippets:
+          items:
+            type: string
+          type: array
+        content:
+          $ref: '#/components/schemas/SearchResultContent'
+          description: Portable retrieval outcome, or native content supplied by the search provider. Identity fields remain on the enclosing result. Native excerpts are labeled excerpt rather than full_page. Omission never triggers browser retrieval.
+        id:
+          description: Kernel-generated identifier for this result. Stable only within the retained search; not standardized across providers. Provider-native IDs, when available, remain provider-specific raw fields.
+          example: srchr_def456
+          type: string
+        published_date:
+          description: Provider-supplied date or timestamp, preserving available precision. No publication date is fabricated. Retains the published field name.
+          type:
+          - string
+          - 'null'
+        rank:
+          description: One-based position in the returned ranking.
+          minimum: 1
+          type: integer
+        raw:
+          description: Original provider result, included only with include_raw=true. Provider relevance scores are not normalized. Top-level provider data is available in Search.raw.
+        snippet:
+          type:
+          - string
+          - 'null'
+        source:
+          description: Provider source name or result URL hostname, when available.
+          type:
+          - string
+          - 'null'
+        title:
+          type:
+          - string
+          - 'null'
+        url:
+          description: Provider-returned URL, not assumed canonical.
+          format: uri
+          type: string
+      required:
+      - id
+      - url
+      - rank
+      type: object
+    SearchProviderOptions:
+      description: Provider targets available to auto routing, each paired with typed native options. Provider names must be unique.
+      items:
+        $ref: '#/components/schemas/SearchProviderTarget'
+      maxItems: 10
+      type: array
+    SearchWarning:
+      properties:
+        code:
+          description: 'Examples: param_unsupported, preference_unsupported, max_results_clamped, domains_truncated, recency_emulated, filter_emulated, date_filter_overridden, provider_ineligible, fallback_failed, content_partial.'
+          type: string
+        message:
+          type: string
+        param:
+          type: string
+        provider:
+          type: string
+        result_id:
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    SearchOctenOptions:
+      additionalProperties: false
+      properties:
+        count:
+          maximum: 100
+          minimum: 1
+          type: integer
+        end_time:
+          format: date-time
+          type: string
+        exclude_domains:
+          items:
+            maxLength: 60
+            type: string
+          maxItems: 1200
+          type: array
+        exclude_text:
+          items:
+            maxLength: 30
+            type: string
+          maxItems: 5
+          type: array
+        format:
+          enum:
+          - markdown
+          - text
+          type: string
+        full_content:
+          additionalProperties: false
+          properties:
+            enable:
+              type: boolean
+            max_tokens:
+              maximum: 100000
+              minimum: 100
+              type: integer
+          type: object
+        highlight:
+          additionalProperties: false
+          properties:
+            enable:
+              type: boolean
+            max_tokens:
+              maximum: 20000
+              minimum: 100
+              type: integer
+          type: object
+        include_domains:
+          items:
+            maxLength: 60
+            type: string
+          maxItems: 1200
+          type: array
+        include_images:
+          type: boolean
+        include_text:
+          items:
+            maxLength: 30
+            type: string
+          maxItems: 5
+          type: array
+        language:
+          items:
+            type: string
+          type: array
+        safesearch:
+          enum:
+          - 'off'
+          - strict
+          type: string
+        start_time:
+          format: date-time
+          type: string
+        time_basis:
+          enum:
+          - auto
+          - published
+          - crawled
+          type: string
+        time_range:
+          enum:
+          - day
+          - week
+          - month
+          - year
+          - d
+          - w
+          - m
+          - true
+          type: string
+        topic:
+          enum:
+          - general
+          - news
+          type: string
+      type: object
+    SearchYouOptionsExtractionFullPageExtractionFormatsItem:
+      enum:
+      - html
+      - markdown
+      type: string
+      x-enum-varnames:
+      - SearchYouOptionsExtractionFullPageExtractionFormatsItemHtml
+      - SearchYouOptionsExtractionFullPageExtractionFormatsItemMarkdown
+    SearchValyuOptions:
+      additionalProperties: false
+      properties:
+        fast_mode:
+          description: Trade depth for latency.
+          type: boolean
+        historical_cache:
+          description: Allow historical cached results.
+          type: boolean
+        include_abstracts:
+          description: Include abstracts for academic sources.
+          type: boolean
+        instructions:
+          description: Natural-language retrieval guidance.
+          type: string
+        is_tool_call:
+          description: Mark the search as an agent tool call.
+          type: boolean
+        max_num_results:
+          description: Provider-native count. Lower-only alias for max_results.
+          minimum: 1
+          type: integer
+        max_price:
+          description: Provider-native USD-per-thousand-results price ceiling. Forwarded to Valyu.
+          type: number
+        relevance_threshold:
+          description: Provider-native minimum relevance threshold. Not a normalized cross-provider score.
+          type: number
+        response_length:
+          description: Provider result-content length preset.
+          enum:
+          - short
+          - medium
+          - large
+          - max
+          type: string
+          x-enum-varnames:
+          - SearchValyuOptionsResponseLengthShort
+          - SearchValyuOptionsResponseLengthMedium
+          - SearchValyuOptionsResponseLengthLarge
+          - SearchValyuOptionsResponseLengthMax
+        search_type:
+          description: Corpus selector, including all, web, proprietary, and news. Provider corpus choice may change billing; Kernel does not force web-only searches.
+          type: string
+        source_biases:
+          description: Bias retrieval toward these sources.
+          items:
+            type: string
+          type: array
+        url_only:
+          description: Return URLs without content.
+          type: boolean
+      type: object
+    SearchYouOptionsExtractionFullPage:
+      additionalProperties: false
+      properties:
+        extraction_formats:
+          items:
+            $ref: '#/components/schemas/SearchYouOptionsExtractionFullPageExtractionFormatsItem'
+          type: array
+      type: object
+    SearchOctenTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchOctenOptions'
+        provider:
+          const: octen
+          type: string
+      required:
+      - provider
+      type: object
+    SearchFallbackCondition:
+      enum:
+      - error
+      - timeout
+      - empty
+      type: string
+      x-enum-varnames:
+      - SearchFallbackConditionError
+      - SearchFallbackConditionTimeout
+      - SearchFallbackConditionEmpty
+    SearchSerpApiTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchSerpApiOptions'
+        provider:
+          const: serpapi
+          type: string
+      required:
+      - provider
+      type: object
+    SearchBrowserOptions:
+      additionalProperties: false
+      properties:
+        browser_id:
+          description: 'Existing browser session ID authorized for the caller and selected
+
+            project. Reuses its cookies, proxy, and browser configuration; requests
+
+            follow that browser''s existing network access behavior, with no additional
+
+            destination allowlist in this endpoint. Kernel does not delete a caller-supplied
+
+            browser. Render mode uses a temporary tab; website activity may still change
+
+            shared cookies and storage.
+
+            When omitted and any result needs browser retrieval, Kernel creates one temporary
+
+            browser for the request using the dashboard launch defaults (headful, stealth,
+
+            default proxy), tags it with search_id, and deletes it when the request finishes.
+
+            It is billed and counts toward browser concurrency like any other browser. A
+
+            concurrency rejection returns 429 for source=browser; for source=auto, results
+
+            with retained content are still returned and the rest report the rejection.
+
+            '
+          type: string
+        mode:
+          default: curl
+          description: 'Curl uses the browser HTTP stack without navigation or JavaScript
+
+            execution. Render navigates a temporary page and extracts from its
+
+            DOM. The selected mode is used for the retrieval.
+
+            '
+          enum:
+          - curl
+          - render
+          type: string
+          x-enum-varnames:
+          - SearchBrowserModeCurl
+          - SearchBrowserModeRender
+      type: object
+    SearchContentMethod:
+      description: Original retrieval method.
+      enum:
+      - provider
+      - browser_curl
+      - browser_render
+      type: string
+      x-enum-varnames:
+      - SearchContentMethodProvider
+      - SearchContentMethodBrowserCurl
+      - SearchContentMethodBrowserRender
+    SearchProvider:
+      properties:
+        content:
+          $ref: '#/components/schemas/SearchContentCapabilities'
+        max_results_cap:
+          minimum: 1
+          type: integer
+        notes:
+          description: Provider-specific limitations, conditional filter support, and warnings about search modes.
+          items:
+            type: string
+          type: array
+        params:
+          $ref: '#/components/schemas/SearchParameterCapabilities'
+        provider_options:
+          $ref: '#/components/schemas/SearchProviderOptionsDiscovery'
+        slug:
+          type: string
+      required:
+      - slug
+      - max_results_cap
+      - params
+      - content
+      - provider_options
+      type: object
+    SearchContentError:
+      properties:
+        code:
+          description: Machine-readable retrieval failure code.
+          type: string
+        message:
+          description: Human-readable failure description.
+          type: string
+        retryable:
+          type: boolean
+      required:
+      - code
+      - message
+      - retryable
+      type: object
+    SearchContextOptions:
+      additionalProperties: false
+      properties:
+        country:
+          description: ISO 3166-1 alpha-2 country code.
+          maxLength: 2
+          minLength: 2
+          type: string
+        excludeDomains:
+          description: Blocklist of result domains.
+          items:
+            type: string
+          type: array
+        freshness:
+          description: Restrict results to content published within this window.
+          enum:
+          - last_24_hours
+          - last_week
+          - last_month
+          - last_year
+          type: string
+        includeDomains:
+          description: Allowlist of result domains.
+          items:
+            type: string
+          type: array
+        markdownOptions:
+          $ref: '#/components/schemas/SearchContextMarkdownOptions'
+        numResults:
+          description: Number of results to request from Context.dev.
+          maximum: 100
+          minimum: 10
+          type: integer
+        queryFanout:
+          description: Expand the query into multiple parallel variants.
+          type: boolean
+        tags:
+          description: Usage tracking tags.
+          items:
+            maxLength: 50
+            minLength: 1
+            type: string
+          maxItems: 20
+          type: array
+        timeoutMS:
+          description: Context.dev request timeout in milliseconds.
+          maximum: 300000
+          minimum: 1000
+          type: integer
+      type: object
+    SearchContextMarkdownOptions:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        includeFrames:
+          type: boolean
+        includeImages:
+          type: boolean
+        includeLinks:
+          type: boolean
+        maxAgeMs:
+          minimum: 0
+          type: integer
+        pdf:
+          additionalProperties: false
+          properties:
+            shouldParse:
+              type: boolean
+          type: object
+        shortenBase64Images:
+          type: boolean
+        timeoutMS:
+          maximum: 300000
+          minimum: 1000
+          type: integer
+        useMainContentOnly:
+          type: boolean
+        waitForMs:
+          minimum: 0
+          type: integer
+      type: object
+    SearchParallelOptionsAdvancedSettings:
+      additionalProperties: false
+      description: Explicit search settings. Unified search parameters are re-applied to overlapping settings; native result counts are lower-only.
+      properties:
+        excerpt_settings:
+          $ref: '#/components/schemas/SearchParallelOptionsAdvancedSettingsExcerptSettings'
+        fetch_policy:
+          $ref: '#/components/schemas/SearchParallelOptionsAdvancedSettingsFetchPolicy'
+        location:
+          description: Native ISO 3166-1 alpha-2 location preference.
+          type:
+          - string
+          - 'null'
+        max_results:
+          description: Native count; lower-only alias for unified max_results.
+          minimum: 1
+          type:
+          - integer
+          - 'null'
+        source_policy:
+          $ref: '#/components/schemas/SearchParallelOptionsAdvancedSettingsSourcePolicy'
+      type: object
+    SearchParallelOptionsAdvancedSettingsExcerptSettings:
+      additionalProperties: false
+      properties:
+        max_chars_per_result:
+          type:
+          - integer
+          - 'null'
+      type: object
+    SearchTavilyTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchTavilyOptions'
+        provider:
+          const: tavily
+          type: string
+      required:
+      - provider
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    SearchExaOptionsContents:
+      additionalProperties: false
+      description: Provider-native content retrieval. Available without requesting Kernel browser retrieval; may incur provider retrieval charges.
+      properties:
+        highlights:
+          default: true
+          description: Return query-relevant provider excerpts. Defaults to true for Exa search requests; set false to disable.
+          type: boolean
+        text:
+          description: Return provider page text.
+          type: boolean
+      type: object
+    SearchContentOptions:
+      additionalProperties: false
+      properties:
+        browser:
+          $ref: '#/components/schemas/SearchBrowserOptions'
+          description: Requires source=auto or source=browser in deferred retrieval.
+        format:
+          $ref: '#/components/schemas/SearchContentFormat'
+          default: markdown
+        max_age_hours:
+          default: 24
+          description: For source=auto, maximum acceptable age of retained provider content, measured from when the search received it from the provider. A value of 0 disables reuse of retained content, so every result is fetched through a browser. source=provider reuses retained provider content without freshness validation. source=browser always fetches through a browser and does not use this age limit.
+          minimum: 0
+          type: integer
+        max_chars:
+          default: 10000
+          description: Per-result Unicode character limit after extraction. Retained provider content cannot exceed what was stored at search time; such results report truncated when the stored text was already truncated.
+          maximum: 100000
+          minimum: 100
+          type: integer
+        source:
+          description: auto uses retained provider content within max_age_hours; for deferred retrieval it falls back to a Kernel browser (caller-supplied or temporary) for results without it. Inline retrieval never uses a browser. provider reuses retained provider content when available, without freshness validation, and never provisions a browser. browser fetches each URL through a Kernel browser, either caller-supplied or temporary. No option makes a new provider request. Defaults to auto for both inline and deferred retrieval. Missing documents produce per-result unavailable outcomes, not request failures.
+          enum:
+          - auto
+          - provider
+          - browser
+          type: string
+          x-enum-varnames:
+          - SearchContentSourceAuto
+          - SearchContentSourceProvider
+          - SearchContentSourceBrowser
+        timeout_ms:
+          default: 15000
+          description: 'Per-result deadline including capacity acquisition, retrieval, and
+
+            extraction. Also bounded by the overall request deadline.
+
+            '
+          maximum: 60000
+          minimum: 1000
+          type: integer
+      type: object
+    SearchContentFormat:
+      enum:
+      - markdown
+      - text
+      type: string
+      x-enum-varnames:
+      - SearchContentFormatMarkdown
+      - SearchContentFormatText
+    SearchAutoStrategy:
+      additionalProperties: false
+      properties:
+        fallback_on:
+          $ref: '#/components/schemas/SearchFallbackConditions'
+        provider_options:
+          $ref: '#/components/schemas/SearchProviderOptions'
+        type:
+          const: auto
+          description: Let Kernel choose an eligible provider by capability fit.
+          type: string
+      required:
+      - type
+      type: object
+    SearchProviderSlug:
+      description: Concrete search provider. Matches the slugs returned by GET /search/providers.
+      enum:
+      - brave
+      - exa
+      - perplexity
+      - context
+      - parallel
+      - valyu
+      - octen
+      - you
+      - tavily
+      - serpapi
+      type: string
+      x-enum-varnames:
+      - SearchProviderSlugBrave
+      - SearchProviderSlugExa
+      - SearchProviderSlugPerplexity
+      - SearchProviderSlugContext
+      - SearchProviderSlugParallel
+      - SearchProviderSlugValyu
+      - SearchProviderSlugOcten
+      - SearchProviderSlugYou
+      - SearchProviderSlugTavily
+      - SearchProviderSlugSerpapi
+    SearchExaTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchExaOptions'
+        provider:
+          const: exa
+          type: string
+      required:
+      - provider
+      type: object
+    SearchContentCapabilities:
+      properties:
+        freshness_control:
+          description: Can enforce the requested maximum content age.
+          type: boolean
+        inline:
+          description: Supports content retrieval with the search request.
+          type: boolean
+        post_hoc:
+          description: Supports content retrieval after the search completes.
+          type: boolean
+      required:
+      - inline
+      - post_hoc
+      - freshness_control
+      type: object
+    SearchParameterCapability:
+      properties:
+        notes:
+          description: Translation behavior, limitations, and precision.
+          type: string
+        support:
+          enum:
+          - native
+          - emulated
+          - unsupported
+          type: string
+          x-enum-varnames:
+          - SearchParameterSupportNative
+          - SearchParameterSupportEmulated
+          - SearchParameterSupportUnsupported
+      required:
+      - support
+      type: object
+    SearchParallelOptionsAdvancedSettingsFetchPolicy:
+      additionalProperties: false
+      properties:
+        disable_cache_fallback:
+          default: false
+          description: When false, the provider may return cached content after live fetching fails.
+          type: boolean
+        max_age_seconds:
+          description: Native live-fetch trigger; minimum 600 seconds. Not the unified hard-freshness control.
+          minimum: 600
+          type:
+          - integer
+          - 'null'
+        timeout_seconds:
+          description: Native live-fetch timeout, bounded by the remaining overall deadline.
+          type:
+          - number
+          - 'null'
+      type: object
+    SearchYouOptions:
+      additionalProperties: false
+      properties:
+        boost_domains:
+          description: Prefer these domains without excluding others. Cannot be combined with include_domains if the provider does not accept the combination.
+          items:
+            type: string
+          type: array
+        count:
+          description: Provider-native per-section count. Lower-only alias for max_results. Web and news sections may produce more rows than Kernel returns.
+          minimum: 1
+          type: integer
+        crawl_timeout:
+          description: Native extraction timeout in seconds, bounded by the remaining Kernel request deadline.
+          type: integer
+        extraction:
+          $ref: '#/components/schemas/SearchYouOptionsExtraction'
+        knowledge:
+          description: Request licensed-data output. URL-less knowledge entries are not converted into web results; include_raw exposes the full provider response separately.
+          enum:
+          - core
+          type: string
+          x-enum-varnames:
+          - SearchYouOptionsKnowledgeCore
+        language:
+          description: BCP 47 result language from You.com's 51-value enum, e.g. "EN", "JA". Default EN.
+          type: string
+        offset:
+          description: Page offset supported by You.com.
+          maximum: 9
+          minimum: 0
+          type: integer
+      type: object
+    SearchParallelTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchParallelOptions'
+        provider:
+          const: parallel
+          type: string
+      required:
+      - provider
+      type: object
+    SearchContentCacheStatus:
+      description: 'Kernel content cache outcome. Kernel has no content cache yet: responses report bypass or
+
+        unknown, and hit and miss are reserved. Provider-internal cache behavior may be unknown.
+
+        '
+      enum:
+      - hit
+      - miss
+      - bypass
+      - unknown
+      type: string
+      x-enum-varnames:
+      - SearchContentCacheStatusHit
+      - SearchContentCacheStatusMiss
+      - SearchContentCacheStatusBypass
+      - SearchContentCacheStatusUnknown
+    SearchContentsRequest:
+      additionalProperties: false
+      oneOf:
+      - required:
+        - result_ids
+      - required:
+        - limit
+      properties:
+        content:
+          $ref: '#/components/schemas/SearchContentOptions'
+          description: Defaults to source:auto when omitted.
+        limit:
+          description: Maximum number of search results to fetch when result_ids is omitted, starting from rank 1. Mutually exclusive with result_ids.
+          maximum: 100
+          minimum: 1
+          type: integer
+        result_ids:
+          description: Kernel-generated IDs from the referenced retained search, in desired response order. They are not provider-standard IDs. Mutually exclusive with limit.
+          items:
+            type: string
+          maxItems: 100
+          minItems: 1
+          type: array
+          uniqueItems: true
+        timeout_ms:
+          default: 60000
+          description: Overall deadline across all selected results.
+          maximum: 120000
+          minimum: 1000
+          type: integer
+      type: object
+    SearchStrategy:
+      description: Typed provider selection and routing strategy.
+      discriminator:
+        mapping:
+          auto: '#/components/schemas/SearchAutoStrategy'
+          fallback: '#/components/schemas/SearchFallbackStrategy'
+          pinned: '#/components/schemas/SearchPinnedStrategy'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/SearchAutoStrategy'
+      - $ref: '#/components/schemas/SearchPinnedStrategy'
+      - $ref: '#/components/schemas/SearchFallbackStrategy'
+    SearchPinnedStrategy:
+      additionalProperties: false
+      properties:
+        provider:
+          $ref: '#/components/schemas/SearchProviderTarget'
+        type:
+          const: pinned
+          description: Use exactly the selected provider with no cross-provider fallback.
+          type: string
+      required:
+      - type
+      - provider
+      type: object
+    SearchYouTarget:
+      additionalProperties: false
+      properties:
+        options:
+          $ref: '#/components/schemas/SearchYouOptions'
+        provider:
+          const: you
+          type: string
+      required:
+      - provider
+      type: object
+    SearchParameterCapabilities:
+      additionalProperties: false
+      properties:
+        country:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        end_date:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        exclude_domains:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        include_domains:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        language:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        recency:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        safe_search:
+          $ref: '#/components/schemas/SearchParameterCapability'
+        start_date:
+          $ref: '#/components/schemas/SearchParameterCapability'
+      required:
+      - country
+      - language
+      - include_domains
+      - exclude_domains
+      - start_date
+      - end_date
+      - recency
+      - safe_search
+      type: object
+    SearchParallelOptionsAdvancedSettingsSourcePolicy:
+      additionalProperties: false
+      properties:
+        after_date:
+          description: Native publication-date lower bound.
+          format: date
+          type:
+          - string
+          - 'null'
+        exclude_domains:
+          description: Native exclusions; the provider ignores these when native include_domains is non-empty.
+          items:
+            type: string
+          type: array
+        include_domains:
+          description: Native domain/path restrictions. Explicit unified domain parameters take precedence. Combined include/exclude native lists cannot exceed 200 entries.
+          items:
+            type: string
+          type: array
+      type: object
+    SearchFallbackStrategy:
+      additionalProperties: false
+      properties:
+        fallback_on:
+          $ref: '#/components/schemas/SearchFallbackConditions'
+        providers:
+          description: Ordered provider targets. Provider names must be unique.
+          items:
+            $ref: '#/components/schemas/SearchProviderTarget'
+          maxItems: 8
+          minItems: 1
+          type: array
+        type:
+          const: fallback
+          description: Try providers in order and advance when fallback_on matches the outcome.
+          type: string
+      required:
+      - type
+      - providers
+      type: object
+    SearchUsage:
+      properties:
+        content_fetches:
+          description: Number of result URLs for which a Kernel browser retrieval received a response from the target, excluding cache-only hits.
+          minimum: 0
+          type: integer
+        cost:
+          description: Total customer charge in USD when billing data is available.
+          minimum: 0
+          type: number
+        results_count:
+          description: Number of result entries returned, including failed entries on the contents endpoint.
+          minimum: 0
+          type: integer
+      required:
+      - results_count
+      - content_fetches
+      type: object
+    SearchFallbackConditions:
+      default:
+      - error
+      - timeout
+      description: Conditions that advance to the next provider under auto routing or an explicit providers chain. Ignored when provider pins a single provider. error means a retryable provider failure, including rate limiting, not invalid caller input or caller quotas. empty means zero results after required filtering. An empty list disables fallback. If every attempt is empty or fails, the response is the first valid empty response with the full attempt trail, or a 502 if none succeeded.
+      items:
+        $ref: '#/components/schemas/SearchFallbackCondition'
+      type: array
+      uniqueItems: true
+    SearchPerplexityOptions:
+      additionalProperties: false
+      properties:
+        last_updated_after_filter:
+          description: MM/DD/YYYY. Filters by last-updated date, not published date.
+          type: string
+        last_updated_before_filter:
+          description: MM/DD/YYYY upper bound on last-updated date.
+          type: string
+        max_results:
+          description: Provider-native count. Lower-only alias for max_results.
+          minimum: 1
+          type: integer
+        max_tokens:
+          description: Values outside the documented range are rejected.
+          maximum: 1000000
+          minimum: 1
+          type: integer
+        max_tokens_per_page:
+          description: Per-page token cap.
+          maximum: 1000000
+          minimum: 1
+          type: integer
+        query:
+          description: Provider-native multi-query form, applied only to Perplexity. Other fallback providers receive the top-level query. Each query may incur a separate provider charge.
+          items:
+            maxLength: 2000
+            minLength: 1
+            type: string
+          maxItems: 50
+          minItems: 1
+          type: array
+        search_context_size:
+          default: medium
+          description: Amount of page content Perplexity extracts per result. Defaults to medium unless max_tokens or max_tokens_per_page is set.
+          enum:
+          - low
+          - medium
+          - high
+          type: string
+          x-enum-varnames:
+          - SearchPerplexityOptionsSearchContextSizeLow
+          - SearchPerplexityOptionsSearchContextSizeMedium
+          - SearchPerplexityOptionsSearchContextSizeHigh
+        search_language_filter:
+          description: ISO 639-1 language codes, max 20.
+          items:
+            type: string
+          maxItems: 20
+          type: array
+      type: object
+    SearchYouOptionsExtraction:
+      additionalProperties: false
+      description: Provider-native page extraction. Both modes may incur per-row charges; full_page may retrieve web and news rows.
+      properties:
+        extraction_mode:
+          enum:
+          - highlights
+          - full_page
+          type: string
+          x-enum-varnames:
+          - SearchYouOptionsExtractionExtractionModeHighlights
+          - SearchYouOptionsExtractionExtractionModeFullPage
+        full_page:
+          $ref: '#/components/schemas/SearchYouOptionsExtractionFullPage'
+      required:
+      - extraction_mode
+      type: object
+    SearchContentsResponse:
+      properties:
+        contents:
+          items:
+            $ref: '#/components/schemas/SearchContentResult'
+          type: array
+        search_id:
+          type: string
+        usage:
+          $ref: '#/components/schemas/SearchUsage'
+        warnings:
+          items:
+            $ref: '#/components/schemas/SearchWarning'
+          type: array
+      required:
+      - search_id
+      - contents
+      - warnings
+      - usage
+      type: object
+    SearchParallelOptions:
+      additionalProperties: false
+      properties:
+        advanced_settings:
+          $ref: '#/components/schemas/SearchParallelOptionsAdvancedSettings'
+        client_model:
+          description: Client model hint.
+          type: string
+        max_chars_total:
+          description: Cap total characters returned.
+          type: integer
+        mode:
+          default: basic
+          description: Search mode. Basic is used when omitted; each mode can have different latency and charges.
+          enum:
+          - turbo
+          - fast
+          - basic
+          - advanced
+          type: string
+          x-enum-varnames:
+          - SearchParallelOptionsModeTurbo
+          - SearchParallelOptionsModeFast
+          - SearchParallelOptionsModeBasic
+          - SearchParallelOptionsModeAdvanced
+        objective:
+          description: The goal behind the search, stated separately from the query.
+          minLength: 1
+          type: string
+        search_queries:
+          description: Provider-native multi-query search. Defaults to [query] for this provider.
+          items:
+            maxLength: 2000
+            minLength: 1
+            type: string
+          maxItems: 20
+          minItems: 1
+          type: array
+        session_id:
+          description: Group related searches.
+          type: string
+      type: object
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    SearchProviderError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: 'Search providers could not complete the request. Details contain
+
+        per-attempt failure codes and provider names.
+
+        '
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unprocessable Entity – request was valid but the operation failed
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+    SearchUnavailable:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: No provider is currently available for the request.
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+    SearchTimeout:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Overall deadline exceeded before a search response was available.
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

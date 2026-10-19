@@ -1,233 +1,179 @@
 openapi: 3.2.0
 info:
-  title: Kernel Deployments API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Deployments API
   version: 0.1.0
 servers:
-- url: https://api.onkernel.com
-  description: API Server
+- description: API Server
+  url: https://api.onkernel.com
 security:
 - bearerAuth: []
 tags:
-- name: Deployments
-  description: Create and manage app deployments and stream deployment events.
+- description: Create and manage app deployments and stream deployment events.
+  name: Deployments
 paths:
   /deployments:
-    post:
-      operationId: postDeployments
-      tags:
-      - Deployments
-      summary: Create a deployment
-      description: Create a new deployment.
-      security:
-      - bearerAuth: []
-      requestBody:
-        description: App deployment data
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DeploymentRequest'
-            examples:
-              upload_zip:
-                summary: Upload a ZIP file
-                value:
-                  version: 1.0.0
-                  file: <binary>
-                  entrypoint_rel_path: src/app.py
-                  region: aws.us-east-1a
-                  force: false
-                  env_vars:
-                    FOO: bar
-              github_public:
-                summary: Deploy from GitHub source
-                value:
-                  version: 1.0.0
-                  source:
-                    type: github
-                    url: https://github.com/org/repo
-                    ref: main
-                    path: apps/api
-                    entrypoint: src/index.ts
-                  region: aws.us-east-1a
-                  force: false
-                  env_vars:
-                    FOO: bar
-              github_private:
-                summary: Deploy from private GitHub repo
-                value:
-                  version: latest
-                  source:
-                    type: github
-                    url: https://github.com/org/private-repo
-                    ref: main
-                    path: apps/service
-                    entrypoint: index.ts
-                    auth:
-                      method: github_token
-                      token: ghs_***
-            encoding:
-              source:
-                contentType: application/json
-      responses:
-        '201':
-          description: Deployment created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Deployment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import fs from 'fs';\nimport Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst deployment = await client.deployments.create({\n  entrypoint_rel_path: 'src/app.py',\n  env_vars: { FOO: 'bar' },\n  file: fs.createReadStream('path/to/file'),\n  region: 'aws.us-east-1a',\n  version: '1.0.0',\n});\n\nconsole.log(deployment.id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ndeployment = client.deployments.create(\n    entrypoint_rel_path=\"src/app.py\",\n    env_vars={\n        \"FOO\": \"bar\"\n    },\n    file=b\"<binary>\",\n    force=False,\n    region=\"aws.us-east-1a\",\n    version=\"1.0.0\",\n)\nprint(deployment.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"fmt\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tdeployment, err := client.Deployments.New(context.TODO(), kernel.DeploymentNewParams{\n\t\tEntrypointRelPath: kernel.String(\"src/app.py\"),\n\t\tEnvVars: map[string]string{\n\t\t\t\"FOO\": \"bar\",\n\t\t},\n\t\tFile:    io.Reader(bytes.NewBuffer([]byte(\"<binary>\"))),\n\t\tRegion:  kernel.DeploymentNewParamsRegionAwsUsEast1a,\n\t\tVersion: kernel.String(\"1.0.0\"),\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", deployment.ID)\n}\n"
     get:
-      operationId: getDeployments
-      tags:
-      - Deployments
-      summary: List deployments
       description: List deployments. Optionally filter by application name and version.
-      security:
-      - bearerAuth: []
+      operationId: getDeployments
       parameters:
-      - name: app_name
+      - description: Filter results by application name.
         in: query
+        name: app_name
         required: false
-        description: Filter results by application name.
         schema:
           type: string
-      - name: app_version
+      - description: Filter results by application version. Requires app_name to be set.
         in: query
+        name: app_version
         required: false
-        description: Filter results by application version. Requires app_name to be set.
         schema:
           type: string
-      - name: limit
+      - description: Limit the number of deployments to return.
         in: query
+        name: limit
         required: false
-        description: Limit the number of deployments to return.
         schema:
-          type: integer
-          minimum: 1
-          maximum: 100
           default: 20
-      - name: offset
-        in: query
-        required: false
-        description: Offset the number of deployments to return.
-        schema:
+          maximum: 100
+          minimum: 1
           type: integer
-          minimum: 0
-          default: 0
-      - name: query
+      - description: Offset the number of deployments to return.
         in: query
+        name: offset
         required: false
-        description: Search deployments by ID or app name.
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: Search deployments by ID or app name.
+        in: query
+        name: query
+        required: false
         schema:
           type: string
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Deployment'
+                type: array
           description: List of deployments.
           headers:
-            X-Limit:
-              description: Limit the number of deployments to return.
-              schema:
-                type: integer
-                minimum: 1
-                maximum: 100
-                default: 20
-            X-Offset:
-              description: The offset of deployments to return.
-              schema:
-                type: integer
-                minimum: 0
-                default: 0
-            X-Next-Offset:
-              description: The offset where the next page starts. 0 when there are no more results.
-              schema:
-                type: integer
-                nullable: true
             X-Has-More:
               description: Whether there are more deployments to fetch.
               schema:
-                type: boolean
                 default: false
-          content:
-            application/json:
+                type: boolean
+            X-Limit:
+              description: Limit the number of deployments to return.
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Deployment'
+                default: 20
+                maximum: 100
+                minimum: 1
+                type: integer
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                nullable: true
+                type: integer
+            X-Offset:
+              description: The offset of deployments to return.
+              schema:
+                default: 0
+                minimum: 0
+                type: integer
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const deploymentListResponse of client.deployments.list()) {\n  console.log(deploymentListResponse.id);\n}"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.deployments.list()\npage = page.items[0]\nprint(page.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Deployments.List(context.TODO(), kernel.DeploymentListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
-  /deployments/{id}:
-    get:
-      operationId: getDeploymentsById
-      tags:
-      - Deployments
-      summary: Get deployment details
-      description: Get information about a deployment's status.
       security:
       - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
+      summary: List deployments
+      tags:
+      - Deployments
+    post:
+      description: Create a new deployment.
+      operationId: postDeployments
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              source:
+                contentType: application/json
+            examples:
+              github_private:
+                summary: Deploy from private GitHub repo
+                value:
+                  source:
+                    auth:
+                      method: github_token
+                      token: ghs_***
+                    entrypoint: index.ts
+                    path: apps/service
+                    ref: main
+                    type: github
+                    url: https://github.com/org/private-repo
+                  version: latest
+              github_public:
+                summary: Deploy from GitHub source
+                value:
+                  env_vars:
+                    FOO: bar
+                  force: false
+                  region: aws.us-east-1a
+                  source:
+                    entrypoint: src/index.ts
+                    path: apps/api
+                    ref: main
+                    type: github
+                    url: https://github.com/org/repo
+                  version: 1.0.0
+              upload_zip:
+                summary: Upload a ZIP file
+                value:
+                  entrypoint_rel_path: src/app.py
+                  env_vars:
+                    FOO: bar
+                  file: <binary>
+                  force: false
+                  region: aws.us-east-1a
+                  version: 1.0.0
+            schema:
+              $ref: '#/components/schemas/DeploymentRequest'
+        description: App deployment data
         required: true
-        description: Deployment ID
-        schema:
-          type: string
       responses:
-        '200':
-          description: Deployment retrieved successfully
+        '201':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Deployment'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Deployment created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst deployment = await client.deployments.retrieve('id');\n\nconsole.log(deployment.id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ndeployment = client.deployments.retrieve(\n    \"id\",\n)\nprint(deployment.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tdeployment, err := client.Deployments.Get(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", deployment.ID)\n}\n"
-    delete:
-      operationId: deleteDeploymentsById
-      tags:
-      - Deployments
-      summary: Delete a deployment
-      description: Stops a running deployment and marks it for deletion. If the deployment is already in a terminal state (stopped or failed), returns immediately.
       security:
       - bearerAuth: []
+      summary: Create a deployment
+      tags:
+      - Deployments
+  /deployments/{id}:
+    delete:
+      description: Stops a running deployment and marks it for deletion. If the deployment is already in a terminal state (stopped or failed), returns immediately.
+      operationId: deleteDeploymentsById
       parameters:
-      - name: id
+      - description: Deployment ID
         in: path
+        name: id
         required: true
-        description: Deployment ID
         schema:
           type: string
       responses:
@@ -239,54 +185,74 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.deployments.delete('id');"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.deployments.delete(\n    \"id\",\n)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Deployments.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
-  /deployments/{id}/events:
-    get:
-      x-hidden: false
-      operationId: getDeploymentsEventsById
+      security:
+      - bearerAuth: []
+      summary: Delete a deployment
       tags:
       - Deployments
-      summary: Stream deployment events via SSE
+    get:
+      description: Get information about a deployment's status.
+      operationId: getDeploymentsById
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+          description: Deployment retrieved successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get deployment details
+      tags:
+      - Deployments
+  /deployments/{id}/events:
+    get:
       description: 'Establishes a Server-Sent Events (SSE) stream that delivers real-time logs and
 
         status updates for a deployment. The stream terminates automatically
 
         once the deployment reaches a terminal state.'
-      security:
-      - bearerAuth: []
+      operationId: getDeploymentsEventsById
       parameters:
-      - name: id
+      - description: The deployment ID to follow.
         in: path
+        name: id
         required: true
-        description: The deployment ID to follow.
         schema:
           type: string
-      - name: since
+      - description: Show logs since the given time (RFC timestamps or durations like 5m).
         in: query
+        name: since
         required: false
-        description: Show logs since the given time (RFC timestamps or durations like 5m).
         schema:
-          type: string
           example: '2025-06-20T12:00:00Z'
+          type: string
       responses:
         '200':
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/DeploymentEvent'
           description: SSE stream of deployment state updates and logs.
           headers:
             X-SSE-Content-Type:
               description: Media type of SSE data events (always application/json).
               schema:
-                type: string
                 const: application/json
-          content:
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/DeploymentEvent'
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -295,132 +261,233 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.deployments.follow('id');\n\nconsole.log(response);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nfor deployment in client.deployments.follow(\n    id=\"id\",\n):\n  print(deployment)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tstream := client.Deployments.FollowStreaming(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.DeploymentFollowParams{},\n\t)\n\tfor stream.Next() {\n\t\tfmt.Printf(\"%+v\\n\", stream.Current())\n\t}\n\terr := stream.Err()\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
+      security:
+      - bearerAuth: []
+      summary: Stream deployment events via SSE
+      tags:
+      - Deployments
+      x-hidden: false
 components:
+  responses:
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
   schemas:
-    DeploymentStateEvent:
-      type: object
-      description: An event representing the current state of a deployment.
-      required:
-      - event
-      - deployment
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: deployment_state
-          description: Event type identifier (always "deployment_state").
-        deployment:
-          $ref: '#/components/schemas/Deployment'
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the state was reported.
     DeploymentRequest:
-      type: object
       description: App deployment request. Provide either file+entrypoint_rel_path or source.
-      properties:
-        version:
-          type: string
-          description: Version of the application. Can be any string.
-          example: 1.0.0
-          default: latest
-        file:
-          type: string
-          format: binary
-          description: ZIP file containing the application source directory
-          example: '@path/to/file.zip'
-        entrypoint_rel_path:
-          type: string
-          description: Relative path to the entrypoint of the application
-          example: src/app.py
-        source:
-          $ref: '#/components/schemas/DeploymentSource'
-        region:
-          type: string
-          description: Region for deployment. Currently we only support "aws.us-east-1a"
-          example: aws.us-east-1a
-          default: aws.us-east-1a
-          const: aws.us-east-1a
-        force:
-          type: boolean
-          description: Allow overwriting an existing app version
-          example: false
-          default: false
-        env_vars:
-          type: object
-          description: Map of environment variables to set for the deployed application. Each key-value pair represents an environment variable.
-          additionalProperties:
-            type: string
       oneOf:
       - required:
         - file
         - entrypoint_rel_path
       - required:
         - source
-    SSEHeartbeatEvent:
+      properties:
+        entrypoint_rel_path:
+          description: Relative path to the entrypoint of the application
+          example: src/app.py
+          type: string
+        env_vars:
+          additionalProperties:
+            type: string
+          description: Map of environment variables to set for the deployed application. Each key-value pair represents an environment variable.
+          type: object
+        file:
+          description: ZIP file containing the application source directory
+          example: '@path/to/file.zip'
+          format: binary
+          type: string
+        force:
+          default: false
+          description: Allow overwriting an existing app version
+          example: false
+          type: boolean
+        region:
+          const: aws.us-east-1a
+          default: aws.us-east-1a
+          description: Region for deployment. Currently we only support "aws.us-east-1a"
+          example: aws.us-east-1a
+          type: string
+        source:
+          $ref: '#/components/schemas/DeploymentSource'
+        version:
+          default: latest
+          description: Version of the application. Can be any string.
+          example: 1.0.0
+          type: string
       type: object
+    SSEHeartbeatEvent:
       description: Heartbeat event sent periodically to keep SSE connection alive.
+      properties:
+        event:
+          const: sse_heartbeat
+          description: Event type identifier (always "sse_heartbeat").
+          type: string
+        timestamp:
+          description: Time the heartbeat was sent.
+          format: date-time
+          type: string
       required:
       - event
       - timestamp
-      properties:
-        event:
-          type: string
-          const: sse_heartbeat
-          description: Event type identifier (always "sse_heartbeat").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the heartbeat was sent.
-    ErrorDetail:
       type: object
+    DeploymentSource:
+      description: Source from which to fetch application code.
       properties:
-        code:
+        auth:
+          description: Authentication for private repositories.
+          properties:
+            method:
+              description: Auth method
+              enum:
+              - github_token
+              example: github_token
+              type: string
+            token:
+              description: GitHub PAT or installation access token
+              example: ghs_***
+              format: password
+              type: string
+          required:
+          - method
+          - token
+          type: object
+        entrypoint:
+          description: Relative path to the application entrypoint within the selected path.
+          example: src/index.ts
           type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
+        path:
+          description: Path within the repo to deploy (omit to use repo root).
+          example: apps/api
           type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    Error:
-      type: object
+        ref:
+          description: Git ref (branch, tag, or commit SHA) to fetch.
+          example: main
+          type: string
+        type:
+          description: Source type identifier.
+          enum:
+          - github
+          example: github
+          type: string
+        url:
+          description: Base repository URL (without blob/tree suffixes).
+          example: https://github.com/org/repo
+          type: string
       required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    Deployment:
+      - type
+      - url
+      - ref
+      - entrypoint
       type: object
+    AppAction:
+      description: An action available on the app
+      properties:
+        input_schema:
+          additionalProperties: true
+          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
+          nullable: true
+          type: object
+        name:
+          description: Name of the action
+          example: analyze
+          type: string
+        output_schema:
+          additionalProperties: true
+          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
+          nullable: true
+          type: object
+      required:
+      - name
+      type: object
+    ErrorEvent:
+      description: An error event from the application.
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+        event:
+          const: error
+          description: Event type identifier (always "error").
+          type: string
+        timestamp:
+          description: Time the error occurred.
+          format: date-time
+          type: string
+      required:
+      - event
+      - timestamp
+      - error
+      type: object
+    Deployment:
       description: Deployment record information.
       properties:
-        id:
+        created_at:
+          description: Timestamp when the deployment was created
+          format: date-time
           type: string
+        entrypoint_rel_path:
+          description: Relative path to the application entrypoint
+          example: src/app.py
+          type: string
+        env_vars:
+          additionalProperties:
+            type: string
+          description: Environment variables configured for this deployment. Values are redacted for API key, OAuth, and managed-auth callers, which receive every key with an empty string value. Only dashboard sessions receive the actual values.
+          type: object
+        id:
           description: Unique identifier for the deployment
           example: rr33xuugxj9h0bkf1rdt2bet
-        status:
           type: string
+        region:
+          const: aws.us-east-1a
+          description: Deployment region code
+          example: aws.us-east-1a
+          type: string
+        source_checksum:
+          description: Hex-encoded SHA-256 checksum of the source archive. For file uploads, this hashes the uploaded archive; for GitHub-sourced deployments, this hashes the GitHub archive downloaded by the API. Omitted for deployments created before this field was recorded.
+          example: 3f4d0ea1bd2c5c1a1a1f0e9d8c7b6a5948372615049382716a5b4c3d2e1f0a9b
+          type: string
+        source_path:
+          description: For GitHub-sourced deployments, the subpath within the repository that was used as the deploy root. Omitted when the repo root was used or for file uploads.
+          example: apps/api
+          type: string
+        source_ref:
+          description: For GitHub-sourced deployments, the git ref as requested at deploy time (branch, tag, or commit SHA — not resolved to a commit). Omitted for file uploads.
+          example: main
+          type: string
+        source_type:
+          description: Origin of the deployed source code. This is read-only response provenance; `file` indicates an uploaded archive and `github` indicates a repository fetched by the API.
+          enum:
+          - file
+          - github
+          example: github
+          type: string
+          x-go-type-name: DeploymentSourceOrigin
+        source_url:
+          description: For GitHub-sourced deployments, the repository URL that was fetched. Omitted for file uploads.
+          example: https://github.com/org/repo
+          type: string
+        status:
           description: Current status of the deployment
           enum:
           - queued
@@ -429,187 +496,127 @@ components:
           - failed
           - stopped
           example: queued
-        status_reason:
           type: string
+        status_reason:
           description: Status reason
           example: Deployment in progress
-        region:
           type: string
-          description: Deployment region code
-          example: aws.us-east-1a
-          const: aws.us-east-1a
-        entrypoint_rel_path:
-          type: string
-          description: Relative path to the application entrypoint
-          example: src/app.py
-        env_vars:
-          type: object
-          description: Environment variables configured for this deployment. Values are redacted for API key, OAuth, and managed-auth callers, which receive every key with an empty string value. Only dashboard sessions receive the actual values.
-          additionalProperties:
-            type: string
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the deployment was created
         updated_at:
-          type: string
+          description: Timestamp when the deployment was last updated
           format: date-time
           nullable: true
-          description: Timestamp when the deployment was last updated
-        source_type:
           type: string
-          description: Origin of the deployed source code. This is read-only response provenance; `file` indicates an uploaded archive and `github` indicates a repository fetched by the API.
-          enum:
-          - file
-          - github
-          x-go-type-name: DeploymentSourceOrigin
-          example: github
-        source_url:
-          type: string
-          description: For GitHub-sourced deployments, the repository URL that was fetched. Omitted for file uploads.
-          example: https://github.com/org/repo
-        source_ref:
-          type: string
-          description: For GitHub-sourced deployments, the git ref as requested at deploy time (branch, tag, or commit SHA — not resolved to a commit). Omitted for file uploads.
-          example: main
-        source_path:
-          type: string
-          description: For GitHub-sourced deployments, the subpath within the repository that was used as the deploy root. Omitted when the repo root was used or for file uploads.
-          example: apps/api
-        source_checksum:
-          type: string
-          description: Hex-encoded SHA-256 checksum of the source archive. For file uploads, this hashes the uploaded archive; for GitHub-sourced deployments, this hashes the GitHub archive downloaded by the API. Omitted for deployments created before this field was recorded.
-          example: 3f4d0ea1bd2c5c1a1a1f0e9d8c7b6a5948372615049382716a5b4c3d2e1f0a9b
       required:
       - id
       - status
       - region
       - created_at
-    AppAction:
       type: object
-      description: An action available on the app
-      required:
-      - name
+    ErrorDetail:
       properties:
-        name:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
           type: string
-          description: Name of the action
-          example: analyze
-        input_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected input payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-        output_schema:
-          type: object
-          nullable: true
-          description: JSON Schema (draft-07) describing the expected output payload. Null if schema could not be automatically generated.
-          additionalProperties: true
-    DeploymentSource:
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
       type: object
-      description: Source from which to fetch application code.
+    Error:
       properties:
-        type:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
           type: string
-          description: Source type identifier.
-          enum:
-          - github
-          example: github
-        url:
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
           type: string
-          description: Base repository URL (without blob/tree suffixes).
-          example: https://github.com/org/repo
-        ref:
-          type: string
-          description: Git ref (branch, tag, or commit SHA) to fetch.
-          example: main
-        path:
-          type: string
-          description: Path within the repo to deploy (omit to use repo root).
-          example: apps/api
-        entrypoint:
-          type: string
-          description: Relative path to the application entrypoint within the selected path.
-          example: src/index.ts
-        auth:
-          type: object
-          description: Authentication for private repositories.
-          properties:
-            method:
-              type: string
-              enum:
-              - github_token
-              description: Auth method
-              example: github_token
-            token:
-              type: string
-              format: password
-              description: GitHub PAT or installation access token
-              example: ghs_***
-          required:
-          - method
-          - token
       required:
-      - type
-      - url
-      - ref
-      - entrypoint
+      - code
+      - message
+      type: object
+    LogEvent:
+      description: A log entry from the application.
+      properties:
+        event:
+          const: log
+          description: Event type identifier (always "log").
+          type: string
+        message:
+          description: Log message text.
+          type: string
+        timestamp:
+          description: Time the log entry was produced.
+          format: date-time
+          type: string
+      required:
+      - event
+      - message
+      - timestamp
+      type: object
     DeploymentEvent:
+      description: Union type representing any deployment event.
+      discriminator:
+        mapping:
+          app_version_summary: '#/components/schemas/AppVersionSummary'
+          deployment_state: '#/components/schemas/DeploymentStateEvent'
+          error: '#/components/schemas/InternalError'
+          log: '#/components/schemas/LogEvent'
+          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
+        propertyName: event
       oneOf:
       - $ref: '#/components/schemas/LogEvent'
       - $ref: '#/components/schemas/DeploymentStateEvent'
       - $ref: '#/components/schemas/AppVersionSummaryEvent'
       - $ref: '#/components/schemas/ErrorEvent'
       - $ref: '#/components/schemas/SSEHeartbeatEvent'
-      discriminator:
-        propertyName: event
-        mapping:
-          log: '#/components/schemas/LogEvent'
-          deployment_state: '#/components/schemas/DeploymentStateEvent'
-          app_version_summary: '#/components/schemas/AppVersionSummary'
-          error: '#/components/schemas/InternalError'
-          sse_heartbeat: '#/components/schemas/SSEHeartbeatEvent'
-      description: Union type representing any deployment event.
-    LogEvent:
-      type: object
-      description: A log entry from the application.
-      required:
-      - event
-      - message
-      - timestamp
-      properties:
-        event:
-          type: string
-          const: log
-          description: Event type identifier (always "log").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the log entry was produced.
-        message:
-          type: string
-          description: Log message text.
-    ErrorEvent:
-      type: object
-      description: An error event from the application.
-      required:
-      - event
-      - timestamp
-      - error
-      properties:
-        event:
-          type: string
-          const: error
-          description: Event type identifier (always "error").
-        timestamp:
-          type: string
-          format: date-time
-          description: Time the error occurred.
-        error:
-          $ref: '#/components/schemas/Error'
     AppVersionSummaryEvent:
-      type: object
       description: Summary of an application version.
+      properties:
+        actions:
+          description: List of actions available on the app
+          items:
+            $ref: '#/components/schemas/AppAction'
+          type: array
+        app_name:
+          description: Name of the application
+          example: my-app
+          type: string
+        env_vars:
+          additionalProperties:
+            type: string
+          description: Environment variables configured for this app version. Not currently populated on streamed app_version_summary events.
+          type: object
+        event:
+          const: app_version_summary
+          description: Event type identifier (always "app_version_summary").
+          type: string
+        id:
+          description: Unique identifier for the app version
+          example: rr33xuugxj9h0bkf1rdt2bet
+          type: string
+        region:
+          const: aws.us-east-1a
+          description: Deployment region code
+          example: aws.us-east-1a
+          type: string
+        timestamp:
+          description: Time the state was reported.
+          format: date-time
+          type: string
+        version:
+          description: Version label for the application
+          example: 1.0.0
+          type: string
       required:
       - event
       - timestamp
@@ -618,68 +625,33 @@ components:
       - version
       - region
       - actions
+      type: object
+    DeploymentStateEvent:
+      description: An event representing the current state of a deployment.
       properties:
+        deployment:
+          $ref: '#/components/schemas/Deployment'
         event:
+          const: deployment_state
+          description: Event type identifier (always "deployment_state").
           type: string
-          const: app_version_summary
-          description: Event type identifier (always "app_version_summary").
         timestamp:
-          type: string
-          format: date-time
           description: Time the state was reported.
-        id:
+          format: date-time
           type: string
-          description: Unique identifier for the app version
-          example: rr33xuugxj9h0bkf1rdt2bet
-        app_name:
-          type: string
-          description: Name of the application
-          example: my-app
-        version:
-          type: string
-          description: Version label for the application
-          example: 1.0.0
-        region:
-          type: string
-          description: Deployment region code
-          example: aws.us-east-1a
-          const: aws.us-east-1a
-        actions:
-          type: array
-          description: List of actions available on the app
-          items:
-            $ref: '#/components/schemas/AppAction'
-        env_vars:
-          type: object
-          description: Environment variables configured for this app version. Not currently populated on streamed app_version_summary events.
-          additionalProperties:
-            type: string
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      required:
+      - event
+      - deployment
+      - timestamp
+      type: object
   securitySchemes:
     bearerAuth:
-      type: http
       scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

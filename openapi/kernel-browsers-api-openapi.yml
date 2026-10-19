@@ -1,26 +1,126 @@
 openapi: 3.2.0
 info:
-  title: Kernel Browsers API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Browsers API
   version: 0.1.0
 servers:
-- url: https://api.onkernel.com
-  description: API Server
+- description: API Server
+  url: https://api.onkernel.com
 security:
 - bearerAuth: []
 tags:
-- name: Browsers
-  description: Create and manage browser sessions.
+- description: Create and manage browser sessions.
+  name: Browsers
 paths:
   /browsers:
-    post:
-      operationId: postBrowsers
-      tags:
-      - Browsers
-      summary: Create a browser session
-      description: Create a new browser session from within an action.
+    get:
+      description: List all browser sessions with pagination support. Use status parameter to filter by session state.
+      operationId: getBrowsers
+      parameters:
+      - description: Filter sessions by status. "active" returns only active sessions (default), "deleted" returns only soft-deleted sessions, "all" returns both.
+        in: query
+        name: status
+        required: false
+        schema:
+          default: active
+          enum:
+          - active
+          - deleted
+          - all
+          type: string
+          x-enum-varnames:
+          - GetBrowsersParamsStatusActive
+          - GetBrowsersParamsStatusDeleted
+          - GetBrowsersParamsStatusAll
+      - deprecated: true
+        description: 'Deprecated: Use status=all instead. When true, includes soft-deleted browser sessions in the results alongside active sessions.'
+        in: query
+        name: include_deleted
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - description: Maximum number of results to return. Defaults to 20, maximum 100.
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - description: Number of results to skip. Defaults to 0.
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: Search browsers by name, session ID, profile name or ID, proxy ID, or pool name.
+        in: query
+        name: query
+        required: false
+        schema:
+          type: string
+      - description: 'Filter sessions by tag key-value pairs using deepObject style, e.g. ?tags[team]=backend&tags[env]=staging. Multiple pairs are ANDed: a session must match every supplied pair exactly.
+
+          '
+        explode: true
+        in: query
+        name: tags
+        required: false
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+        style: deepObject
+      - description: Filter sessions by geographic region. Omit to list sessions in all regions.
+        in: query
+        name: region
+        required: false
+        schema:
+          $ref: '#/components/schemas/Region'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Browser'
+                type: array
+          description: List of browsers
+          headers:
+            X-Has-More:
+              description: Whether more results are available
+              schema:
+                type: boolean
+            X-Limit:
+              description: The limit used for pagination
+              schema:
+                type: integer
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+            X-Offset:
+              description: The offset used for pagination
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
       security:
       - bearerAuth: []
+      summary: List browser sessions
+      tags:
+      - Browsers
+    post:
+      description: Create a new browser session from within an action.
+      operationId: postBrowsers
       requestBody:
         content:
           application/json:
@@ -28,11 +128,11 @@ paths:
               $ref: '#/components/schemas/BrowserRequest'
       responses:
         '200':
-          description: Successful response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Browser'
+          description: Successful response
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -47,188 +147,98 @@ paths:
           $ref: '#/components/responses/InternalError'
         '529':
           $ref: '#/components/responses/CapacityExhausted'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browser = await client.browsers.create();\n\nconsole.log(browser.session_id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser = client.browsers.create()\nprint(browser.session_id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowser, err := client.Browsers.New(context.TODO(), kernel.BrowserNewParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browser.SessionID)\n}\n"
-    get:
-      operationId: getBrowsers
-      tags:
-      - Browsers
-      summary: List browser sessions
-      description: List all browser sessions with pagination support. Use status parameter to filter by session state.
       security:
       - bearerAuth: []
-      parameters:
-      - name: status
-        in: query
-        required: false
-        description: Filter sessions by status. "active" returns only active sessions (default), "deleted" returns only soft-deleted sessions, "all" returns both.
-        schema:
-          type: string
-          enum:
-          - active
-          - deleted
-          - all
-          default: active
-      - name: include_deleted
-        in: query
-        required: false
-        deprecated: true
-        description: 'Deprecated: Use status=all instead. When true, includes soft-deleted browser sessions in the results alongside active sessions.'
-        schema:
-          type: boolean
-          default: false
-      - name: limit
-        in: query
-        required: false
-        description: Maximum number of results to return. Defaults to 20, maximum 100.
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        required: false
-        description: Number of results to skip. Defaults to 0.
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: query
-        in: query
-        required: false
-        description: Search browsers by name, session ID, profile ID, proxy ID, or pool name.
-        schema:
-          type: string
-      - name: tags
-        in: query
-        required: false
-        style: deepObject
-        explode: true
-        description: 'Filter sessions by tag key-value pairs using deepObject style, e.g. ?tags[team]=backend&tags[env]=staging. Multiple pairs are ANDed: a session must match every supplied pair exactly.
-
-          '
-        schema:
-          type: object
-          additionalProperties:
-            type: string
-      responses:
-        '200':
-          description: List of browsers
-          headers:
-            X-Limit:
-              description: The limit used for pagination
-              schema:
-                type: integer
-            X-Offset:
-              description: The offset used for pagination
-              schema:
-                type: integer
-            X-Has-More:
-              description: Whether more results are available
-              schema:
-                type: boolean
-            X-Next-Offset:
-              description: The offset where the next page starts. 0 when there are no more results.
-              schema:
-                type: integer
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Browser'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const browserListResponse of client.browsers.list()) {\n  console.log(browserListResponse.session_id);\n}"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.browsers.list()\npage = page.items[0]\nprint(page.session_id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.Browsers.List(context.TODO(), kernel.BrowserListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
+      summary: Create a browser session
+      tags:
+      - Browsers
   /browsers/{id_or_name}:
-    get:
-      operationId: getBrowsersByIdOrName
-      tags:
-      - Browsers
-      summary: Get browser session details
-      description: Get information about a browser session.
-      security:
-      - bearerAuth: []
+    delete:
+      operationId: deleteBrowsersByIdOrName
       parameters:
-      - name: id_or_name
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
         in: path
+        name: id_or_name
         required: true
         schema:
           type: string
-        description: Browser session ID or name
-        example: htzv5orfit78e1m2biiifpbv
-      - name: include_deleted
-        in: query
-        required: false
-        description: When true, includes soft-deleted browser sessions in the lookup.
-        schema:
-          type: boolean
-          default: false
       responses:
-        '200':
-          description: Browser session retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Browser'
+        '204':
+          description: Browser session deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browser = await client.browsers.retrieve('htzv5orfit78e1m2biiifpbv');\n\nconsole.log(browser.session_id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser = client.browsers.retrieve(\n    id_or_name=\"htzv5orfit78e1m2biiifpbv\",\n)\nprint(browser.session_id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowser, err := client.Browsers.Get(\n\t\tcontext.TODO(),\n\t\t\"htzv5orfit78e1m2biiifpbv\",\n\t\tkernel.BrowserGetParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browser.SessionID)\n}\n"
-    patch:
-      operationId: patchBrowsersByIdOrName
-      tags:
-      - Browsers
-      summary: Update browser session
-      description: Update a browser session.
       security:
       - bearerAuth: []
+      summary: Delete a browser session by ID or name
+      tags:
+      - Browsers
+    get:
+      description: Get information about a browser session.
+      operationId: getBrowsersByIdOrName
       parameters:
-      - name: id_or_name
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
         in: path
+        name: id_or_name
         required: true
         schema:
           type: string
-        description: Browser session ID or name
-        example: htzv5orfit78e1m2biiifpbv
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BrowserUpdateRequest'
+      - description: When true, includes soft-deleted browser sessions in the lookup.
+        in: query
+        name: include_deleted
+        required: false
+        schema:
+          default: false
+          type: boolean
       responses:
         '200':
-          description: Browser session updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Browser'
+          description: Browser session retrieved successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get browser session details
+      tags:
+      - Browsers
+    patch:
+      description: Update a browser session.
+      operationId: patchBrowsersByIdOrName
+      parameters:
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserUpdateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Browser'
+          description: Browser session updated successfully
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -241,90 +251,99 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst browser = await client.browsers.update('htzv5orfit78e1m2biiifpbv');\n\nconsole.log(browser.session_id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nbrowser = client.browsers.update(\n    id_or_name=\"htzv5orfit78e1m2biiifpbv\",\n)\nprint(browser.session_id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tbrowser, err := client.Browsers.Update(\n\t\tcontext.TODO(),\n\t\t\"htzv5orfit78e1m2biiifpbv\",\n\t\tkernel.BrowserUpdateParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", browser.SessionID)\n}\n"
-    delete:
-      operationId: deleteBrowsersByIdOrName
-      tags:
-      - Browsers
-      summary: Delete a browser session by ID or name
       security:
       - bearerAuth: []
+      summary: Update browser session
+      tags:
+      - Browsers
+  /browsers/{id_or_name}/curl:
+    post:
+      description: 'Sends an HTTP request through Chrome''s HTTP request stack, inheriting
+
+        the browser''s TLS fingerprint, cookies, proxy configuration, and headers.
+
+        Returns a structured JSON response with status, headers, body, and timing.'
+      operationId: browserCurl
       parameters:
-      - name: id_or_name
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
         in: path
+        name: id_or_name
         required: true
         schema:
           type: string
-        description: Browser session ID or name
-        example: htzv5orfit78e1m2biiifpbv
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserCurlRequest'
+        required: true
       responses:
-        '204':
-          description: Browser session deleted successfully
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserCurlResult'
+          description: Response from target URL
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.deleteByID('htzv5orfit78e1m2biiifpbv');"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.delete_by_id(\n    \"htzv5orfit78e1m2biiifpbv\",\n)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.DeleteByID(context.TODO(), \"htzv5orfit78e1m2biiifpbv\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
-  /browsers/{id}/extensions:
-    post:
-      operationId: uploadExtensionsToBrowser
-      tags:
-      - Browsers
-      summary: Ad-hoc upload one or more unpacked extensions to a running browser instance
-      description: Loads one or more unpacked extensions and restarts Chromium on the browser instance.
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserCurlTransportError'
+          description: Upstream transport failure
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
       security:
       - bearerAuth: []
+      summary: Make an HTTP request through the browser's network stack
+      tags:
+      - Browsers
+  /browsers/{id_or_name}/extensions:
+    post:
+      description: Loads one or more unpacked extensions using live CDP activation when eligible. Chromium restarts when enterprise policy requires it or live activation fails.
+      operationId: uploadExtensionsToBrowser
       parameters:
-      - name: id
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
         in: path
+        name: id_or_name
         required: true
         schema:
           type: string
-        description: Browser session ID
       requestBody:
-        required: true
         content:
           multipart/form-data:
             schema:
-              type: object
               properties:
                 extensions:
-                  type: array
                   description: List of extensions to upload and activate
                   items:
-                    type: object
                     properties:
-                      zip_file:
-                        type: string
-                        format: binary
-                        description: Zip archive containing an unpacked Chromium extension (must include manifest.json)
                       name:
-                        type: string
                         description: Folder name to place the extension under /home/kernel/extensions/<name>
-                        minLength: 1
                         maxLength: 255
+                        minLength: 1
                         pattern: ^[a-zA-Z0-9._-]{1,255}$
+                        type: string
+                      zip_file:
+                        description: Zip archive containing an unpacked Chromium extension (must include manifest.json)
+                        format: binary
+                        type: string
                     required:
                     - zip_file
                     - name
+                    type: object
+                  type: array
               required:
               - extensions
+              type: object
+        required: true
       responses:
         '201':
           description: Extensions uploaded, Chromium restarted, and DevTools is ready
@@ -338,123 +357,477 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.browsers.loadExtensions('id', {\n  extensions: [{ name: 'name', zip_file: fs.createReadStream('path/to/file') }],\n});"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.browsers.load_extensions(\n    id=\"id\",\n    extensions=[{\n        \"name\": \"name\",\n        \"zip_file\": b\"Example data\",\n    }],\n)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"io\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.Browsers.LoadExtensions(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserLoadExtensionsParams{\n\t\t\tExtensions: []kernel.BrowserLoadExtensionsParamsExtension{{\n\t\t\t\tName:    \"name\",\n\t\t\t\tZipFile: io.Reader(bytes.NewBuffer([]byte(\"Example data\"))),\n\t\t\t}},\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
-  /browsers/{id}/curl:
-    post:
-      summary: Make an HTTP request through the browser's network stack
-      description: 'Sends an HTTP request through Chrome''s HTTP request stack, inheriting
-
-        the browser''s TLS fingerprint, cookies, proxy configuration, and headers.
-
-        Returns a structured JSON response with status, headers, body, and timing.'
-      operationId: browserCurl
-      tags:
-      - Browsers
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
       security:
       - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Browser session ID
+      summary: Ad-hoc upload one or more unpacked extensions to a running browser instance
+      tags:
+      - Browsers
+  /mpp/browsers:
+    post:
+      description: 'Buys a stealth headful browser for the duration in the offer with a Machine Payments Protocol (MPP) payment, without a Kernel account. A request without an `Authorization: Payment` credential gets a 402 challenge; the paid retry returns the browser and a `Payment-Receipt` header. A challenge can be paid until its `expires` time, 30 minutes after it is issued by default. A challenge buys one browser. Resending the same paid credential is intentional and safe: it returns the same browser without charging again until the session expires, even after the challenge has expired, so an agent can retry after a timeout. After the session expires it gets a 402 with a fresh challenge and `code: session_expired`. A different payment for a challenge that was already charged is rejected with a 402 before any charge.'
+      operationId: postMppBrowsers
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BrowserCurlRequest'
+              properties:
+                email:
+                  description: Optional address for the Stripe receipt. When omitted, the billing email shared with the payment token is used, if any. A malformed address is rejected with a 400 before any challenge or charge.
+                  format: email
+                  type: string
+              type: object
+        required: false
       responses:
         '200':
-          description: Response from target URL
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BrowserCurlResult'
+                properties:
+                  access:
+                    properties:
+                      type:
+                        enum:
+                        - session_urls
+                        type: string
+                    required:
+                    - type
+                    type: object
+                  browser_live_view_url:
+                    type: string
+                  cdp_ws_url:
+                    type: string
+                  created_at:
+                    format: date-time
+                    type: string
+                  duration_minutes:
+                    type: integer
+                  expires_at:
+                    format: date-time
+                    type: string
+                  headless:
+                    type: boolean
+                  payment:
+                    properties:
+                      amount:
+                        description: Amount in cents
+                        type: integer
+                      currency:
+                        type: string
+                      reference:
+                        description: Stripe PaymentIntent ID
+                        type: string
+                    required:
+                    - reference
+                    - amount
+                    - currency
+                    type: object
+                  session_id:
+                    type: string
+                  stealth:
+                    type: boolean
+                  webdriver_ws_url:
+                    type: string
+                required:
+                - session_id
+                - cdp_ws_url
+                - webdriver_ws_url
+                - headless
+                - stealth
+                - duration_minutes
+                - created_at
+                - expires_at
+                - payment
+                - access
+                type: object
+          description: The purchased browser session.
+          headers:
+            Payment-Receipt:
+              description: Base64url-encoded MPP receipt.
+              schema:
+                type: string
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '502':
-          description: Upstream transport failure
           content:
-            application/json:
+            application/problem+json:
               schema:
-                $ref: '#/components/schemas/BrowserCurlTransportError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.curl('id', { url: 'url' });\n\nconsole.log(response.body);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.curl(\n    id=\"id\",\n    url=\"url\",\n)\nprint(response.body)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Curl(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserCurlParams{\n\t\t\tURL: \"url\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Body)\n}\n"
+                type: object
+          description: The request body is not a JSON object, or `email` is malformed.
+        '402':
+          content:
+            application/problem+json:
+              schema:
+                properties:
+                  challengeId:
+                    type: string
+                  code:
+                    enum:
+                    - session_expired
+                    type: string
+                  detail:
+                    type: string
+                  expires_at:
+                    format: date-time
+                    type: string
+                  status:
+                    type: integer
+                  title:
+                    type: string
+                  type:
+                    type: string
+                type: object
+          description: 'Payment required. The `WWW-Authenticate` header carries a fresh Payment challenge; the body is RFC 9457 problem details. When the session this credential bought has expired, the problem type is `invalid-challenge` with `code: session_expired` and `expires_at`.'
+          headers:
+            WWW-Authenticate:
+              description: MPP Payment challenge.
+              schema:
+                type: string
+        '429':
+          description: Too many requests from this client.
+        '503':
+          content:
+            application/problem+json:
+              schema:
+                type: object
+          description: Paid browsers are unavailable, at capacity, or the browser could not be created (payment refunded).
+      security: []
+      summary: Buy a browser session with a machine payment
+      tags:
+      - Browsers
+      x-cli-skip: true
+      x-hidden: true
+      x-payment-info:
+        offers:
+        - amount: '50'
+          currency: usd
+          description: Kernel stealth headful browser, 30 minutes
+          intent: charge
+          method: stripe
+      x-stainless-skip: true
 components:
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    CapacityExhausted:
-      description: Capacity exhausted, unable to fulfill request at this time
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Conflict – resource already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    TooManyRequests:
-      description: Too Many Requests – rate limit exceeded
-      headers:
-        Retry-After:
-          description: Seconds to wait before retrying
-          schema:
-            type: integer
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    BrowserViewport:
+    BrowserTelemetryCategoryConfig:
+      description: Per-category telemetry configuration.
+      properties:
+        enabled:
+          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction), screenshot and platform default to false; set true to opt in.
+          type: boolean
       type: object
+    Profile:
+      description: Browser profile metadata.
+      properties:
+        created_at:
+          description: Timestamp when the profile was created
+          format: date-time
+          type: string
+        id:
+          description: Unique identifier for the profile
+          type: string
+        last_used_at:
+          description: Timestamp when the profile was last used
+          format: date-time
+          type: string
+        name:
+          description: Optional, easier-to-reference name for the profile
+          nullable: true
+          type: string
+        updated_at:
+          description: Timestamp when the profile was last updated
+          format: date-time
+          type: string
+      required:
+      - id
+      - created_at
+      type: object
+    Region:
+      description: 'Geographic region for hosting browser sessions or pools.
+
+        '
+      enum:
+      - us-east
+      - us-west
+      - eu-west
+      - ap-southeast
+      type: string
+    BrowserVideoMemory:
+      description: 'Video memory (VRAM) of a GPU browser session. 2GiB sessions have 4 vCPU and 6GiB memory. 4GiB sessions have 8 vCPU and 12GiB memory.
+
+        '
+      enum:
+      - 2GiB
+      - 4GiB
+      example: 2GiB
+      type: string
+      x-enum-varnames:
+      - BrowserVideoMemoryN2GiB
+      - BrowserVideoMemoryN4GiB
+    BrowserProxyConfig:
+      additionalProperties: false
+      description: 'Browser proxy configuration. Provide exactly one of mode, id, or name; an empty object is invalid.
+
+        Set mode to direct for no proxy regardless of stealth. Set mode to default to use the browser''s stealth-derived default: Kernel''s default stealth proxy when stealth=true, or direct egress when stealth=false.
+
+        Select id or name to use that proxy regardless of stealth. The selected proxy must be in the same project as the browser. Names must match exactly one active proxy; use id for stable references.
+
+        Proxy configuration changes only egress and does not change stealth or CAPTCHA solver behavior. A stealth browser using mode=direct still runs in stealth mode with the CAPTCHA solver enabled.
+
+        When proxy is omitted on browser creation, stealth browsers use Kernel''s default stealth proxy and non-stealth browsers use direct egress. When omitted on update, the current configuration is unchanged.
+
+        '
+      oneOf:
+      - required:
+        - mode
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          description: Proxy ID.
+          minLength: 1
+          type: string
+        mode:
+          $ref: '#/components/schemas/BrowserProxyMode'
+        name:
+          description: Proxy name. Must match exactly one active proxy in the project.
+          minLength: 1
+          type: string
+      type: object
+    BrowserCdpCommandMethod:
+      description: 'A browser-control CDP method the proxy reports. The set covers the commands an agent drives the browser with; configuration, DOM and Runtime bookkeeping, and Chrome-specific UI commands are outside it. Canonical definitions: devtools-protocol@2d019e73.
+
+        '
+      enum:
+      - Input.dispatchMouseEvent
+      - Input.dispatchKeyEvent
+      - Input.insertText
+      - Input.imeSetComposition
+      - Input.dispatchTouchEvent
+      - Input.dispatchDragEvent
+      - Input.cancelDragging
+      - Input.emulateTouchFromMouseEvent
+      - Input.synthesizePinchGesture
+      - Input.synthesizeScrollGesture
+      - Input.synthesizeTapGesture
+      - DOM.setFileInputFiles
+      - DOM.focus
+      - DOM.scrollIntoViewIfNeeded
+      - Page.bringToFront
+      - Page.captureScreenshot
+      - Page.captureSnapshot
+      - Page.handleJavaScriptDialog
+      - Page.navigate
+      - Page.navigateToHistoryEntry
+      - Page.reload
+      - Page.printToPDF
+      - Page.startScreencast
+      - Page.stopScreencast
+      - Page.stopLoading
+      - Page.close
+      - Page.setWebLifecycleState
+      - Target.activateTarget
+      - Target.closeTarget
+      - Target.createTarget
+      - Target.createBrowserContext
+      - Target.disposeBrowserContext
+      - Target.openDevTools
+      - Browser.cancelDownload
+      - Browser.close
+      - Browser.setWindowBounds
+      - Browser.setContentsSize
+      - Autofill.trigger
+      type: string
+    BrowserTelemetryControlConfig:
+      description: Configuration for the control category. Same enabled semantics as any other category, plus settings for the browser-control commands the CDP proxy reports.
+      properties:
+        cdp:
+          $ref: '#/components/schemas/BrowserTelemetryCdpControlConfig'
+          description: Settings for the cdp_command events the CDP proxy reports. Merged independently of enabled, so a later update that only sets enabled keeps the current exclusion list.
+        enabled:
+          description: Whether this category is captured. Control is on by default; set false to opt out.
+          type: boolean
+      type: object
+    BrowserAllowlistState:
+      properties:
+        base_revision:
+          description: Revision against which that mutation was accepted; reuse it when retrying the mutation.
+          type: string
+        mutation_id:
+          description: ID of the last conditional allowlist update saved on this browser.
+          type: string
+        revision:
+          description: Opaque revision to pass as network.expected_allowlist_revision on an update.
+          type: string
+      required:
+      - revision
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    BrowserCurlRequest:
+      additionalProperties: false
+      description: Request to make an HTTP request through the browser's network stack.
+      properties:
+        body:
+          description: Request body (for POST/PUT/PATCH).
+          type: string
+        headers:
+          additionalProperties:
+            type: string
+          description: Custom headers merged with browser defaults.
+          type: object
+        method:
+          default: GET
+          description: HTTP method.
+          enum:
+          - GET
+          - HEAD
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+          type: string
+        response_encoding:
+          default: utf8
+          description: Encoding for the response body. Use base64 for binary content.
+          enum:
+          - utf8
+          - base64
+          type: string
+        timeout_ms:
+          default: 30000
+          description: Request timeout in milliseconds.
+          maximum: 60000
+          minimum: 1000
+          type: integer
+        url:
+          description: Target URL (must be http or https).
+          type: string
+      required:
+      - url
+      type: object
+    BrowserProfile:
+      description: 'Profile selection for the browser session. Provide either id or name. If specified, the
+
+        matching profile will be loaded into the browser session. Profiles must be created beforehand.
+
+        '
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          description: Profile ID to load for this browser session
+          type: string
+        name:
+          description: Profile name to load for this browser session (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
+          maxLength: 255
+          minLength: 1
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        save_changes:
+          default: false
+          description: If true, save changes made during the session back to the profile when the session ends.
+          type: boolean
+      type: object
+    BrowserMemory:
+      description: Memory allocated to the browser session.
+      enum:
+      - 1GiB
+      - 2GiB
+      - 4GiB
+      - 6GiB
+      - 8GiB
+      - 12GiB
+      - 16GiB
+      example: 8GiB
+      type: string
+    BrowserNetworkUpdate:
+      additionalProperties: false
+      description: Network configuration changes for a running browser session. Other network settings can only be set at creation.
+      properties:
+        allowed_hosts:
+          description: 'Replaces the session''s egress allowlist, using the same entry rules as network.allowed_hosts on create. Only an allowlist the browser was created with can be changed: a browser created without one can''t be given one, and an allowlist removed with null can''t be added back. Omit to leave the allowlist unchanged, or set to null to remove it and return to unfiltered egress; an empty list is invalid. The new list applies without restarting the browser: new requests to destinations it no longer allows are refused within a few seconds, and open connections to them are closed within about 30 seconds, or up to 10 minutes during a Kernel deploy. Connections to destinations it still allows, such as WebSockets, stay open. A start_url in the same request must be allowed by the updated list, and is loaded only after the list takes effect. Requires a browser created with proxy v3. Supported on leased pooled browsers; the pool''s allowlist is restored before reuse, or the browser is destroyed if it cannot be safely restored. If the request fails, retry it: the new list may already apply to some requests.
+
+            '
+          example:
+          - example.com
+          - '*.example.com'
+          items:
+            maxLength: 253
+            type: string
+          maxItems: 100
+          minItems: 1
+          nullable: true
+          type: array
+          x-go-type: AllowedHostsUpdate
+          x-go-type-skip-optional-pointer: true
+          x-omitzero: true
+        expected_allowlist_revision:
+          description: 'The network.allowlist_state.revision from the browser''s last saved snapshot. Supply together with mutation_id to opt into conditional allowlist updates. The revision is checked atomically with the configuration write. A stale request returns 409 stale_network without changing the allowlist. A GET alone does not fence an earlier unfinished PATCH.
+
+            '
+          maxLength: 64
+          minLength: 64
+          type: string
+        mutation_id:
+          description: 'A unique ID for this allowlist update, supplied together with expected_allowlist_revision. Reuse both values and the identical allowed_hosts payload when retrying an uncertain update. If it is still the current mutation, the retry finishes proxy and VM application without creating another revision. A superseded mutation returns 409 stale_network. These fields guard only network.allowed_hosts, not other browser update fields.
+
+            '
+          maxLength: 64
+          minLength: 1
+          pattern: ^[A-Za-z0-9_-]+$
+          type: string
+      type: object
+    InstanceProxyError:
+      properties:
+        code:
+          $ref: '#/components/schemas/InstanceProxyErrorCode'
+        message:
+          description: Human-readable error description for debugging
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    BrowserViewportUpdate:
+      allOf:
+      - $ref: '#/components/schemas/BrowserViewport'
+      - properties:
+          force:
+            default: false
+            description: 'If true, allow the viewport change even when a live view or recording/replay is active.
+
+              Active recordings will be gracefully stopped and restarted at the new resolution as
+
+              separate segments. If false (default), the resize is refused when a live view or recording is active.
+
+              '
+            type: boolean
+        type: object
+      description: Viewport configuration for updating a browser session. Extends BrowserViewport with update-only options.
+    BrowserViewport:
       description: 'Initial browser window size in pixels with optional refresh rate.
 
         If omitted, image defaults apply (1920x1080@25).
@@ -479,527 +852,810 @@ components:
 
         '
       properties:
-        width:
-          type: integer
-          description: Browser window width in pixels. Any positive integer is accepted.
-          minimum: 1
-          example: 1280
         height:
-          type: integer
           description: Browser window height in pixels. Any positive integer is accepted.
-          minimum: 1
           example: 800
-        refresh_rate:
-          type: integer
-          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
           minimum: 1
+          type: integer
+        refresh_rate:
+          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
           example: 60
+          minimum: 1
+          type: integer
+        width:
+          description: Browser window width in pixels. Any positive integer is accepted.
+          example: 1280
+          minimum: 1
+          type: integer
       required:
       - width
       - height
-    Tags:
       type: object
-      maxProperties: 50
-      description: User-defined key-value tags.
-      propertyNames:
-        type: string
-        minLength: 1
-        maxLength: 128
-        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
-      additionalProperties:
-        type: string
-        minLength: 0
-        maxLength: 256
-        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
-      example:
-        team: backend
-        env: staging
-    BrowserExtension:
-      type: object
-      description: 'Extension selection for the browser session. Provide either id or name of an extension uploaded to Kernel.
-
-        '
+    BrowserUsageStatus:
+      description: Whether final usage billing is still pending or complete. Only present for deleted sessions.
+      enum:
+      - pending
+      - ready
+      type: string
+      x-enum-varnames:
+      - BrowserUsageStatusPending
+      - BrowserUsageStatusReady
+    BrowserPoolRef:
+      description: Browser pool this session was acquired from, if any.
       properties:
         id:
+          description: Browser pool ID
           type: string
-          description: Extension ID to load for this browser session
         name:
+          description: Browser pool name, if set
           type: string
-          minLength: 1
-          maxLength: 255
-          pattern: ^[a-zA-Z0-9._-]{1,255}$
-          description: Extension name to load for this browser session (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
-      oneOf:
-      - required:
-        - id
-      - required:
-        - name
-    Browser:
+      required:
+      - id
       type: object
+    BrowserTelemetryOTLPExportRequestConfig:
+      description: OTLP export settings for a browser session.
       properties:
-        created_at:
-          type: string
-          format: date-time
-          description: When the browser session was created.
-        cdp_ws_url:
-          type: string
-          description: Websocket URL for Chrome DevTools Protocol connections to the browser session
-          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/cdp?jwt=eyJ0eXAi...
-        webdriver_ws_url:
-          type: string
-          description: Websocket URL for WebDriver BiDi connections to the browser session
-          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/webdriver/session?jwt=eyJ0eXAi...
-        browser_live_view_url:
-          type: string
-          description: Remote URL for live viewing the browser session. Only available for non-headless browsers.
-          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/live?jwt=eyJ0eXAi...
+        destination:
+          $ref: '#/components/schemas/OTLPDestinationRef'
+          description: OTLP destination to export this session's captured telemetry to. Provide either id or name. Requires telemetry capture to be enabled.
+        enabled:
+          description: Whether to export captured telemetry over OTLP. Setting destination implies enabled=true, so this only needs to be set explicitly to disable export (enabled=false with a destination is rejected).
+          type: boolean
+      type: object
+    Tags:
+      additionalProperties:
+        maxLength: 256
+        minLength: 0
+        pattern: ^[A-Za-z0-9 _.:/=+@-]*$
+        type: string
+      description: User-defined key-value tags.
+      example:
+        env: staging
+        team: backend
+      maxProperties: 50
+      propertyNames:
+        maxLength: 128
+        minLength: 1
+        pattern: ^[A-Za-z0-9 _.:/=+@-]+$
+        type: string
+      type: object
+    Browser:
+      properties:
         base_url:
-          type: string
           description: Metro-API HTTP base URL for this browser session.
           example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/kernel
-        headless:
-          type: boolean
-          description: Whether the browser session is running in headless mode.
-          example: false
-        stealth:
-          type: boolean
-          description: Whether the browser session is running in stealth mode.
-          example: false
-        gpu:
-          type: boolean
-          description: Whether GPU acceleration is enabled for the browser session (only supported for headful sessions).
-          example: false
-        session_id:
           type: string
-          description: Unique identifier for the browser session
-          example: htzv5orfit78e1m2biiifpbv
-        name:
+        browser_live_view_url:
+          description: Remote URL for live viewing the browser session. Only available for non-headless browsers.
+          example: https://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/live?jwt=eyJ0eXAi...
           type: string
-          description: Human-readable name of the browser session, if one was set at creation.
-          example: checkout-flow-1
-        timeout_seconds:
-          type: integer
-          description: The number of seconds of inactivity before the browser session is terminated.
-        profile:
-          $ref: '#/components/schemas/Profile'
-        proxy_id:
+        cdp_ws_url:
+          description: Websocket URL for Chrome DevTools Protocol connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/cdp?jwt=eyJ0eXAi...
           type: string
-          description: ID of the proxy associated with this browser session, if any.
-        pool:
-          $ref: '#/components/schemas/BrowserPoolRef'
-        viewport:
-          $ref: '#/components/schemas/BrowserViewport'
-        kiosk_mode:
-          type: boolean
-          description: Whether the browser session is running in kiosk mode.
-          example: false
-        start_url:
-          type: string
-          description: URL the session was asked to navigate to on creation, if any. Recorded for debugging. Navigation is fire-and-forget — the URL is dispatched to the browser without waiting for it to load, and any errors (DNS failure, bad status, timeout) are silently dropped. Captures what was requested, not what the browser actually loaded.
-          example: https://example.com
         chrome_policy:
-          type: object
           additionalProperties: true
           description: 'Custom Chrome enterprise policy overrides that were applied to this browser session, if any. Echoed back for verification. Keys are Chrome enterprise policy names.
 
             '
+          type: object
+        created_at:
+          description: When the browser session was created.
+          format: date-time
+          type: string
+        deleted_at:
+          description: When the browser session was soft-deleted. Only present for deleted sessions.
+          format: date-time
+          type: string
+        gpu:
+          description: Whether GPU acceleration is enabled for the browser session (only supported for headful sessions).
+          example: false
+          type: boolean
+        headless:
+          description: Whether the browser session is running in headless mode.
+          example: false
+          type: boolean
+        kiosk_mode:
+          description: Whether the browser session is running in kiosk mode.
+          example: false
+          type: boolean
+        memory:
+          $ref: '#/components/schemas/BrowserMemory'
+          description: Memory allocated to the browser session.
+        name:
+          description: Human-readable name of the browser session, if one was set at creation.
+          example: checkout-flow-1
+          type: string
+        network:
+          $ref: '#/components/schemas/BrowserNetworkConfig'
+          description: Network configuration the session was created with, if any. Omitted when the session has no network configuration.
+        pool:
+          $ref: '#/components/schemas/BrowserPoolRef'
+        profile:
+          $ref: '#/components/schemas/Profile'
+        profile_save_changes:
+          description: Whether changes made during this browser session are saved back to its profile when the session ends. Omitted when no profile is attached.
+          type: boolean
+        proxy:
+          $ref: '#/components/schemas/BrowserProxy'
+          description: Resolved proxy configuration for this browser session.
+        proxy_id:
+          deprecated: true
+          description: ID of the proxy associated with this browser session, if any. Deprecated in favor of proxy.
+          type: string
+          x-deprecated-reason: Use proxy instead.
+        region:
+          $ref: '#/components/schemas/Region'
+          description: 'Geographic region of the browser session. Fixed once the session is created.
+
+            '
+        session_id:
+          description: Unique identifier for the browser session
+          example: htzv5orfit78e1m2biiifpbv
+          type: string
+        start_url:
+          description: URL the session was most recently asked to navigate to, if any. Recorded for debugging. Navigation is fire-and-forget — the URL is dispatched to the browser without waiting for it to load, and any errors (DNS failure, bad status, timeout) are silently dropped. Captures what was requested, not what the browser actually loaded.
+          example: https://example.com
+          type: string
+        stealth:
+          description: Whether the browser session is running in stealth mode.
+          example: false
+          type: boolean
         tags:
           $ref: '#/components/schemas/Tags'
           description: User-defined key-value tags that were set on this browser session, if any. Echoed back when present.
-        deleted_at:
-          type: string
-          format: date-time
-          description: When the browser session was soft-deleted. Only present for deleted sessions.
-        usage:
-          $ref: '#/components/schemas/BrowserUsage'
         telemetry:
           $ref: '#/components/schemas/BrowserTelemetryConfig'
-          nullable: true
           description: Active telemetry configuration for the session, if any.
+          nullable: true
+        timeout_seconds:
+          description: The number of seconds of inactivity before the browser session is terminated.
+          type: integer
+        usage:
+          $ref: '#/components/schemas/BrowserUsage'
+        usage_status:
+          $ref: '#/components/schemas/BrowserUsageStatus'
+        vaults:
+          description: Vaults linked when the browser session was created.
+          items:
+            $ref: '#/components/schemas/VaultReference'
+          type: array
+        video_memory:
+          $ref: '#/components/schemas/BrowserVideoMemory'
+          description: Video memory (VRAM) of the GPU browser session. Only present when gpu is true.
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+        webdriver_ws_url:
+          description: Websocket URL for WebDriver BiDi connections to the browser session
+          example: wss://proxy.yul-upbeat-herschel.onkernel.com:8443/browser/webdriver/session?jwt=eyJ0eXAi...
+          type: string
       required:
       - created_at
       - cdp_ws_url
       - webdriver_ws_url
       - session_id
+      - region
       - stealth
       - headless
+      - memory
       - timeout_seconds
-    BrowserUsage:
       type: object
-      description: Session usage metrics.
+    BrowserProxy:
+      additionalProperties: false
+      description: Resolved proxy configuration for a browser session. Selected proxies are returned by stable ID.
+      oneOf:
+      - required:
+        - mode
+      - required:
+        - id
+      - required:
+        - name
       properties:
-        uptime_ms:
+        id:
+          description: Selected proxy ID.
+          minLength: 1
+          type: string
+        mode:
+          $ref: '#/components/schemas/BrowserProxyMode'
+        name:
+          description: Selected proxy name.
+          minLength: 1
+          type: string
+      type: object
+    BrowserRequest:
+      description: 'Parameters for creating a browser session.
+
+        '
+      properties:
+        chrome_policy:
+          additionalProperties: true
+          description: 'Custom Chrome enterprise policy overrides applied to this browser session. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/
+
+            '
+          type: object
+        extensions:
+          description: List of browser extensions to load into the session. Provide each by id or name.
+          items:
+            $ref: '#/components/schemas/BrowserExtension'
+          maxItems: 20
+          type: array
+        gpu:
+          description: If true, enables GPU acceleration for the browser session. Requires Start-Up or Enterprise plan, headless=false, and region=us-east.
+          example: false
+          type: boolean
+        headless:
+          description: If true, launches the browser using a headless image (no VNC/GUI). Defaults to false.
+          example: false
+          type: boolean
+        invocation_id:
+          description: action invocation ID
+          example: rr33xuugxj9h0bkf1rdt2bet
+          type: string
+        kiosk_mode:
+          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view.
+          example: true
+          type: boolean
+        memory:
+          $ref: '#/components/schemas/BrowserMemoryRequest'
+          description: 'Memory for a non-GPU browser. Headless: 1GiB (default), 2GiB, or 4GiB. Headful: 8GiB (default) or 16GiB.'
+        name:
+          description: 'Optional human-readable name for the browser session, used to find it later in the dashboard. Must be unique among active sessions within the project. Can be changed later via PATCH /browsers/{id_or_name}.
+
+            '
+          example: checkout-flow-1
+          maxLength: 255
+          minLength: 1
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        network:
+          $ref: '#/components/schemas/BrowserNetworkConfig'
+          description: 'Network configuration for the browser session. Only allowed_hosts can be changed after creation, with PATCH /browsers/{id_or_name}.
+
+            '
+        profile:
+          $ref: '#/components/schemas/BrowserProfile'
+        proxy:
+          $ref: '#/components/schemas/BrowserProxyConfig'
+          description: 'Proxy configuration for the browser session. Cannot be combined with proxy_id.
+
+            Omit to use the browser default: stealth browsers use Kernel''s default stealth proxy, while non-stealth browsers use direct egress.
+
+            Set mode to direct to force direct egress regardless of stealth. Set mode to default to explicitly use the browser default: Kernel''s default stealth proxy when stealth=true, or direct egress when stealth=false.
+
+            Select id or name to use that proxy regardless of stealth. Proxy selection does not change stealth or CAPTCHA solver behavior.
+
+            '
+        proxy_id:
+          deprecated: true
+          description: Optional proxy to associate to the browser session. Must reference a proxy in the same project as the browser session. Deprecated in favor of proxy.
+          type: string
+          x-deprecated-reason: Use proxy instead.
+        region:
+          $ref: '#/components/schemas/Region'
+          description: 'Geographic region for the browser session. It is fixed once the session is created. Region selection requires a Start-Up or Enterprise plan, defaults to us-east when omitted on create.
+
+            '
+        start_url:
+          description: Optional URL to open when the browser session is created. Navigation is best-effort, so navigation failures do not prevent the session from being created.
+          example: https://example.com
+          type: string
+        stealth:
+          description: 'If true, launches the browser in stealth mode and enables the CAPTCHA solver. Defaults to false.
+
+            When proxy is omitted, stealth browsers use Kernel''s default stealth proxy and non-stealth browsers use direct egress.
+
+            An explicit proxy configuration changes only egress; it does not enable or disable stealth or the CAPTCHA solver.
+
+            '
+          example: true
+          type: boolean
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: 'Optional user-defined key-value tags for the browser session, used to find and group sessions later. Can be changed later via PATCH /browsers/{id_or_name}. Up to 50 pairs.
+
+            '
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
+          description: 'Telemetry configuration for the browser session. Set enabled to true to start capture using VM defaults, or provide browser category settings. If omitted, null, set to an empty object ({}), set to enabled: false without browser category settings, or all four categories are explicitly disabled, capture is not started.
+
+            '
+          nullable: true
+        timeout_seconds:
+          description: The number of seconds of inactivity before the browser session is terminated. Activity includes CDP connections and live view connections. Defaults to 60 seconds. Minimum allowed is 10 seconds. Maximum allowed is 259200 (72 hours). We check for inactivity every 5 seconds, so the actual timeout behavior you will see is +/- 5 seconds around the specified value.
+          maximum: 259200
+          minimum: 10
           type: integer
-          description: Time in milliseconds the session was actively running.
-      required:
-      - uptime_ms
-    BrowserTelemetryCategoriesConfig:
+        vaults:
+          description: Project-scoped vaults to link to the browser session. Links are immutable after creation.
+          items:
+            $ref: '#/components/schemas/VaultReference'
+          maxItems: 20
+          type: array
+        video_memory:
+          $ref: '#/components/schemas/BrowserVideoMemory'
+          description: 'Video memory (VRAM) for a GPU browser session. Requires gpu=true. Defaults to 2GiB, which comes with 4 vCPU and 6GiB memory. 4GiB comes with 8 vCPU and 12GiB memory.
+
+            '
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+      required: []
       type: object
-      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction) and screenshot are off by default and are opt-in: set enabled=true to capture them.'
+    BrowserProxyRoute:
+      additionalProperties: false
       properties:
+        hosts:
+          description: 'Exact hostnames or leading *. wildcard patterns (subdomains only); patterns cannot include ports, and matching ignores the destination port. Hosts not matched by any route use the session''s top-level proxy (or the browser default when proxy is omitted).
+
+            '
+          items:
+            maxLength: 253
+            type: string
+          maxItems: 50
+          minItems: 1
+          type: array
+        proxy:
+          $ref: '#/components/schemas/BrowserProxyRouteTarget'
+      required:
+      - hosts
+      - proxy
+      type: object
+    InstanceProxyErrorCode:
+      description: Canonical error code returned by browser instance API proxy routes
+      enum:
+      - invalid_request
+      - unauthorized
+      - forbidden
+      - session_not_leased
+      - not_found
+      - conflict
+      - session_gone
+      - rate_limit_exceeded
+      - internal_error
+      - browser_unavailable
+      type: string
+    BrowserUpdateRequest:
+      description: Request body for updating a browser session.
+      properties:
+        disable_default_proxy:
+          deprecated: true
+          description: If true, stealth browsers connect directly instead of using the default stealth proxy. Deprecated in favor of proxy.mode.
+          type: boolean
+          x-deprecated-reason: Use proxy.mode instead.
+        name:
+          description: 'Human-readable name for the browser session. Omit to leave unchanged, set to an empty string to clear the name. When set, must be unique among active sessions within the project.
+
+            '
+          example: checkout-flow-1
+          maxLength: 255
+          minLength: 1
+          nullable: true
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        network:
+          $ref: '#/components/schemas/BrowserNetworkUpdate'
+          description: Network configuration changes to apply to the running browser session.
+        profile:
+          $ref: '#/components/schemas/BrowserProfile'
+          description: Profile to load into the browser session. Only allowed if the session does not already have a profile loaded.
+        proxy:
+          $ref: '#/components/schemas/BrowserProxyConfig'
+          description: 'Proxy configuration to apply. Omit to leave the current configuration unchanged. Cannot be combined with proxy_id or disable_default_proxy.
+
+            Set mode to direct to switch to direct egress regardless of stealth. Set mode to default to restore the browser default after using a selected proxy: Kernel''s default stealth proxy for a stealth browser, or direct egress for a non-stealth browser.
+
+            Updating proxy does not change stealth or CAPTCHA solver behavior.
+
+            '
+        proxy_id:
+          deprecated: true
+          description: ID of the proxy to use. Omit to leave unchanged, set to empty string to remove proxy. Deprecated in favor of proxy.
+          nullable: true
+          type: string
+          x-deprecated-reason: Use proxy instead.
+        start_url:
+          description: 'Optional URL to navigate the browser to after applying this update. When a profile is loaded in the same update, this overrides the profile''s restored tabs. Navigation is best-effort, so failures do not fail the update. Omit or set to an empty string to leave the current page unchanged.
+
+            '
+          example: https://example.com
+          maxLength: 2048
+          type: string
+        tags:
+          $ref: '#/components/schemas/Tags'
+          description: 'User-defined key-value tags for the browser session. Omit to leave unchanged. Provide a map to replace the entire tag set (full replace, not a merge). Set to an empty object ({}) to clear all tags. Up to 50 pairs.
+
+            '
+          nullable: true
+        telemetry:
+          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
+          description: 'Telemetry configuration. Omit, set to null, or set to an empty object ({}) to leave the existing configuration unchanged. Set enabled to true to enable capture using VM defaults. Set enabled to false to stop capture. Provide browser category settings for per-category updates. Explicitly disabling all four categories also stops capture.
+
+            '
+          nullable: true
+        viewport:
+          $ref: '#/components/schemas/BrowserViewportUpdate'
+          description: Viewport configuration to apply to the browser session.
+      type: object
+    BrowserCurlTransportError:
+      additionalProperties: false
+      description: Transport-level error when the request could not complete.
+      properties:
+        code:
+          $ref: '#/components/schemas/InstanceProxyErrorCode'
+        message:
+          description: Human-readable error description.
+          type: string
+        net_error:
+          description: Chromium net error code.
+          type: integer
+        net_error_name:
+          description: Chromium net error name.
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    BrowserTelemetryStorageConfig:
+      description: Kernel storage state for a session's captured telemetry.
+      properties:
+        enabled:
+          description: Whether captured telemetry is persisted to Kernel storage. When off, the session's events are only available on the live stream and through any configured export.
+          type: boolean
+      type: object
+    BrowserNetworkConfig:
+      description: 'Network configuration for a browser session or browser pool.
+
+        '
+      properties:
+        allowed_hosts:
+          description: 'Egress allowlist for a browser session: the only destinations the browser may reach through Kernel-managed egress. Any other destination is refused with a 403 whose X-Kernel-Proxy-Error header is network_policy_denied, so pages cannot load or send data to unlisted hosts, including with fetch() and WebSockets. Omit the field for unfiltered egress; an empty list is invalid. The allowlist applies from the browser''s first request, and start_url must be allowed by it. Entries are exact hostnames ("example.com"), one leading "*." wildcard that matches subdomains at any depth but not the domain itself ("*.example.com" matches api.example.com, not example.com), public IPv4 addresses ("8.8.8.8"), bracketed public IPv6 addresses ("[2001:4860:4860::8888]"), or public CIDR ranges in canonical form ("8.8.4.0/24", "2001:4860::/32"). IP and CIDR entries only match destinations written as an IP address, never hostnames that resolve into the range. Entries cannot include ports, paths, or schemes, and match every port on their host. Wildcards over a public suffix ("*.com", "*.github.io") and private or reserved IP ranges are rejected, as are entries that overlap private_hosts. Enforced at Kernel''s egress proxy only: destinations in private_hosts, and processes in the browser VM that do not use the browser''s proxy, are not filtered, and Kernel''s own control traffic is always allowed. Can be replaced or removed while the session runs with PATCH /browsers/{id_or_name}, but not added to a browser created without one. Supported on browser pools and their leased browsers. Per-lease changes are reset to the pool''s allowlist on release. If a lessee removes the allowlist and the pool still requires one, the browser is replaced on release rather than given an allowlist again. Requires proxy v3.
+
+            '
+          example:
+          - example.com
+          - '*.example.com'
+          items:
+            maxLength: 253
+            type: string
+          maxItems: 100
+          minItems: 1
+          type: array
+        allowlist_state:
+          $ref: '#/components/schemas/BrowserAllowlistState'
+          description: 'Concurrency metadata for a browser''s saved allowlist configuration. Browser pools omit it. This remains present after removal so an uncertain removal can be retried. It does not prove proxy or VM application completed. Do not include it in creation or pool updates.
+
+            '
+          readOnly: true
+        private_hosts:
+          description: 'Destinations the browser reaches directly through the session''s own network instead of through Kernel-managed egress — for private hosts reachable over a VPN or tunnel the session has joined (e.g. a Tailscale tailnet). By default, private IP ranges already route directly: RFC1918 (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), CGNAT/Tailscale (100.64.0.0/10), and IPv6 ULA (fc00::/7). An explicitly supplied list replaces those defaults with exactly the entries given, and an empty list ([]) disables them so all traffic uses Kernel-managed egress; omit private_hosts to keep the defaults. Entries are hostname patterns ("*.example.ts.net", "preview.internal") or IP/CIDR literals ("100.64.0.0/10", "10.1.30.63"). IP and CIDR entries only match URLs written with a literal IP address; they never match hostnames that resolve into the range, so private DNS names need a hostname entry even when they resolve inside the default ranges. CIDRs must be in canonical masked form (host bits zero), and only the private ranges listed above are accepted; public, loopback, link-local, and unspecified ranges are rejected. Exact IPv6 addresses must be bracketed ("[fd00::1]"); IPv6 CIDR ranges are unbracketed ("fd00::/8"). Wildcards are limited to one leading "*." over a suffix with at least two labels that is not a public suffix (so "*.co.uk" or "*.ts.net" are rejected, while "*.example.ts.net" is accepted). Hostname and IP entries may carry a port; CIDR ranges may not. Hostname entries are not resolved during validation, so callers must ensure they identify private destinations. Not related to a proxy''s bypass_hosts, which selects between upstream-proxy and Kernel-managed direct egress and cannot reach into a VPN.
+
+            '
+          example:
+          - '*.example.ts.net'
+          - 100.64.0.0/10
+          items:
+            maxLength: 255
+            type: string
+          maxItems: 32
+          type: array
+        proxy_routes:
+          description: 'Per-destination proxy routes for a browser session. A destination hostname is matched against every route''s hosts, regardless of port; route order does not matter. An exact hostname beats a wildcard, and a longer wildcard suffix beats a shorter one (for a.b.example.com: "a.b.example.com" > "*.b.example.com" > "*.example.com"). A host pattern may appear in only one route. "*.example.com" matches subdomains only, not example.com. A matched request selects the route''s proxy instead of the session''s top-level proxy (including mode: direct); the route proxy''s own bypass_hosts still apply. If the route proxy becomes unavailable, matched requests fail closed without falling back. Requests that match no route use the session''s default egress from the top-level proxy field (or the browser default when proxy is omitted: stealth proxy or direct egress). Routes apply from the start of the session, including to start_url and other traffic during browser setup. Setting routes requires proxy v3. Browser pools also support these routes.
+
+            '
+          items:
+            $ref: '#/components/schemas/BrowserProxyRoute'
+          maxItems: 10
+          type: array
+      type: object
+    BrowserProxyRouteTarget:
+      additionalProperties: false
+      description: Select an active non-direct proxy by ID or name. Responses always use ID.
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          minLength: 1
+          type: string
+        name:
+          minLength: 1
+          type: string
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    BrowserMemoryRequest:
+      description: Memory requested for a non-GPU browser. Headless browsers support 1GiB (default), 2GiB, or 4GiB; headful browsers support 8GiB (default) or 16GiB.
+      enum:
+      - 1GiB
+      - 2GiB
+      - 4GiB
+      - 8GiB
+      - 16GiB
+      example: 8GiB
+      type: string
+    VaultReference:
+      additionalProperties: false
+      description: Reference to a project-scoped vault. Provide exactly one of id or name.
+      properties:
+        id:
+          type: string
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+      type: object
+    BrowserTelemetryStorageRequestConfig:
+      description: Kernel storage settings for a session's captured telemetry.
+      properties:
+        enabled:
+          description: Whether captured telemetry is persisted to Kernel storage. Defaults to true. Setting false requires an OTLP destination and cannot be changed after the browser is created.
+          type: boolean
+      type: object
+    BrowserTelemetryExportRequestConfig:
+      description: Export destinations for a session's captured telemetry, by protocol. Honored when creating a browser, including the browser a managed auth connection creates for a login. Browser pools do not support export and reject it; on a browser update it is ignored, so the session keeps the destination it was created with.
+      properties:
+        otlp:
+          $ref: '#/components/schemas/BrowserTelemetryOTLPExportRequestConfig'
+          description: Export captured telemetry over OTLP to one of the org's configured destinations.
+      type: object
+    BrowserTelemetryExportConfig:
+      description: Active export state for a session's captured telemetry, by protocol.
+      properties:
+        otlp:
+          $ref: '#/components/schemas/BrowserTelemetryOTLPExportConfig'
+          description: Active OTLP export state.
+      type: object
+    OTLPDestinationRef:
+      description: 'OTLP destination selection. Provide either id or name. The destination
+
+        must be customer-visible in the authenticated organization. A
+
+        project-scoped credential can select any such destination for workloads
+
+        in its project.
+
+        '
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          description: OTLP destination ID
+          type: string
+        name:
+          description: OTLP destination name
+          type: string
+      type: object
+    BrowserTelemetryCdpControlConfig:
+      description: Settings for the cdp_command events the CDP proxy reports.
+      properties:
+        excluded_methods:
+          description: 'Methods to leave out of the cdp_command stream. Omit the list to keep the current one; send an empty list to report every supported method again. Exclusion is a telemetry setting only: an excluded command is still relayed to the browser unchanged, it simply produces no event. Use it to drop the highest-volume methods — Input.dispatchMouseEvent during a humanized cursor path, or Page.captureScreenshot under a screencast — without turning the whole category off. Excluded commands are counted in cdp_disconnect.telemetry_excluded.'
+          items:
+            $ref: '#/components/schemas/BrowserCdpCommandMethod'
+          type: array
+      type: object
+    BrowserProxyMode:
+      description: 'Proxy egress mode. direct forces no proxy regardless of stealth. default uses the browser''s stealth-derived default: Kernel''s default stealth proxy when stealth=true, or direct egress when stealth=false.
+
+        default is primarily useful on browser update to restore the browser default after selected-proxy egress.
+
+        '
+      enum:
+      - direct
+      - default
+      type: string
+      x-enum-varnames:
+      - Direct
+      - Default
+    BrowserCurlResult:
+      additionalProperties: false
+      description: Structured response from the browser curl request.
+      properties:
+        body:
+          description: Response body (UTF-8 string or base64 depending on request).
+          type: string
+        duration_ms:
+          description: Total request duration in milliseconds.
+          type: integer
+        headers:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          description: Response headers (multi-value).
+          type: object
+        status:
+          description: HTTP status code from target.
+          type: integer
+      required:
+      - status
+      - headers
+      - body
+      - duration_ms
+      type: object
+    BrowserExtension:
+      description: 'Extension selection for the browser session. Provide either id or name of an extension uploaded to Kernel.
+
+        '
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          description: Extension ID to load for this browser session
+          type: string
+        name:
+          description: Extension name to load for this browser session (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
+          maxLength: 255
+          minLength: 1
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+      type: object
+    BrowserTelemetryRequestConfig:
+      description: Telemetry request configuration for a browser session.
+      properties:
+        browser:
+          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
+          description: Per-category capture flags. The operational categories (control, connection, system, captcha) are captured whenever telemetry is enabled; set one to enabled=false to opt out. The CDP categories (console, network, page, interaction), screenshot and platform are off by default; set enabled=true to opt in. On create, provided categories layer onto the default set. On update, provided categories merge onto the session's current config; when no telemetry is active this falls back to the default set (matching create). If browser is omitted or empty, the default set is used. A browser config that disables every category stops capture on update and starts no capture on create.
+        enabled:
+          description: Request shortcut for browser telemetry capture. True enables capture; with no browser category settings it captures the default set (control, connection, system, captcha), and any browser category settings are layered onto that default set. On update, enabled=true resolves the config fresh from the default set plus any provided categories, replacing the session's current selection rather than merging onto it; omit enabled to merge categories onto the current selection instead. False stops capture on update and starts no capture on create. enabled=false cannot be combined with browser category settings.
+          type: boolean
+        export:
+          $ref: '#/components/schemas/BrowserTelemetryExportRequestConfig'
+          description: Where to export this session's captured telemetry. Omit to capture without exporting.
+        storage:
+          $ref: '#/components/schemas/BrowserTelemetryStorageRequestConfig'
+          description: Whether to persist this session's captured telemetry to Kernel storage.
+      type: object
+    BrowserTelemetryCategoriesConfig:
+      description: 'Per-category telemetry capture settings layered onto the default set. The operational signals (control, connection, system, captcha) are on by default and are opt-out: set one to enabled=false to stop capturing it. The CDP categories (console, network, page, interaction), screenshot and platform are off by default and are opt-in: set enabled=true to capture them.'
+      properties:
+        captcha:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Captcha solver tasks and visible challenge outcomes. On by default.
+        connection:
+          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
+          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
         console:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
           description: Console output (log, warn, error) and uncaught exceptions. CDP category; off by default.
-        page:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
+        control:
+          $ref: '#/components/schemas/BrowserTelemetryControlConfig'
+          description: Agent-driven actions against the browser — computer-control calls, Playwright code execution, screenshots, clipboard access, and browser-control commands sent over the CDP proxy. On by default.
         interaction:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
           description: User interaction events including clicks, keydowns, and scroll-settled events. CDP category; off by default.
         network:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
           description: HTTP request and response metadata including URL, method, status code, and timing. Request post data is forwarded as-is from CDP. Text response bodies are truncated at 8 KB for structured types (JSON, XML, form data) and 4 KB for other text types. Binary responses (images, fonts, media) are excluded. CDP category; off by default.
-        control:
+        page:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Agent-driven actions against the browser, such as inbound calls to the in-VM API. On by default.
-        connection:
+          description: Page lifecycle events including navigation, DOMContentLoaded, load, layout shifts, and LCP. CDP category; off by default.
+        platform:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Client attach/detach lifecycle for the CDP proxy and live view. On by default.
-        system:
-          $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
+          description: In-VM API calls that manage the browser VM rather than drive the browser (recording, filesystem, process, telemetry and browser configuration). Mostly platform-induced; off by default and must be opted into.
         screenshot:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
           description: Periodic base64-encoded viewport screenshots. High volume; off by default and must be opted into.
-        captcha:
+        system:
           $ref: '#/components/schemas/BrowserTelemetryCategoryConfig'
-          description: Captcha solve attempt outcomes. On by default.
-    BrowserCurlRequest:
+          description: Browser VM health, such as out-of-memory kills and managed-service crashes. On by default.
       type: object
-      description: Request to make an HTTP request through the browser's network stack.
-      required:
-      - url
+    BrowserTelemetryOTLPExportConfig:
+      description: Active OTLP export state for a browser session.
       properties:
-        url:
+        destination:
+          description: ID of the OTLP destination the session is bound to. Omitted when the session is not exporting.
           type: string
-          description: Target URL (must be http or https).
-        method:
-          type: string
-          description: HTTP method.
-          enum:
-          - GET
-          - HEAD
-          - POST
-          - PUT
-          - PATCH
-          - DELETE
-          - OPTIONS
-          default: GET
-        headers:
-          type: object
-          description: Custom headers merged with browser defaults.
-          additionalProperties:
-            type: string
-        body:
-          type: string
-          description: Request body (for POST/PUT/PATCH).
-        timeout_ms:
-          type: integer
-          description: Request timeout in milliseconds.
-          minimum: 1000
-          maximum: 60000
-          default: 30000
-        response_encoding:
-          type: string
-          description: Encoding for the response body. Use base64 for binary content.
-          enum:
-          - utf8
-          - base64
-          default: utf8
-      additionalProperties: false
-    BrowserUpdateRequest:
-      type: object
-      description: Request body for updating a browser session.
-      properties:
-        name:
-          type: string
-          nullable: true
-          description: 'Human-readable name for the browser session. Omit to leave unchanged, set to an empty string to clear the name. When set, must be unique among active sessions within the project.
-
-            '
-          minLength: 1
-          maxLength: 255
-          pattern: ^[a-zA-Z0-9._-]{1,255}$
-          example: checkout-flow-1
-        tags:
-          $ref: '#/components/schemas/Tags'
-          nullable: true
-          description: 'User-defined key-value tags for the browser session. Omit to leave unchanged. Provide a map to replace the entire tag set (full replace, not a merge). Set to an empty object ({}) to clear all tags. Up to 50 pairs.
-
-            '
-        proxy_id:
-          type: string
-          nullable: true
-          description: ID of the proxy to use. Omit to leave unchanged, set to empty string to remove proxy.
-        disable_default_proxy:
-          type: boolean
-          description: If true, stealth browsers connect directly instead of using the default stealth proxy.
-        profile:
-          $ref: '#/components/schemas/BrowserProfile'
-          description: Profile to load into the browser session. Only allowed if the session does not already have a profile loaded.
-        viewport:
-          $ref: '#/components/schemas/BrowserViewportUpdate'
-          description: Viewport configuration to apply to the browser session.
-        telemetry:
-          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
-          nullable: true
-          description: 'Telemetry configuration. Omit, set to null, or set to an empty object ({}) to leave the existing configuration unchanged. Set enabled to true to enable capture using VM defaults. Set enabled to false to stop capture. Provide browser category settings for per-category updates. Explicitly disabling all four categories also stops capture.
-
-            '
-    BrowserCurlResult:
-      type: object
-      description: Structured response from the browser curl request.
-      required:
-      - status
-      - headers
-      - body
-      - duration_ms
-      properties:
-        status:
-          type: integer
-          description: HTTP status code from target.
-        headers:
-          type: object
-          description: Response headers (multi-value).
-          additionalProperties:
-            type: array
-            items:
-              type: string
-        body:
-          type: string
-          description: Response body (UTF-8 string or base64 depending on request).
-        duration_ms:
-          type: integer
-          description: Total request duration in milliseconds.
-      additionalProperties: false
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    BrowserViewportUpdate:
-      description: Viewport configuration for updating a browser session. Extends BrowserViewport with update-only options.
-      allOf:
-      - $ref: '#/components/schemas/BrowserViewport'
-      - type: object
-        properties:
-          force:
-            type: boolean
-            default: false
-            description: 'If true, allow the viewport change even when a live view or recording/replay is active.
-
-              Active recordings will be gracefully stopped and restarted at the new resolution as
-
-              separate segments. If false (default), the resize is refused when a live view or recording is active.
-
-              '
-    BrowserRequest:
-      type: object
-      description: 'Parameters for creating a browser session.
-
-        '
-      properties:
-        invocation_id:
-          type: string
-          description: action invocation ID
-          example: rr33xuugxj9h0bkf1rdt2bet
-        name:
-          type: string
-          description: 'Optional human-readable name for the browser session, used to find it later in the dashboard. Must be unique among active sessions within the project. Can be changed later via PATCH /browsers/{id_or_name}.
-
-            '
-          minLength: 1
-          maxLength: 255
-          pattern: ^[a-zA-Z0-9._-]{1,255}$
-          example: checkout-flow-1
-        tags:
-          $ref: '#/components/schemas/Tags'
-          description: 'Optional user-defined key-value tags for the browser session, used to find and group sessions later. Can be changed later via PATCH /browsers/{id_or_name}. Up to 50 pairs.
-
-            '
-        stealth:
-          type: boolean
-          description: If true, launches the browser in stealth mode to reduce detection by anti-bot mechanisms.
-          example: true
-        headless:
-          type: boolean
-          description: If true, launches the browser using a headless image (no VNC/GUI). Defaults to false.
-          example: false
-        gpu:
-          type: boolean
-          description: If true, enables GPU acceleration for the browser session. Requires Start-Up or Enterprise plan and headless=false.
-          example: false
-        timeout_seconds:
-          type: integer
-          description: The number of seconds of inactivity before the browser session is terminated. Activity includes CDP connections and live view connections. Defaults to 60 seconds. Minimum allowed is 10 seconds. Maximum allowed is 259200 (72 hours). We check for inactivity every 5 seconds, so the actual timeout behavior you will see is +/- 5 seconds around the specified value.
-          minimum: 10
-          maximum: 259200
-        profile:
-          $ref: '#/components/schemas/BrowserProfile'
-        extensions:
-          type: array
-          description: List of browser extensions to load into the session. Provide each by id or name.
-          maxItems: 20
-          items:
-            $ref: '#/components/schemas/BrowserExtension'
-        proxy_id:
-          type: string
-          description: Optional proxy to associate to the browser session. Must reference a proxy in the same project as the browser session.
-        viewport:
-          $ref: '#/components/schemas/BrowserViewport'
-        kiosk_mode:
-          type: boolean
-          description: If true, launches the browser in kiosk mode to hide address bar and tabs in live view.
-          example: true
-        start_url:
-          type: string
-          description: Optional URL to open when the browser session is created. Navigation is best-effort, so navigation failures do not prevent the session from being created.
-          example: https://example.com
-        chrome_policy:
-          type: object
-          additionalProperties: true
-          description: 'Custom Chrome enterprise policy overrides applied to this browser session. Keys are Chrome enterprise policy names; values must match their expected types. Blocked: kernel-managed policies (extensions, proxy, CDP/automation). See https://chromeenterprise.google/policies/
-
-            '
-        telemetry:
-          $ref: '#/components/schemas/BrowserTelemetryRequestConfig'
-          nullable: true
-          description: 'Telemetry configuration for the browser session. Set enabled to true to start capture using VM defaults, or provide browser category settings. If omitted, null, set to an empty object ({}), set to enabled: false without browser category settings, or all four categories are explicitly disabled, capture is not started.
-
-            '
-      required: []
-    BrowserCurlTransportError:
-      type: object
-      description: Transport-level error when the request could not complete.
-      required:
-      - message
-      properties:
-        message:
-          type: string
-          description: Human-readable error description.
-        net_error:
-          type: integer
-          description: Chromium net error code.
-        net_error_name:
-          type: string
-          description: Chromium net error name.
-      additionalProperties: false
-    BrowserTelemetryCategoryConfig:
-      type: object
-      description: Per-category telemetry configuration.
-      properties:
         enabled:
+          description: Whether the session is exporting captured telemetry over OTLP.
           type: boolean
-          description: Whether this category is captured. Operational categories (control, connection, system, captcha) default to true; set false to opt out. CDP categories (console, network, page, interaction) and screenshot default to false; set true to opt in.
-    BrowserTelemetryConfig:
       type: object
+    BrowserUsage:
+      description: Session usage metrics.
+      properties:
+        uptime_ms:
+          description: Time in milliseconds the session was actively running.
+          type: integer
+      required:
+      - uptime_ms
+      type: object
+    BrowserTelemetryConfig:
       description: Active telemetry configuration for a browser session.
       properties:
         browser:
           $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
           description: Per-category enable/disable flags.
-    Profile:
+        export:
+          $ref: '#/components/schemas/BrowserTelemetryExportConfig'
+          description: Where the session's captured telemetry is being exported. Omitted when the export state is unknown.
+        storage:
+          $ref: '#/components/schemas/BrowserTelemetryStorageConfig'
+          description: Whether the session's captured telemetry is persisted to Kernel storage. Omitted for browsers created before this setting existed, which persist it.
       type: object
-      description: Browser profile metadata.
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the profile
-        name:
-          type: string
-          nullable: true
-          description: Optional, easier-to-reference name for the profile
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was created
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last updated
-        last_used_at:
-          type: string
-          format: date-time
-          description: Timestamp when the profile was last used
-      required:
-      - id
-      - created_at
-    BrowserTelemetryRequestConfig:
-      type: object
-      description: Telemetry request configuration for a browser session.
-      properties:
-        enabled:
-          type: boolean
-          description: Request shortcut for browser telemetry capture. True enables capture; with no browser category settings it captures the default set (control, connection, system, captcha), and any browser category settings are layered onto that default set. On update, enabled=true resolves the config fresh from the default set plus any provided categories, replacing the session's current selection rather than merging onto it; omit enabled to merge categories onto the current selection instead. False stops capture on update and starts no capture on create. enabled=false cannot be combined with browser category settings.
-        browser:
-          $ref: '#/components/schemas/BrowserTelemetryCategoriesConfig'
-          description: Per-category capture flags. The operational categories (control, connection, system, captcha) are captured whenever telemetry is enabled; set one to enabled=false to opt out. The CDP categories (console, network, page, interaction) and screenshot are off by default; set enabled=true to opt in. On create, provided categories layer onto the default set. On update, provided categories merge onto the session's current config; when no telemetry is active this falls back to the default set (matching create). If browser is omitted or empty, the default set is used. A browser config that disables every category stops capture on update and starts no capture on create.
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    BrowserProfile:
-      type: object
-      description: 'Profile selection for the browser session. Provide either id or name. If specified, the
-
-        matching profile will be loaded into the browser session. Profiles must be created beforehand.
-
-        '
-      properties:
-        id:
-          type: string
-          description: Profile ID to load for this browser session
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-          pattern: ^[a-zA-Z0-9._-]{1,255}$
-          description: Profile name to load for this browser session (instead of id). Must be 1-255 characters, using letters, numbers, dots, underscores, or hyphens.
-        save_changes:
-          type: boolean
-          description: If true, save changes made during the session back to the profile when the session ends.
-          default: false
-      oneOf:
-      - required:
-        - id
-      - required:
-        - name
-    BrowserPoolRef:
-      type: object
-      description: Browser pool this session was acquired from, if any.
-      properties:
-        id:
-          type: string
-          description: Browser pool ID
-        name:
-          type: string
-          description: Browser pool name, if set
-      required:
-      - id
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+    Conflict:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Conflict – resource already exists
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+    BrowserProxyError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InstanceProxyError'
+      description: Error returned by the browser or its proxy
+    CapacityExhausted:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Capacity exhausted, unable to fulfill request at this time
   securitySchemes:
     bearerAuth:
-      type: http
       scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

@@ -1,65 +1,73 @@
 openapi: 3.2.0
 info:
-  title: Kernel Organization API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Organization API
   version: 0.1.0
 servers:
-- url: https://api.onkernel.com
-  description: API Server
+- description: API Server
+  url: https://api.onkernel.com
 security:
 - bearerAuth: []
 tags:
-- name: Organization
-  description: Read and manage organization-level limits.
+- description: Read and manage organization-level limits.
+  name: Organization
 paths:
-  /org/limits:
+  /org/entitlements:
     get:
-      operationId: getOrgLimits
-      tags:
-      - Organization
-      summary: Get organization limits
-      description: Get the organization's concurrency limit — the maximum browsers running at once across on-demand sessions and browser pool reservations — and the default per-project concurrency cap applied to projects without an explicit override.
-      security:
-      - bearerAuth: []
+      description: Get the authenticated organization's effective feature access and constraints after applying its plan, active trial treatment, plan status, and organization-specific overrides. Null constraint values mean unlimited.
+      operationId: getOrgEntitlements
       responses:
         '200':
-          description: Organization limits
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrgLimits'
+                $ref: '#/components/schemas/OrgEntitlements'
+          description: Effective organization entitlements
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst orgLimits = await client.organization.limits.retrieve();\n\nconsole.log(orgLimits.default_project_max_concurrent_sessions);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\norg_limits = client.organization.limits.retrieve()\nprint(org_limits.default_project_max_concurrent_sessions)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\torgLimits, err := client.Organization.Limits.Get(context.TODO())\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", orgLimits.DefaultProjectMaxConcurrentSessions)\n}\n"
-    patch:
-      operationId: patchOrgLimits
-      tags:
-      - Organization
-      summary: Update organization limits
-      description: Set the default per-project concurrency cap applied to projects without an explicit override. Set the value to 0 to remove the default; omit to leave it unchanged. The default cannot exceed the organization's concurrency limit.
       security:
       - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateOrgLimitsRequest'
+      summary: Get organization entitlements
+      tags:
+      - Organization
+  /org/limits:
+    get:
+      description: Get the organization's effective limits and current concurrency, managed auth, and vault usage.
+      operationId: getOrgLimits
       responses:
         '200':
-          description: Organization limits updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrgLimits'
+          description: Organization limits
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get organization limits
+      tags:
+      - Organization
+    patch:
+      description: Set the default per-project concurrency cap applied to projects without an explicit override. Set the value to 0 to remove the default; omit to leave it unchanged. The default cannot exceed the organization's concurrency limit.
+      operationId: patchOrgLimits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrgLimitsRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgLimits'
+          description: Organization limits updated
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -68,92 +76,356 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst orgLimits = await client.organization.limits.update();\n\nconsole.log(orgLimits.default_project_max_concurrent_sessions);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\norg_limits = client.organization.limits.update()\nprint(org_limits.default_project_max_concurrent_sessions)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\torgLimits, err := client.Organization.Limits.Update(context.TODO(), kernel.OrganizationLimitUpdateParams{\n\t\tUpdateOrgLimitsRequest: kernel.UpdateOrgLimitsRequestParam{},\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", orgLimits.DefaultProjectMaxConcurrentSessions)\n}\n"
+      security:
+      - bearerAuth: []
+      summary: Update organization limits
+      tags:
+      - Organization
 components:
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Forbidden – insufficient permissions or plan
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    UpdateOrgLimitsRequest:
+    OrgEntitlementFeatures:
+      additionalProperties: false
+      properties:
+        browser_extensions:
+          $ref: '#/components/schemas/OrgBrowserExtensionEntitlement'
+        browser_pools:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        browser_replays:
+          $ref: '#/components/schemas/OrgBrowserReplayEntitlement'
+        credential_providers:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        credentials:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        custom_proxies:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        file_io:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        gpu:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        managed_auth:
+          $ref: '#/components/schemas/OrgManagedAuthEntitlement'
+        managed_proxies:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        profiles:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        proxy_bypass_hosts:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+        search:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+          description: Whether the Search API is enabled for the organization by its rollout feature flag.
+        vaults:
+          $ref: '#/components/schemas/OrgEntitlementFeature'
+          description: Whether the organization can access vaults, using the same access check as vault API routes.
+      required:
+      - profiles
+      - file_io
+      - browser_replays
+      - browser_extensions
+      - browser_pools
+      - managed_auth
+      - credentials
+      - credential_providers
+      - managed_proxies
+      - custom_proxies
+      - proxy_bypass_hosts
+      - gpu
+      - vaults
+      - search
       type: object
+    OrgEntitlementLimits:
+      additionalProperties: false
+      properties:
+        default_max_concurrent_invocations_per_app:
+          description: Effective org-level default concurrent invocation ceiling for apps without an app-specific override. App-specific overrides are not represented here.
+          example: 20
+          minimum: 1
+          type: integer
+        max_concurrent_browsers:
+          description: Effective organization-wide ceiling shared by on-demand browsers and browser pool reservations.
+          example: 150
+          minimum: 1
+          type: integer
+        max_concurrent_invocations:
+          description: Effective organization-wide concurrent app invocation ceiling.
+          example: 50
+          minimum: 1
+          type: integer
+        max_vaults:
+          description: Maximum non-deleted vaults allowed org-wide across all projects. Null means unlimited. The vaults feature flag still controls access.
+          example: 3
+          nullable: true
+          type: integer
+      required:
+      - max_vaults
+      - max_concurrent_browsers
+      - max_concurrent_invocations
+      - default_max_concurrent_invocations_per_app
+      type: object
+    OrgLimits:
+      properties:
+        auth_connections_used:
+          description: The organization's current non-deleted managed auth connections, counted org-wide across every project. Compare against max_auth_connections to show remaining capacity before a create is rejected with 403 insufficient_plan.
+          example: 2
+          type: integer
+        concurrent_sessions_available:
+          description: Number of concurrent browser slots currently available to the organization. This is the effective concurrency limit minus active on-demand sessions and browser pool reservations, floored at zero. Null when usage cannot be read.
+          example: 488
+          nullable: true
+          type: integer
+        concurrent_sessions_used:
+          description: Current organization-wide concurrent browser usage, including active on-demand sessions and browser pool reservations. Null when usage cannot be read.
+          example: 12
+          nullable: true
+          type: integer
+        default_project_max_concurrent_sessions:
+          description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
+          example: 10
+          nullable: true
+          type: integer
+        max_auth_connections:
+          description: Maximum managed auth connections the organization's plan allows. Null means unlimited. Counted org-wide, so it cannot be multiplied across projects.
+          example: 3
+          nullable: true
+          type: integer
+        max_concurrent_sessions:
+          description: The organization's effective concurrency limit — the maximum browsers running at once, covering both on-demand sessions and browser pool reservations — from its plan or an override. Read-only and shared across all projects in the org; a per-project default cannot exceed it.
+          example: 500
+          type: integer
+        max_vaults:
+          description: Maximum non-deleted vaults allowed org-wide across all projects. Null means unlimited.
+          example: 3
+          nullable: true
+          type: integer
+        min_health_check_interval_seconds:
+          description: Smallest health_check_interval the organization's plan accepts on a managed auth connection. Requests below this are rejected with 400. Existing connections stored below the floor are grandfathered until edited.
+          example: 21600
+          type: integer
+        vaults_used:
+          description: Current non-deleted vault count across all projects in the organization.
+          example: 2
+          type: integer
+      required:
+      - max_auth_connections
+      - auth_connections_used
+      - max_vaults
+      - vaults_used
+      - min_health_check_interval_seconds
+      - concurrent_sessions_used
+      - concurrent_sessions_available
+      type: object
+    UpdateOrgLimitsRequest:
       properties:
         default_project_max_concurrent_sessions:
-          type: integer
-          nullable: true
           description: Default maximum concurrent browsers for projects without an explicit override. Set to 0 to remove the default; omit to leave unchanged. Cannot exceed the organization's concurrency limit.
-    ErrorDetail:
+          nullable: true
+          type: integer
       type: object
+    OrgEntitlements:
+      additionalProperties: false
+      description: Effective feature access and constraints for the authenticated organization. Values already include trial treatment, plan status, and organization-specific overrides; consumers should use these resolved values instead of comparing plan IDs.
+      properties:
+        features:
+          $ref: '#/components/schemas/OrgEntitlementFeatures'
+        limits:
+          $ref: '#/components/schemas/OrgEntitlementLimits'
+        plan:
+          $ref: '#/components/schemas/OrgEntitlementPlan'
+      required:
+      - plan
+      - features
+      - limits
+      type: object
+    OrgManagedAuthEntitlement:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: Whether managed auth is available.
+          example: true
+          type: boolean
+        health_check_interval_default_seconds:
+          description: Effective interval in seconds used when a connection is created without an explicit health-check interval.
+          example: 3600
+          minimum: 1
+          type: integer
+        health_check_interval_max_seconds:
+          description: Maximum accepted managed auth health-check interval in seconds.
+          example: 86400
+          minimum: 1
+          type: integer
+        health_check_interval_min_seconds:
+          description: Minimum accepted managed auth health-check interval in seconds.
+          example: 1200
+          minimum: 1
+          type: integer
+        max_connections:
+          description: Maximum active managed auth connections in the organization. Null means unlimited.
+          example: null
+          minimum: 1
+          nullable: true
+          type: integer
+      required:
+      - enabled
+      - max_connections
+      - health_check_interval_min_seconds
+      - health_check_interval_default_seconds
+      - health_check_interval_max_seconds
+      type: object
+    OrgBrowserExtensionEntitlement:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: Whether browser extensions are available.
+          example: true
+          type: boolean
+        max_stored_per_org:
+          description: Maximum active custom extensions the organization may store. Null means unlimited. Loading stored extensions into a browser is not plan-limited.
+          example: null
+          minimum: 1
+          nullable: true
+          type: integer
+      required:
+      - enabled
+      - max_stored_per_org
+      type: object
+    ErrorDetail:
       properties:
         code:
-          type: string
           description: Lower-level error code providing more specific detail
           example: invalid_input
-        message:
           type: string
+        message:
           description: Further detail about the error
           example: Provided version string is not semver compliant
-    Error:
+          type: string
       type: object
-      required:
-      - code
-      - message
+    Error:
       properties:
         code:
-          type: string
           description: Application-specific error code (machine-readable)
           example: bad_request
-        message:
           type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
         details:
-          type: array
           description: Additional error details (for multiple errors)
           items:
             $ref: '#/components/schemas/ErrorDetail'
+          type: array
         inner_error:
           $ref: '#/components/schemas/ErrorDetail'
-    OrgLimits:
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
       type: object
+    OrgEntitlementPlan:
+      additionalProperties: false
       properties:
-        max_concurrent_sessions:
-          type: integer
-          description: The organization's effective concurrency limit — the maximum browsers running at once, covering both on-demand sessions and browser pool reservations — from its plan or an override. Read-only and shared across all projects in the org; a per-project default cannot exceed it.
-          example: 100
-        default_project_max_concurrent_sessions:
-          type: integer
+        effective_id:
+          description: The plan used to resolve plan-based access. Active trials resolve to START_UP regardless of the contractual plan.
+          enum:
+          - FREE
+          - HOBBYIST
+          - START_UP
+          - ENTERPRISE
+          example: START_UP
+          type: string
+        id:
+          description: The organization's contractual plan identifier. Use the resolved feature and limit values, not this field, for access decisions.
+          enum:
+          - FREE
+          - HOBBYIST
+          - START_UP
+          - ENTERPRISE
+          example: START_UP
+          type: string
+        is_trialing:
+          description: Whether the organization is currently within its trial period.
+          example: false
+          type: boolean
+        status:
+          description: Current billing status of the contractual plan, or null when no billing status is recorded. Status-sensitive feature values already account for it.
+          enum:
+          - NEEDS_PAYMENT_METHOD
+          - ACTIVE
+          - CANCELED
+          - UNPAID
+          example: ACTIVE
           nullable: true
-          description: Default maximum concurrent browsers applied to every project that has no explicit per-project override. Null means no org-level default, so such projects are uncapped (only the org-wide limit applies). Applies to existing and newly created projects.
-          example: 10
+          type: string
+        trial_ends_at:
+          description: Configured trial end timestamp, or null when the organization has no trial. A past timestamp may be returned when is_trialing is false.
+          example: null
+          format: date-time
+          nullable: true
+          type: string
+      required:
+      - id
+      - effective_id
+      - status
+      - is_trialing
+      - trial_ends_at
+      type: object
+    OrgBrowserReplayEntitlement:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: Whether browser replay recording is available.
+          example: true
+          type: boolean
+        retention_days:
+          description: Number of days browser replays are retained, matching the replay reaper policy.
+          example: 30
+          minimum: 0
+          type: integer
+      required:
+      - enabled
+      - retention_days
+      type: object
+    OrgEntitlementFeature:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: Whether the organization is entitled to use this feature.
+          example: true
+          type: boolean
+      required:
+      - enabled
+      type: object
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
   securitySchemes:
     bearerAuth:
-      type: http
       scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

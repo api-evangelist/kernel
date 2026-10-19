@@ -1,0 +1,1054 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Config Registry API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- description: Resolve browser and proxy recommendations for bot-protected sites.
+  name: Config Registry
+paths:
+  /config-registry:
+    get:
+      description: Lists unique exact targets previously analyzed by the selected project with the recommendation produced by each target's latest analysis.
+      operationId: getConfigRegistry
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: Case-insensitive substring search over normalized targets, including domain, subdomain, and path.
+        in: query
+        name: search
+        required: false
+        schema:
+          maxLength: 2048
+          type: string
+      - in: query
+        name: sort_by
+        required: false
+        schema:
+          default: last_requested_at
+          enum:
+          - target
+          - analysis_status
+          - recommended_config
+          - last_requested_at
+          - success_rate
+          type: string
+          x-enum-varnames:
+          - ConfigRegistrySortByTarget
+          - ConfigRegistrySortByAnalysisStatus
+          - ConfigRegistrySortByRecommendedConfig
+          - ConfigRegistrySortByLastRequestedAt
+          - ConfigRegistrySortBySuccessRate
+      - in: query
+        name: sort_order
+        required: false
+        schema:
+          default: desc
+          enum:
+          - asc
+          - desc
+          type: string
+          x-enum-varnames:
+          - ConfigRegistrySortOrderAsc
+          - ConfigRegistrySortOrderDesc
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ConfigRegistryRecommendationSummary'
+                type: array
+          description: Project-scoped recommended configurations.
+          headers:
+            X-Has-More:
+              description: Whether more results are available.
+              schema:
+                type: boolean
+            X-Limit:
+              description: The limit used for pagination.
+              schema:
+                type: integer
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+            X-Offset:
+              description: The offset used for pagination.
+              schema:
+                type: integer
+            X-Total-Count:
+              description: Total unique exact targets matching the current project and search.
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: List configs
+      tags:
+      - Config Registry
+      x-cli-skip: true
+  /config-registry/analyses:
+    get:
+      description: Lists analyses for the selected project, newest first.
+      operationId: getConfigRegistryAnalyses
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: Case-insensitive substring search over requested URLs.
+        in: query
+        name: search
+        required: false
+        schema:
+          maxLength: 2048
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ConfigRegistryAnalysisSummary'
+                type: array
+          description: Project-scoped analysis history.
+          headers:
+            X-Has-More:
+              description: Whether more results are available.
+              schema:
+                type: boolean
+            X-Limit:
+              description: The limit used for pagination.
+              schema:
+                type: integer
+            X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
+              schema:
+                type: integer
+            X-Offset:
+              description: The offset used for pagination.
+              schema:
+                type: integer
+            X-Total-Count:
+              description: Total analyses matching the current project and search.
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: List config analyses
+      tags:
+      - Config Registry
+      x-cli-skip: true
+  /config-registry/analyses/{id}:
+    get:
+      description: Returns a project-scoped historical analysis and the recommendation outcome concluded by that run. Later knowledge does not change this response.
+      operationId: getConfigRegistryAnalysesById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryResponse'
+          description: Analysis state and the recommendation outcome concluded by that historical run.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: Get a config analysis
+      tags:
+      - Config Registry
+      x-cli-skip: true
+  /config-registry/analyses/{id}/cancel:
+    post:
+      description: Requests cancellation of a running project-scoped analysis. Cancellation is asynchronous; poll the analysis until its status becomes canceled. Repeating the request after the analysis reaches a terminal state returns the existing outcome.
+      operationId: postConfigRegistryAnalysesByIdCancel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryResponse'
+          description: The analysis had already reached a terminal state.
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryResponse'
+          description: Cancellation was requested. Poll the analysis to observe the canceled outcome.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Cancellation could not be requested.
+      summary: Cancel a config analysis
+      tags:
+      - Config Registry
+      x-cli-skip: true
+  /config-registry/lookup:
+    post:
+      description: Returns current global knowledge without resolving DNS, creating an analysis, or updating config registry data.
+      operationId: postConfigRegistryLookup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigRegistryLookupRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryLookupResponse'
+          description: Current recommendation, or a null recommendation when no eligible knowledge exists.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: Look up a config
+      tags:
+      - Config Registry
+      x-cli-skip: true
+  /config-registry/resolve:
+    post:
+      description: Explicitly starts or retries a project-scoped background analysis while preserving current global knowledge when available. Use `/config-registry/lookup` for side-effect-free reads.
+      operationId: postConfigRegistryResolve
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigRegistryResolveRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryResponse'
+          description: Current recommendation returned. Analysis is null if DNS validation or workflow submission prevented the requested refresh.
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryResponse'
+          description: Analysis is running without a current recommendation.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRegistryAnalysisInProgressError'
+          description: An analysis for this target is already running with a different workload intent. Poll the returned analysis ID and retry once it reaches a terminal status.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Analysis could not be submitted.
+      summary: Resolve a config
+      tags:
+      - Config Registry
+      x-cli-skip: true
+components:
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+  schemas:
+    ConfigRegistryLookupResponse:
+      properties:
+        guidance:
+          description: Short advisory markdown to facilitate navigating this target. Returned even when no configuration reached the target, since knowing what prevented success is useful without a configuration. Not verified against this target. Null when nothing applicable was observed or no notes exist.
+          nullable: true
+          type: string
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/ConfigRegistryRecommendationResult'
+          description: Recommendation or structured no-recommendation result from current knowledge. Only the proxy_restricted code is reported here. Null for every other outcome, including a target analyzed without a working configuration.
+          nullable: true
+        target:
+          $ref: '#/components/schemas/ConfigRegistryTarget'
+        working_configurations:
+          description: Working configurations for the target, ordered with the recommended configuration first.
+          items:
+            $ref: '#/components/schemas/ConfigRegistryRecommendation'
+          type: array
+      required:
+      - target
+      - recommendation
+      - working_configurations
+      type: object
+    ConfigRegistryRecommendation:
+      properties:
+        browser:
+          $ref: '#/components/schemas/ConfigRegistryBrowser'
+        evidence:
+          $ref: '#/components/schemas/ConfigRegistryEvidence'
+        match_scope:
+          description: Specificity of knowledge matched for this recommendation. Exact matches use knowledge for the requested target; host and domain matches use broader fallback knowledge.
+          enum:
+          - exact
+          - host
+          - domain
+          type: string
+          x-enum-varnames:
+          - ConfigRegistryRecommendationMatchScopeExact
+          - ConfigRegistryRecommendationMatchScopeHost
+          - ConfigRegistryRecommendationMatchScopeDomain
+        matched_target:
+          description: Target value that supplied the recommendation.
+          type: string
+        proxy:
+          $ref: '#/components/schemas/ConfigRegistryProxy'
+        type:
+          const: recommendation
+          type: string
+      required:
+      - type
+      - browser
+      - proxy
+      - match_scope
+      - matched_target
+      - evidence
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    ProxyCreateRequest:
+      description: Configuration for routing traffic through a proxy.
+      discriminator:
+        mapping:
+          custom: '#/components/schemas/CustomProxyConfig'
+          datacenter: '#/components/schemas/DatacenterProxyConfig'
+          isp: '#/components/schemas/IspProxyConfig'
+          mobile: '#/components/schemas/MobileProxyConfig'
+          residential: '#/components/schemas/ResidentialProxyConfig'
+        propertyName: type
+      properties:
+        bypass_hosts:
+          description: Hostnames that should bypass the parent proxy and connect directly.
+          items:
+            type: string
+          type: array
+        config:
+          description: Configuration specific to the selected proxy `type`.
+          oneOf:
+          - $ref: '#/components/schemas/DatacenterProxyConfig'
+          - $ref: '#/components/schemas/IspProxyConfig'
+          - $ref: '#/components/schemas/ResidentialProxyConfig'
+          - $ref: '#/components/schemas/MobileProxyConfig'
+          - $ref: '#/components/schemas/CreateCustomProxyConfig'
+          x-stainless-override-schema:
+            oneOf:
+            - $ref: '#/components/schemas/IspProxyConfig'
+            - $ref: '#/components/schemas/ResidentialProxyConfig'
+            - $ref: '#/components/schemas/MobileProxyConfig'
+            - $ref: '#/components/schemas/CreateCustomProxyConfig'
+        name:
+          description: Readable name of the proxy.
+          type: string
+        protocol:
+          default: https
+          description: Protocol to use for the proxy connection.
+          enum:
+          - http
+          - https
+          type: string
+        type:
+          description: 'Proxy type to use. In terms of quality for avoiding bot-detection, from best to worst: `mobile` > `residential` > `isp`. `datacenter` is deprecated; use `isp` instead. Datacenter proxy creation remains supported for backward compatibility.
+
+            '
+          enum:
+          - datacenter
+          - isp
+          - residential
+          - mobile
+          - custom
+          type: string
+          x-stainless-override-schema:
+            enum:
+            - isp
+            - residential
+            - mobile
+            - custom
+            type: string
+      required:
+      - type
+      type: object
+    ConfigRegistryEvidence:
+      properties:
+        accessed:
+          minimum: 0
+          type: integer
+        blocked:
+          minimum: 0
+          type: integer
+        inconclusive:
+          minimum: 0
+          type: integer
+        last_observed_at:
+          description: Most recent contributing observation. Recommendations remain eligible regardless of age and can be returned while a new analysis refreshes them.
+          format: date-time
+          type: string
+        last_supported_at:
+          description: Most recent contributing run whose evidence supported recommending this configuration. Omitted when no individual run independently met the recommendation threshold.
+          format: date-time
+          nullable: true
+          type: string
+        run_count:
+          minimum: 0
+          type: integer
+        sample_size:
+          description: Number of judged trials.
+          minimum: 0
+          type: integer
+        success_rate:
+          description: Accessed trials divided by judged trials. Inconclusive trials are excluded.
+          maximum: 1
+          minimum: 0
+          type: number
+      required:
+      - success_rate
+      - sample_size
+      - accessed
+      - blocked
+      - inconclusive
+      - run_count
+      - last_observed_at
+      type: object
+    ConfigRegistryResponse:
+      properties:
+        analysis:
+          allOf:
+          - $ref: '#/components/schemas/ConfigRegistryAnalysis'
+          description: Pollable analysis after workflow submission is acknowledged. Null when no refresh was submitted.
+          nullable: true
+        guidance:
+          description: Short advisory markdown to facilitate navigating this target. Returned even when no configuration reached the target, since knowing what prevented success is useful without a configuration. Not verified against this target. Null when nothing applicable was observed or no notes exist.
+          nullable: true
+          type: string
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/ConfigRegistryRecommendationResult'
+          description: Recommendation or structured no-recommendation result for a completed analysis. Null before the analysis produces an outcome.
+          nullable: true
+        target:
+          $ref: '#/components/schemas/ConfigRegistryTarget'
+        working_configurations:
+          description: Working configurations for the target, ordered with the recommended configuration first.
+          items:
+            $ref: '#/components/schemas/ConfigRegistryRecommendation'
+          type: array
+        workload_outcome:
+          description: How far the workload pass got, when an intent was supplied and a pass ran. A run outcome rather than advice, so it is reported whether or not any guidance could be assembled. Null when no intent was supplied or no pass ran.
+          enum:
+          - completed
+          - turn_limit
+          - auth_required
+          - payment_required
+          - blocked
+          - error
+          nullable: true
+          type: string
+      required:
+      - target
+      - analysis
+      - recommendation
+      - working_configurations
+      type: object
+    ConfigRegistryRecommendationResult:
+      description: A recommendation or a structured no-recommendation result.
+      discriminator:
+        mapping:
+          no_recommendation: '#/components/schemas/ConfigRegistryNoRecommendation'
+          recommendation: '#/components/schemas/ConfigRegistryRecommendation'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/ConfigRegistryRecommendation'
+      - $ref: '#/components/schemas/ConfigRegistryNoRecommendation'
+    BrowserViewport:
+      description: 'Initial browser window size in pixels with optional refresh rate.
+
+        If omitted, image defaults apply (1920x1080@25).
+
+        For GPU images, the default is 1920x1080@60.
+
+        Arbitrary viewport dimensions and refresh rates are accepted.
+
+        Known-good presets include:
+
+        2560x1440@10, 1920x1080@25, 1920x1200@25, 1440x900@25, 1280x800@60, 1024x768@60, 1200x800@60, 768x1024@60, 390x844@60.
+
+        For GPU images, recommended presets use one of these resolutions with refresh rates 60, 30, 25, or 10:
+
+        800x600, 960x720, 1024x576, 1024x768, 1152x648, 1200x800, 1280x720, 1368x768, 1440x900, 1600x900, 1920x1080, 1920x1200, 390x844, 360x250, 768x1024, 800x1600.
+
+        Viewports outside this list may exhibit unstable live view or recording behavior.
+
+        If refresh_rate is not provided, it will be automatically determined based on the resolution
+
+        (higher resolutions use lower refresh rates to keep bandwidth reasonable).
+
+        '
+      properties:
+        height:
+          description: Browser window height in pixels. Any positive integer is accepted.
+          example: 800
+          minimum: 1
+          type: integer
+        refresh_rate:
+          description: Display refresh rate in Hz. Any positive integer is accepted; if omitted, automatically determined from width and height.
+          example: 60
+          minimum: 1
+          type: integer
+        width:
+          description: Browser window width in pixels. Any positive integer is accepted.
+          example: 1280
+          minimum: 1
+          type: integer
+      required:
+      - width
+      - height
+      type: object
+    ConfigRegistryAnalysis:
+      properties:
+        created_at:
+          description: Time the analysis was created.
+          format: date-time
+          type: string
+        expires_at:
+          description: Deadline after which a still-running analysis becomes expired.
+          format: date-time
+          type: string
+        failure:
+          allOf:
+          - $ref: '#/components/schemas/Error'
+          description: Present for failed, canceled, or expired analyses. Messages contain safe retry guidance rather than internal workflow errors.
+          nullable: true
+        finished_at:
+          description: Time the analysis reached a terminal status. Null while it is running.
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          description: Discovery run ID used to poll analysis status.
+          type: string
+        intent:
+          description: The workload description supplied for this analysis. Null when the analysis only tested connectivity.
+          nullable: true
+          type: string
+        status:
+          $ref: '#/components/schemas/ConfigRegistryAnalysisStatus'
+      required:
+      - id
+      - status
+      - failure
+      - created_at
+      - expires_at
+      - finished_at
+      type: object
+    ConfigRegistryManagedProxy:
+      additionalProperties: false
+      description: 'Managed proxy recipe. `create` is a non-idempotent `POST /proxies` payload:
+
+        create the resource once, retain its ID, and reuse that ID as the browser''s
+
+        `proxy.id`. Do not submit this recipe before every browser session.
+
+        '
+      properties:
+        create:
+          $ref: '#/components/schemas/ProxyCreateRequest'
+        mode:
+          enum:
+          - managed
+          type: string
+          x-enum-varnames:
+          - ConfigRegistryManagedProxyModeManaged
+      required:
+      - mode
+      - create
+      type: object
+    ConfigRegistryNoRecommendation:
+      additionalProperties: false
+      properties:
+        code:
+          description: 'Machine-readable reason Kernel cannot currently provide a config recommendation.
+
+            '
+          enum:
+          - proxy_restricted
+          - target_not_evaluable
+          - no_working_configuration
+          - inconclusive
+          type: string
+          x-enum-varnames:
+          - ConfigRegistryNoRecommendationCodeProxyRestricted
+          - ConfigRegistryNoRecommendationCodeTargetNotEvaluable
+          - ConfigRegistryNoRecommendationCodeNoWorkingConfiguration
+          - ConfigRegistryNoRecommendationCodeInconclusive
+        message:
+          description: Human-readable explanation suitable for display.
+          type: string
+        type:
+          const: no_recommendation
+          type: string
+      required:
+      - type
+      - code
+      - message
+      type: object
+    ResidentialProxyConfig:
+      description: Configuration for residential proxies.
+      properties:
+        asn:
+          description: Autonomous system number. See https://bgp.potaroo.net/cidr/autnums.html
+          example: AS15169
+          type: string
+        city:
+          description: City name (no spaces, e.g. `sanfrancisco`). If provided, `country` must also be provided.
+          example: sanfrancisco
+          type: string
+        country:
+          description: ISO 3166 country code. If omitted, the proxy uses the global pool without country targeting.
+          example: US
+          type: string
+        os:
+          deprecated: true
+          description: Operating system of the residential device.
+          enum:
+          - windows
+          - macos
+          - android
+          type: string
+          x-deprecated-reason: os selection not supported by proxy provider
+        state:
+          description: Two-letter state code.
+          example: CA
+          type: string
+        zip:
+          description: US ZIP code.
+          example: '94107'
+          type: string
+      title: Residential
+      type: object
+    IspProxyConfig:
+      description: Configuration for an ISP proxy.
+      properties:
+        country:
+          description: ISO 3166 country code. Supported countries are US, GB, FR, DE, SG, and KR. Defaults to US if not provided.
+          example: US
+          type: string
+      title: ISP
+      type: object
+    ConfigRegistryAnalysisStatus:
+      description: Lifecycle status of a background analysis.
+      enum:
+      - running
+      - completed
+      - failed
+      - canceled
+      - expired
+      type: string
+      x-enum-varnames:
+      - ConfigRegistryAnalysisStatusRunning
+      - ConfigRegistryAnalysisStatusCompleted
+      - ConfigRegistryAnalysisStatusFailed
+      - ConfigRegistryAnalysisStatusCanceled
+      - ConfigRegistryAnalysisStatusExpired
+    ConfigRegistryDirectProxy:
+      additionalProperties: false
+      description: 'Direct egress recipe. Pass `{ "mode": "direct" }` as the browser''s `proxy`.
+
+        '
+      properties:
+        mode:
+          enum:
+          - direct
+          type: string
+          x-enum-varnames:
+          - ConfigRegistryDirectProxyModeDirect
+      required:
+      - mode
+      type: object
+    ConfigRegistryLookupRequest:
+      properties:
+        allowed_proxy_countries:
+          description: ISO 3166 country codes Kernel may use when returning a proxy configuration. When omitted, Kernel uses its default country selection.
+          example:
+          - US
+          items:
+            type: string
+          maxItems: 10
+          minItems: 1
+          type: array
+        url:
+          description: Public HTTP(S) URL to look up.
+          format: uri
+          maxLength: 2048
+          type: string
+      required:
+      - url
+      type: object
+    MobileProxyConfig:
+      description: Configuration for mobile proxies.
+      properties:
+        city:
+          description: Provider city alias. Mobile carrier routing can make observed geo vary.
+          example: brooklyn
+          type: string
+        country:
+          description: ISO 3166 country code. If omitted, the proxy uses the global pool without country targeting.
+          example: US
+          type: string
+        state:
+          description: US-only state code. Mobile carrier routing can make observed geo vary.
+          example: NY
+          type: string
+      title: Mobile
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    DatacenterProxyConfig:
+      deprecated: true
+      description: Configuration for a deprecated datacenter proxy. Use an ISP proxy instead.
+      properties:
+        country:
+          description: ISO 3166 country code. Defaults to US if not provided.
+          example: US
+          type: string
+      title: Datacenter
+      type: object
+      x-deprecated-reason: Use an ISP proxy instead.
+    ConfigRegistryResolveRequest:
+      properties:
+        allowed_proxy_countries:
+          description: ISO 3166 country codes Kernel may use when searching for or returning a proxy configuration. Kernel may test a subset of allowed countries. When omitted, Kernel uses its default country selection.
+          example:
+          - US
+          items:
+            type: string
+          maxItems: 10
+          minItems: 1
+          type: array
+        intent:
+          description: Plain-language description of the workload you intend to run against this target, in a sentence or two. Requires an https target, because the pass treats any non-HTTPS destination as off-site and will not drive an http one. Kernel uses it to drive the browser further into the site, where it can observe protections that only appear once a session interacts. When this target already has a recommended configuration, the run confirms that one instead of re-deriving the whole matrix, so supplying an intent narrows what can be recommended.
+          example: search for a black hoodie and add it to the cart
+          maxLength: 300
+          type: string
+        url:
+          description: Public HTTP(S) URL to refresh.
+          format: uri
+          maxLength: 2048
+          type: string
+      required:
+      - url
+      type: object
+    ConfigRegistryProxy:
+      description: Proxy recipe for the recommended browser.
+      discriminator:
+        mapping:
+          direct: '#/components/schemas/ConfigRegistryDirectProxy'
+          managed: '#/components/schemas/ConfigRegistryManagedProxy'
+        propertyName: mode
+      oneOf:
+      - $ref: '#/components/schemas/ConfigRegistryDirectProxy'
+      - $ref: '#/components/schemas/ConfigRegistryManagedProxy'
+    CreateCustomProxyConfig:
+      description: Configuration for a custom proxy (e.g., private proxy server).
+      properties:
+        ca_bundle:
+          description: PEM-encoded CA certificate bundle the proxy re-signs upstream TLS with. Provide when the proxy terminates TLS (MITM) so the browser trusts its certificates. May contain multiple concatenated certificates.
+          example: '-----BEGIN CERTIFICATE-----
+
+            MIIB...
+
+            -----END CERTIFICATE-----
+
+            '
+          maxLength: 65536
+          type: string
+        host:
+          description: Proxy host address or IP.
+          example: 127.0.0.1
+          type: string
+        password:
+          description: Password for proxy authentication.
+          example: secret
+          maxLength: 4096
+          type: string
+        port:
+          description: Proxy port.
+          example: 8080
+          type: integer
+        username:
+          description: Username for proxy authentication.
+          example: user123
+          type: string
+      required:
+      - host
+      - port
+      title: Custom
+      type: object
+    ConfigRegistryAnalysisInProgressError:
+      additionalProperties: false
+      properties:
+        analysis_id:
+          description: ID of the running analysis to poll before retrying.
+          type: string
+        code:
+          const: analysis_in_progress
+          type: string
+        message:
+          description: Human-readable explanation of the conflict.
+          type: string
+      required:
+      - code
+      - message
+      - analysis_id
+      type: object
+    ConfigRegistryTarget:
+      properties:
+        domain:
+          description: Registrable domain.
+          type: string
+        host:
+          description: Full hostname, including subdomain.
+          type: string
+        normalized:
+          description: Exact normalized scheme, host, port, and path used for lookup.
+          type: string
+      required:
+      - normalized
+      - host
+      - domain
+      type: object
+    ConfigRegistryAnalysisSummary:
+      properties:
+        analysis:
+          $ref: '#/components/schemas/ConfigRegistryAnalysis'
+        target:
+          $ref: '#/components/schemas/ConfigRegistryTarget'
+      required:
+      - target
+      - analysis
+      type: object
+    ConfigRegistryBrowser:
+      description: Browser settings that can be passed directly to `POST /browsers`.
+      properties:
+        gpu:
+          type: boolean
+        headless:
+          type: boolean
+        stealth:
+          type: boolean
+        viewport:
+          $ref: '#/components/schemas/BrowserViewport'
+      required:
+      - stealth
+      - headless
+      - gpu
+      - viewport
+      type: object
+    ConfigRegistryRecommendationSummary:
+      properties:
+        analysis_id:
+          description: ID of the most recently requested analysis for this exact target.
+          type: string
+        analysis_status:
+          $ref: '#/components/schemas/ConfigRegistryAnalysisStatus'
+          description: Lifecycle status of the most recently requested analysis for this exact target.
+        last_requested_at:
+          description: Most recent time the selected project requested an analysis for this exact target.
+          format: date-time
+          type: string
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/ConfigRegistryRecommendation'
+          description: Recommendation produced by the latest analysis. Null when that analysis did not produce one.
+          nullable: true
+        recommended_config_label:
+          description: Display label for the recommended browser configuration.
+          nullable: true
+          type: string
+        success_rate:
+          description: Success rate for the recommended configuration. Null when the latest analysis did not produce one.
+          maximum: 1
+          minimum: 0
+          nullable: true
+          type: number
+        target:
+          description: Normalized exact target previously analyzed by the selected project, including scheme, host, port, and path.
+          type: string
+      required:
+      - target
+      - analysis_id
+      - analysis_status
+      - recommendation
+      - recommended_config_label
+      - last_requested_at
+      - success_rate
+      type: object
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

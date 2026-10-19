@@ -1,0 +1,4321 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Vaults API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- name: Vaults
+paths:
+  /vault-provider-configs:
+    get:
+      description: Secret credentials are never returned.
+      operationId: getVaultProviderConfigs
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VaultProviderConfig'
+                type: array
+          description: Provider configurations
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+            X-Next-Offset:
+              schema:
+                type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: List provider configurations in the organization
+      tags:
+      - Vaults
+    post:
+      description: Register a configuration shared across the organization's projects. Names are unique within the organization; duplicate names return 409 without replacing credentials. A configuration serves many wallets. Secret credentials are never returned. Requires an organization-scoped credential or dashboard authentication; project-scoped credentials receive 403.
+      operationId: postVaultProviderConfig
+      requestBody:
+        content:
+          application/json:
+            examples:
+              agentcard:
+                value:
+                  credentials:
+                    client_id: example-client-id
+                    client_secret: example-client-secret
+                  name: my-agentcard
+                  provider: agentcard
+              link:
+                value:
+                  credentials:
+                    client_id: example-client-id
+                    client_secret: example-client-secret
+                    publishable_key: pk_live_example
+                  name: my-link-client
+                  provider: link
+            schema:
+              $ref: '#/components/schemas/VaultProviderConfigRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                agentcard:
+                  $ref: '#/components/examples/ExampleAgentCardConfig'
+                link:
+                  $ref: '#/components/examples/ExampleLinkConfig'
+              schema:
+                $ref: '#/components/schemas/VaultProviderConfig'
+          description: Provider configuration registered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Register a provider configuration
+      tags:
+      - Vaults
+  /vault-provider-configs/{id_or_name}:
+    parameters:
+    - description: Provider configuration ID or name in the organization.
+      in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    delete:
+      description: Delete a configuration in the organization. Returns 409 while any non-deleted vault item references the configuration, regardless of connection status. Does not delete the external OAuth client or revoke unrelated grants. Requires an organization-scoped credential or dashboard authentication; project-scoped credentials receive 403.
+      operationId: deleteVaultProviderConfig
+      responses:
+        '204':
+          description: Provider configuration deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Delete an unused provider configuration
+      tags:
+      - Vaults
+    get:
+      description: Look up a configuration by ID or name. Returns 404 when it does not exist in the organization.
+      operationId: getVaultProviderConfig
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultProviderConfig'
+          description: Provider configuration without secret credentials
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get a provider configuration
+      tags:
+      - Vaults
+    patch:
+      description: Update the supplied fields; omitted fields remain unchanged. Names must remain unique within the organization. Requires an organization-scoped credential or dashboard authentication; project-scoped credentials receive 403.
+      operationId: patchVaultProviderConfig
+      requestBody:
+        content:
+          application/json:
+            examples:
+              agentcard:
+                summary: Rotate the secret of the AgentCard configuration selected in the path
+                value:
+                  credentials:
+                    client_secret: example-rotated-client-secret
+              link:
+                summary: Rename the Link configuration selected in the path
+                value:
+                  name: renamed-link-client
+              link_publishable_key:
+                summary: Set the Stripe publishable key of the Link configuration selected in the path
+                value:
+                  credentials:
+                    publishable_key: pk_live_example
+            schema:
+              $ref: '#/components/schemas/VaultProviderConfigUpdateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                agentcard:
+                  $ref: '#/components/examples/ExampleAgentCardConfigRotated'
+                link:
+                  $ref: '#/components/examples/ExampleLinkConfigRenamed'
+              schema:
+                $ref: '#/components/schemas/VaultProviderConfig'
+          description: Provider configuration updated without returning secrets
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Update a provider configuration
+      tags:
+      - Vaults
+  /vaults:
+    get:
+      operationId: getVaults
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: Case-insensitive substring match against vault name. IDs match by exact value.
+        in: query
+        name: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Vault'
+                type: array
+          description: List of vaults
+          headers:
+            X-Has-More:
+              schema:
+                type: boolean
+            X-Next-Offset:
+              schema:
+                type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: List vaults in the current project
+      tags:
+      - Vaults
+    post:
+      description: Free organizations can store up to 3 non-deleted vaults across all projects. Paid plans and active trials have no vault cap. Retrieving an existing vault by name succeeds even at the limit.
+      operationId: postVaults
+      requestBody:
+        content:
+          application/json:
+            examples:
+              checkout:
+                summary: Create a provider-neutral vault; repeating this name retrieves it
+                value:
+                  name: checkout
+            schema:
+              $ref: '#/components/schemas/VaultRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                checkout:
+                  $ref: '#/components/examples/ExampleVault'
+              schema:
+                $ref: '#/components/schemas/Vault'
+          description: Existing vault
+        '201':
+          content:
+            application/json:
+              examples:
+                checkout:
+                  $ref: '#/components/examples/ExampleVault'
+              schema:
+                $ref: '#/components/schemas/Vault'
+          description: Vault created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Create or retrieve a vault by immutable name
+      tags:
+      - Vaults
+  /vaults/{id_or_name}:
+    parameters:
+    - in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    delete:
+      description: Unresolved payment operations block deletion. Deleting a connected Kernel wallet first blocks new payments on it, then removes its enrolled card. If that fails, the wallet is kept and keeps refusing payments; retry the deletion. Reconcile the original attempt with the provider or support first; deleting or recreating an item is not proof that a payment did not occur.
+      operationId: deleteVaultByIdOrName
+      responses:
+        '204':
+          description: Vault deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Delete a vault and invalidate its items
+      tags:
+      - Vaults
+    get:
+      operationId: getVaultByIdOrName
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vault'
+          description: Vault
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get a vault
+      tags:
+      - Vaults
+  /vaults/{id_or_name}/encryption_key:
+    parameters:
+    - in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    get:
+      description: Returns the public key that custom credential collection web apps use to encrypt values in the browser. Use this only if you run your own credential collection web app and want values encrypted in the browser, sent to your backend still encrypted, and forwarded to Kernel's API still encrypted. In every other case, including server-side code that already holds the plaintext, use value. The page encrypts each value to this key, your backend forwards the ciphertext unchanged as encrypted_value when creating or updating a credential item in this vault, and Kernel decrypts it.
+      operationId: getVaultEncryptionKey
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultEncryptionKey'
+          description: Vault encryption key
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get a vault's public key for browser-encrypted credential values
+      tags:
+      - Vaults
+  /vaults/{id_or_name}/items:
+    parameters:
+    - in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    get:
+      description: Credential entries include safe field metadata and non-sensitive values. Listing never creates or renews collection sessions; only an existing unexpired active session is included. Use single-item GET or collect to obtain a fresh link.
+      operationId: getVaultItems
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VaultItem'
+                type: array
+          description: Vault items
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: List vault items without secret values
+      tags:
+      - Vaults
+  /vaults/{id_or_name}/items/{key}:
+    parameters:
+    - in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    - in: path
+      name: key
+      required: true
+      schema:
+        maxLength: 255
+        minLength: 1
+        type: string
+    delete:
+      description: Unresolved payment operations normally block deletion, including operations on child cards of a wallet. Deleting a connected Kernel wallet first blocks new payments on it, then removes its enrolled card. If that fails, the wallet is kept and keeps refusing payments; retry the deletion. A Link or Kernel card in recovery_required for issuance, or an AgentCard card in recovery_required whose checkout create response returned no authorization ID, may be explicitly abandoned by deleting that card directly; deleting its wallet or vault remains blocked until the card is deleted. Deleting or recreating an item is not proof that a payment did not occur. Deleting a managed auth credential item leaves the connection and its saved credential unchanged.
+      operationId: deleteVaultItem
+      responses:
+        '204':
+          description: Vault item deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Delete a vault item and invalidate its secret value
+      tags:
+      - Vaults
+    get:
+      description: The response advertises operations that are valid in the item's current state and live data that can be requested through `expand`. Read each operation's description before using it. Expanded data is fetched from the provider and is not persisted in the vault item. Requesting an unavailable expansion returns 409 instead of a partial item. Pending credential items return a collection action. Kernel-hosted active collection links are renewed atomically on expiry for ready or pending items without changing the item version. Invoke collect to open a form for a ready item without clearing values. Sensitive credential values are never returned.
+      operationId: getVaultItem
+      parameters:
+      - description: Hold for up to this many seconds while the item is pending authorization, approval, or credential collection. Return the current item when ready or when the wait elapses. This does not wait for edits to an already-ready credential; poll GET without wait and compare version to observe changes after collect. Managed auth credentials are created ready, so wait returns immediately.
+        in: query
+        name: wait
+        schema:
+          default: 0
+          maximum: 60
+          minimum: 0
+          type: integer
+      - description: Live fields advertised by `available_expansions` to include in `expanded`.
+        explode: false
+        in: query
+        name: expand
+        schema:
+          items:
+            $ref: '#/components/schemas/VaultItemExpansionType'
+          type: array
+          uniqueItems: true
+        style: form
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultItem'
+          description: Vault item
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get a vault item, its currently available operations, and optionally expanded…
+      tags:
+      - Vaults
+    patch:
+      description: Credential updates require type credential and the current version, and change only values or description; omitted values are preserved, nonempty strings replace, and null or empty strings clear supported fields. Clearing required text/email/password values returns pending_collection; browser forms still require nonempty required inputs. Card updates may omit type for compatibility with legacy requests. Requested cards accept a replacement specification. Pending issuance requests may update provider-supported fields on their existing request, subject to atomic provider approval checks; omitted optional fields remain unchanged and explicit empty lists clear them. Wallet/provider binding and unsupported fields cannot change after authorization starts. An uncertain update enters recovery_required; delete the card and create a new one rather than retrying the update. Checkout cards may be edited between authorizations. A Link card authorized with browser_id and page_url cannot be changed; delete it and create a new card with the updated details.
+      operationId: patchVaultItem
+      requestBody:
+        content:
+          application/json:
+            examples:
+              agentcard:
+                $ref: '#/components/examples/ExampleAgentCardCardEdit'
+              credential:
+                summary: Update one credential value at the current version
+                value:
+                  spec:
+                    fields:
+                      password:
+                        value: new-password
+                  type: credential
+                  version: 1
+              link:
+                $ref: '#/components/examples/ExampleLinkCardEdit'
+            schema:
+              $ref: '#/components/schemas/VaultItemUpdateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                agentcard:
+                  $ref: '#/components/examples/ExampleAgentCardCardUpdated'
+                credential:
+                  summary: Updated credential metadata without sensitive values
+                  value:
+                    available_expansions: []
+                    available_operations: []
+                    created_at: '2026-01-01T12:00:00Z'
+                    id: credential-example
+                    key: login
+                    spec:
+                      description: Example account
+                      fields:
+                      - name: password
+                        required: true
+                        sensitive: true
+                        type: password
+                      provider: kernel
+                    state:
+                      fields:
+                        password:
+                          has_value: true
+                      provider: kernel
+                      status: ready
+                    type: credential
+                    updated_at: '2026-01-01T12:01:00Z'
+                    version: 2
+                link:
+                  $ref: '#/components/examples/ExampleLinkCardUpdated'
+              schema:
+                $ref: '#/components/schemas/VaultItem'
+          description: Vault item updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Update a card specification or credential values
+      tags:
+      - Vaults
+    put:
+      description: Create an item under a key unique within its vault, or retrieve the existing item when its specification matches. An identical card PUT returns the existing card in any lifecycle state without polling the provider, reauthorizing, replacing aliases, or resetting recovery. Conflicting specifications return 409. Provider-specific authorization requirements and retry behavior are described in the item's request schema. Do not use credential items to store, collect, or fill credit card data, including card numbers (PANs), security codes (CVV/CVC), or expiration dates. Use wallet and card item types for credit cards and payment checkout instead.
+      operationId: putVaultItem
+      requestBody:
+        content:
+          application/json:
+            examples:
+              agentcard_card:
+                $ref: '#/components/examples/ExampleAgentCardCardInput'
+              customer_managed_agentcard:
+                summary: Create a wallet using customer-owned AgentCard credentials
+                value:
+                  spec:
+                    provider: agentcard
+                    provider_config:
+                      name: my-agentcard
+                  type: wallet
+              imported_link:
+                summary: Import a grant from a customer-owned Link client
+                value:
+                  spec:
+                    authorization:
+                      client:
+                        provider_config:
+                          name: my-link-client
+                        type: customer_managed
+                      method: oauth
+                      tokens:
+                        access_token: example-access-token
+                        refresh_token: example-refresh-token
+                    provider: link
+                  type: wallet
+              kernel_managed_agentcard:
+                summary: Start hosted enrollment with Kernel-managed credentials
+                value:
+                  spec:
+                    provider: agentcard
+                  type: wallet
+              kernel_managed_link:
+                summary: Start Kernel-managed Link authorization
+                value:
+                  spec:
+                    authorization:
+                      client:
+                        type: kernel_managed
+                      method: oauth
+                    provider: link
+                  type: wallet
+              link_card:
+                $ref: '#/components/examples/ExampleLinkCardInput'
+              managed_auth_credential:
+                $ref: '#/components/examples/ExampleManagedAuthCredentialInput'
+            schema:
+              $ref: '#/components/schemas/VaultItemRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                agentcard_card:
+                  $ref: '#/components/examples/ExampleAgentCardCard'
+                imported_link:
+                  $ref: '#/components/examples/ExampleImportedLinkWallet'
+                link_card:
+                  $ref: '#/components/examples/ExampleLinkCard'
+                managed_auth_credential:
+                  $ref: '#/components/examples/ExampleManagedAuthCredential'
+              schema:
+                $ref: '#/components/schemas/VaultItem'
+          description: Existing matching item; card retries preserve identity and state
+        '201':
+          content:
+            application/json:
+              examples:
+                agentcard_card:
+                  $ref: '#/components/examples/ExampleAgentCardCard'
+                customer_managed_agentcard:
+                  $ref: '#/components/examples/ExampleConfiguredAgentCardWallet'
+                imported_link:
+                  $ref: '#/components/examples/ExampleImportedLinkWallet'
+                kernel_managed_agentcard:
+                  $ref: '#/components/examples/ExampleManagedAgentCardWallet'
+                kernel_managed_link:
+                  $ref: '#/components/examples/ExampleManagedLinkWallet'
+                link_card:
+                  $ref: '#/components/examples/ExampleLinkCard'
+                managed_auth_credential:
+                  $ref: '#/components/examples/ExampleManagedAuthCredential'
+              schema:
+                $ref: '#/components/schemas/VaultItem'
+          description: Item created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Create or retrieve an identical vault item by immutable key
+      tags:
+      - Vaults
+  /vaults/{id_or_name}/items/{key}/events:
+    get:
+      operationId: getVaultItemEvents
+      parameters:
+      - in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: key
+        required: true
+        schema:
+          type: string
+      - description: Return events after this event ID.
+        in: query
+        name: after
+        required: false
+        schema:
+          type: string
+      - description: Long-poll for new events for up to this many seconds.
+        in: query
+        name: wait
+        required: false
+        schema:
+          default: 0
+          maximum: 60
+          minimum: 0
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VaultItemEvent'
+                type: array
+          description: Ordered vault item audit events
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: List immutable audit events for a vault item
+      tags:
+      - Vaults
+  /vaults/{id_or_name}/items/{key}/operations:
+    post:
+      description: 'Retrieve the item first and invoke only an operation listed in
+
+        `available_operations`, following its natural-language description.
+
+        Availability is rechecked at execution time; unavailable operations return 409.
+
+        Authorization and preparation may call an external provider and return updated state.
+
+        Link cards advertise authorize; pass browser_id and page_url from the final
+
+        checkout page so Kernel can inspect the checkout. Eligible unused
+
+        AgentCard cards advertise prepare_checkout, which requires checkout context
+
+        and obtains device approval before native Square Pay. Keep the returned
+
+        approval page open, poll until ready_to_submit, then submit before
+
+        preparation.expires_at. Unused preparations expire automatically and cannot
+
+        be reused. If spend-request creation is rejected with a non-retryable
+
+        provider error, the card item is deleted and the provider''s error code and
+
+        message are returned. Rate limits return HTTP 429 and retain the card item;
+
+        stop, back off, and retry the same authorize operation.
+
+
+        Ready Kernel cards advertise fill. Fill delivers card details for a few
+
+        minutes; submit checkout promptly after filling. A repeated fill is safe.
+
+
+        Fill returns a value-free execution result. Validation failures before
+
+        writing return 400 (invalid request or targets), 403 (access or destination
+
+        denied), 404 (resource not found), or 409 (item or browser not ready).
+
+        Once writing starts, known partial failures and indeterminate field outcomes
+
+        return 200 with status `failed` or `unknown`. Fill never submits the page, so
+
+        it is safe to retry after a failure, an `unknown` outcome, or a transport error.'
+      operationId: postVaultItemOperation
+      parameters:
+      - in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: key
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples:
+              agentcard_prepare_checkout:
+                summary: Prepare an unused AgentCard card that advertises this operation
+                value:
+                  checkout:
+                    browser_id: browser-session-id
+                    environment: production
+                    merchant_origin: https://shop.example.com
+                  type: prepare_checkout
+              link_authorize:
+                summary: Authorize a Link card at its final checkout page
+                value:
+                  browser_id: browser-session-id
+                  page_url: https://store.example.com/checkout
+                  type: authorize
+              one_password_fill:
+                summary: Fill and submit an approved 1Password login
+                value:
+                  browser_id: browser-session-id
+                  page_url: https://example.com/login
+                  type: 1pw_fill
+              one_password_recover:
+                summary: Recover a failed 1Password account link
+                value:
+                  type: 1pw_recover
+              one_password_request_access:
+                summary: Request access to a 1Password credential
+                value:
+                  goal: Manage a SaaS subscription
+                  keywords:
+                  - personal
+                  reason: Cancel the subscription
+                  type: 1pw_create_access_request
+            schema:
+              $ref: '#/components/schemas/VaultItemOperationRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                agentcard_prepare_checkout:
+                  $ref: '#/components/examples/ExampleAgentCardCard'
+                link_authorize:
+                  $ref: '#/components/examples/ExampleLinkApproval'
+              schema:
+                $ref: '#/components/schemas/VaultItemOperationResponse'
+          description: Authorization or preparation completed or resumed, or fill execution outcomes returned
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      security:
+      - bearerAuth: []
+      summary: Perform an operation advertised by a vault item
+      tags:
+      - Vaults
+components:
+  schemas:
+    CardEnrollmentAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - card_enrollment
+          type: string
+        url:
+          format: uri
+          type: string
+      required:
+      - name
+      - url
+      type: object
+    VaultCardAliases:
+      additionalProperties: false
+      properties:
+        cvc:
+          pattern: ^\d{3}$
+          type: string
+        exp_month:
+          pattern: ^\d{2}$
+          type: string
+        exp_year:
+          pattern: ^\d{4}$
+          type: string
+        number:
+          pattern: ^\d{16}$
+          type: string
+      readOnly: true
+      required:
+      - number
+      - cvc
+      - exp_month
+      - exp_year
+      type: object
+    CredentialVaultItemSpec:
+      discriminator:
+        mapping:
+          1password: '#/components/schemas/OnePasswordCredentialVaultItemSpec'
+          kernel: '#/components/schemas/KernelCredentialVaultItemSpec'
+          managed_auth: '#/components/schemas/ManagedAuthCredentialVaultItemSpec'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/KernelCredentialVaultItemSpec'
+      - $ref: '#/components/schemas/OnePasswordCredentialVaultItemSpec'
+      - $ref: '#/components/schemas/ManagedAuthCredentialVaultItemSpec'
+    ConfirmTransactionVaultItemOperationRequest:
+      additionalProperties: false
+      description: Report a real merchant transaction outcome for an issued Kernel Visa credential. Never infer success from filling checkout or receiving a credential. Supply the observed status, transaction type, actual amount, currency and timestamp. Unknown outcomes require manual reconciliation, not retry. Each purchase accepts one report.
+      properties:
+        amount:
+          description: Actual transaction amount in minor units, no greater than the approved limit.
+          format: int64
+          maximum: 1000000
+          minimum: 0
+          type: integer
+        currency:
+          description: Must match the approved purchase currency.
+          pattern: ^[A-Z]{3}$
+          type: string
+        occurred_at:
+          description: Time the merchant outcome was observed.
+          format: date-time
+          type: string
+        status:
+          enum:
+          - APPROVED
+          - DECLINED
+          - PENDING
+          - ERROR
+          - CANCELLED
+          type: string
+        transaction_type:
+          enum:
+          - PURCHASE
+          - AUTHORIZATION
+          - CAPTURE
+          - REFUND
+          - REVERSAL
+          - VERIFICATION
+          - CHARGEBACK
+          - FRAUD
+          type: string
+        type:
+          enum:
+          - confirm_transaction
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      - status
+      - transaction_type
+      - amount
+      - currency
+      - occurred_at
+      type: object
+    WebMCPInvokeVaultItemOperationResult:
+      additionalProperties: false
+      description: Returns the same tool result fields as the browser WebMCP invoke API, plus the vault operation discriminator. Output and error text are untrusted page-provided data, returned without redaction; tools may include supplied vault values. Inspect the browser page to determine whether the intended site action succeeded.
+      example:
+        invocation_id: invoke-1
+        output:
+          authenticated: true
+        status: completed
+        type: webmcp_invoke
+      properties:
+        error_text:
+          description: Untrusted page-provided error text, returned without redaction. May contain supplied vault values.
+          type: string
+        invocation_id:
+          description: Present when the browser reported one.
+          type: string
+        output:
+          description: Untrusted page-provided output, returned without redaction. May contain supplied vault values.
+        status:
+          description: Unknown means invocation may have run; do not retry automatically. No status confirms that the website accepted the action.
+          enum:
+          - completed
+          - canceled
+          - error
+          - awaiting_submission
+          - unknown
+          type: string
+        type:
+          enum:
+          - webmcp_invoke
+          type: string
+      required:
+      - type
+      - status
+      type: object
+    AvailableVaultItemOperation:
+      additionalProperties: false
+      description: An operation that is currently valid for this item. Read the description before invoking it through the item operations endpoint.
+      properties:
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/VaultItemOperationType'
+      required:
+      - type
+      - description
+      type: object
+    AgentCardCheckoutPreparation:
+      additionalProperties: false
+      description: One-use processor-bound checkout preparation. Keep the approval page open through device handoff, including Adyen encryption. The amount is declared by the caller and does not constrain the merchant's eventual charge. Adyen device approval and browser Authorised responses are not capture or fulfillment evidence.
+      properties:
+        approval_url:
+          format: uri
+          type: string
+        browser_id:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        environment:
+          enum:
+          - production
+          - sandbox
+          - shared
+          type: string
+        expires_at:
+          description: When ready, the absolute deadline to submit the first native request; no later than provider readiness expiry or 30 seconds after Kernel first observes readiness. Polling never extends this deadline.
+          format: date-time
+          type: string
+        id:
+          type: string
+        merchant_origin:
+          type: string
+        psp:
+          $ref: '#/components/schemas/AgentCardPreparedProcessor'
+        status:
+          description: Preparation consumed means egress claimed the preparation and it cannot be reused. It does not mean the attempt settled. Use the enclosing item's status as the lifecycle indicator; item consumed means the attempt settled, not that an order or charge succeeded.
+          enum:
+          - creating
+          - awaiting_approval
+          - ready
+          - consumed
+          - cancelled
+          - expired
+          - unknown
+          type: string
+      required:
+      - status
+      - browser_id
+      - merchant_origin
+      - psp
+      - environment
+      - created_at
+      type: object
+    CredentialVaultItemUpdateRequest:
+      additionalProperties: false
+      description: 'Atomically update description, field definitions, and selected values.
+
+        Omitted properties are preserved. `remove_fields` deletes definitions and
+
+        their values, then `add_fields` appends definitions, then `fields` sets
+
+        values, including for added fields. An existing field''s definition cannot
+
+        be edited in place; to change it, remove the field and add it again, in
+
+        the same update or a later one. The old value is deleted with it.
+
+        Unknown field names return 400; stale versions or mismatched item types
+
+        return 409 without changing the item. A successful update increments version
+
+        and invalidates outstanding Kernel-hosted collection sessions. If required
+
+        values remain missing, return pending_collection and a fresh collection
+
+        action. Otherwise return ready without an action; collect can open the form
+
+        again without clearing values. Customer URLs have no Kernel-managed expiry.
+
+        1Password and managed auth credentials return 409.
+
+        '
+      properties:
+        expected_item_id:
+          description: Optional immutable item ID precondition. Returns 409 if the key now identifies a different item. Accepted writes target this immutable ID, preventing replacement-key races. Supply this when submitting a form bound to a previously read item.
+          minLength: 1
+          type: string
+        spec:
+          $ref: '#/components/schemas/CredentialVaultItemSpecUpdate'
+        type:
+          enum:
+          - credential
+          type: string
+        version:
+          description: Expected current item version from the latest read.
+          minimum: 1
+          type: integer
+      required:
+      - type
+      - version
+      - spec
+      type: object
+    LinkCardVaultItemSpec:
+      additionalProperties: false
+      description: 'Live Link card request. Test-mode card creation is not supported. The spec can be changed with PATCH until the card is authorized at a checkout. Authorize it with the browser at final checkout: Kernel inspects the checkout through WebMCP and internally chooses a merchant-bound Link Pay Token when supported or a virtual card otherwise. Callers never receive or choose how the credential is delivered.'
+      properties:
+        amount:
+          description: Integer amount in minor currency units, at most 50000.
+          maximum: 50000
+          minimum: 1
+          type: integer
+        context:
+          minLength: 100
+          type: string
+        currency:
+          maxLength: 3
+          minLength: 3
+          pattern: ^[A-Za-z]{3}$
+          type: string
+        line_items:
+          items:
+            $ref: '#/components/schemas/LinkLineItem'
+          type: array
+        merchant_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        merchant_url:
+          format: uri
+          type: string
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        payment_method_id:
+          description: Payment-method ID returned by the referenced wallet's payment-method listing. The provider decides whether the selected funding method can satisfy the card request.
+          minLength: 1
+          type: string
+        provider:
+          enum:
+          - link
+          type: string
+        totals:
+          items:
+            $ref: '#/components/schemas/LinkTotal'
+          type: array
+        wallet:
+          description: Connected Link wallet item key.
+          type: string
+      required:
+      - provider
+      - wallet
+      - payment_method_id
+      - amount
+      - currency
+      - merchant_name
+      - merchant_url
+      - context
+      type: object
+    CredentialAccountVaultItemRequest:
+      additionalProperties: false
+      properties:
+        spec:
+          $ref: '#/components/schemas/OnePasswordCredentialAccountSpec'
+        type:
+          enum:
+          - credential_account
+          type: string
+      required:
+      - type
+      - spec
+      type: object
+    CredentialVaultFieldState:
+      additionalProperties: false
+      properties:
+        has_value:
+          type: boolean
+        value:
+          description: Present exactly when has_value is true and the field is not sensitive. Reflects the latest developer or human edit. For totp, has_value indicates a stored seed; neither the seed nor a generated code is returned.
+          minLength: 1
+          type: string
+      required:
+      - has_value
+      type: object
+    EmbeddedCeremonyAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - embedded_ceremony
+          type: string
+      required:
+      - name
+      type: object
+    ManagedAuthCredentialVaultField:
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/CredentialVaultFieldType'
+      required:
+      - type
+      type: object
+    VaultOAuthClientCredentials:
+      additionalProperties: false
+      properties:
+        client_id:
+          minLength: 1
+          type: string
+        client_secret:
+          minLength: 1
+          type: string
+          writeOnly: true
+      required:
+      - client_id
+      - client_secret
+      type: object
+    LinkLineItem:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        image_url:
+          type: string
+        name:
+          type: string
+        product_url:
+          type: string
+        quantity:
+          minimum: 1
+          type: integer
+        sku:
+          type: string
+        totals:
+          items:
+            $ref: '#/components/schemas/LinkTotal'
+          type: array
+        unit_amount:
+          description: Unit amount in minor currency units.
+          type: integer
+        url:
+          type: string
+      required:
+      - name
+      type: object
+    VaultItemEvent:
+      additionalProperties: false
+      properties:
+        browser_id:
+          description: Browser session associated with the event, when applicable.
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        data:
+          additionalProperties: true
+          type: object
+        id:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
+      - created_at
+      type: object
+    OnePasswordReturnedRequest:
+      additionalProperties: false
+      description: The request object if returned by the extension. The observed create response may omit entries; no entry IDs are invented.
+      properties:
+        entries:
+          items:
+            $ref: '#/components/schemas/OnePasswordReturnedRequestEntry'
+          type: array
+        goal:
+          type: string
+        version:
+          type: integer
+      type: object
+    OnePasswordCredentialVaultItemSpecInput:
+      additionalProperties: false
+      description: A login request backed by a connected 1Password account or by a customer-supplied access token and matching integration key. Supply either account or both secrets, never both. Supplied secrets are write-only and never returned. Supply requests for new items; website remains supported for existing account-backed callers.
+      properties:
+        access_token:
+          description: Customer-supplied 1Password broker token. Requires integration_key; stored encrypted on this item. Omit if providing a connected credential_account item via the account field.
+          maxLength: 16384
+          minLength: 1
+          type: string
+        access_token_expires_at:
+          description: Optional supplied token expiry metadata for stored-token credentials. Omit if providing a connected credential_account item via the account field.
+          format: date-time
+          type: string
+        account:
+          description: Key of a connected credential_account item in the same vault. Omit for stored-token credentials.
+          minLength: 1
+          type: string
+        integration_key:
+          description: Matching customer-supplied integration key. Requires access_token; stored encrypted on this item. Omit if providing a connected credential_account item via the account field.
+          maxLength: 16384
+          minLength: 1
+          type: string
+        provider:
+          enum:
+          - 1password
+          type: string
+        requests:
+          $ref: '#/components/schemas/OnePasswordCredentialRequests'
+        website:
+          deprecated: true
+          description: Legacy single-login shorthand. Supply requests instead.
+          format: uri
+          maxLength: 2083
+          pattern: ^https://
+          type: string
+      required:
+      - provider
+      type: object
+    CollectAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - collect
+          type: string
+      required:
+      - name
+      type: object
+    ImportedLinkAuthorizationInput:
+      additionalProperties: false
+      description: 'The customer''s backend completes Link OAuth and supplies the resulting tokens. For a new wallet, Kernel verifies the access token can access Link payment methods without consuming or rotating the refresh token. Valid access creates a wallet with state.status=connected. An expired, invalid, revoked, or insufficiently scoped access token returns 400 and no wallet is created. Refresh expired tokens in your backend before importing them. A failed import does not modify existing wallets.
+
+        After successful import, Kernel owns subsequent refresh-token rotation; the customer must stop refreshing this grant. Import does not verify the refresh token: if it or the configured client credentials are rejected during a later refresh, the imported wallet becomes degraded. An unknown refresh outcome also leaves it degraded; Kernel does not retry a refresh token that may already have been consumed. There is no in-place reauthorization operation for an imported wallet.
+
+        If this imported wallet''s credentials become unusable, obtain a fresh Link OAuth grant in your backend and create a wallet under a NEW wallet key. Use the new wallet for NEW cards and payments, not to retry an old payment whose outcome is uncertain. This does not replace the old grant, rebind existing cards, or resolve their payment outcomes. Retain the old wallet and its cards while reconciling any uncertain payments with the provider or support. Do not repeat an uncertain payment on the new wallet, and do not treat deletion as evidence that it did not execute. Deletion of the old wallet can remain blocked by unresolved child cards.
+
+        Repeating a create for the same item key and non-secret spec returns the existing wallet without replacing tokens, even if they have rotated or the wallet needs reconnection. ID and name references resolving to the same config are equivalent. A different config or non-secret spec returns 409. This create operation does not replace an existing grant.'
+      properties:
+        client:
+          $ref: '#/components/schemas/CustomerManagedOAuthClient'
+        method:
+          enum:
+          - oauth
+          type: string
+        tokens:
+          allOf:
+          - $ref: '#/components/schemas/LinkWalletTokenInput'
+          writeOnly: true
+      required:
+      - method
+      - client
+      - tokens
+      type: object
+    VaultItemRequest:
+      discriminator:
+        mapping:
+          card: '#/components/schemas/CardVaultItemRequest'
+          credential: '#/components/schemas/CredentialVaultItemRequest'
+          credential_account: '#/components/schemas/CredentialAccountVaultItemRequest'
+          wallet: '#/components/schemas/WalletVaultItemRequest'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/WalletVaultItemRequest'
+      - $ref: '#/components/schemas/CardVaultItemRequest'
+      - $ref: '#/components/schemas/CredentialAccountVaultItemRequest'
+      - $ref: '#/components/schemas/CredentialVaultItemRequest'
+    ManagedAuthCredentialVaultItemState:
+      additionalProperties: false
+      properties:
+        fields:
+          additionalProperties:
+            $ref: '#/components/schemas/ManagedAuthCredentialVaultField'
+          description: One entry per non-empty value on the connection's saved credential, keyed by the field name to use in fill bindings. Included on single-item responses (create and get) and omitted from list responses, like `value_keys` on credentials. Empty when unavailable or when every stored value is empty. A stored value named totp_secret is never listed or filled. Values are never returned. A totp entry is present when the credential has a TOTP seed; fill writes a generated code for it. Entries follow the connection's credential.
+          type: object
+        provider:
+          enum:
+          - managed_auth
+          type: string
+        status:
+          description: Items are created ready, which means the connection has a saved Kernel credential that stores values or a TOTP seed (what has_values or has_totp_secret report on credentials), not that a login succeeded. Unavailable means it no longer does; such items advertise no operations.
+          enum:
+          - ready
+          - unavailable
+          type: string
+        status_reason:
+          description: Present when status is unavailable. connection_not_found means the connection was deleted. no_credential means the connection's credential was deleted or emptied after the item was created. external_credential means the connection was moved to an external credential provider.
+          enum:
+          - connection_not_found
+          - no_credential
+          - external_credential
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    VaultItemExpansionType:
+      enum:
+      - payment_methods
+      type: string
+    VaultItemExpanded:
+      additionalProperties: false
+      description: Live, non-persisted data requested through the item GET expand parameter.
+      properties:
+        payment_methods:
+          items:
+            $ref: '#/components/schemas/VaultPaymentMethod'
+          type: array
+      type: object
+    KernelManagedLinkAuthorizationInput:
+      additionalProperties: false
+      description: Kernel starts and completes the user's Link authorization flow.
+      properties:
+        client:
+          $ref: '#/components/schemas/KernelManagedOAuthClient'
+        method:
+          enum:
+          - oauth
+          type: string
+      required:
+      - method
+      - client
+      type: object
+    VaultPaymentMethodDisplay:
+      additionalProperties: false
+      properties:
+        brand:
+          type: string
+        label:
+          type: string
+        last4:
+          type: string
+      type: object
+    OnePasswordFillVaultItemOperationResult:
+      additionalProperties: false
+      description: The submission result reported by the 1Password extension when available. Kernel returns fill_unknown if the extension call has no conclusive result. Inspect the page to determine successful authentication on the website.
+      properties:
+        error_code:
+          description: Present for fill_failed, and for fill_unknown when the extension reported autosubmitFailed (it filled and submitted the form but could not confirm the fill finished). These are allowlisted 1Password extension codes, never raw errors, secrets, or page content.
+          enum:
+          - fillFailed
+          - autosubmitFailed
+          - noExistingCredentials
+          - authenticationFailed
+          type: string
+        status:
+          description: Kernel's outcome of the extension call. fill_submitted means the extension reported submission, not website authentication. fill_failed means the extension returned a known failure and includes error_code. fill_unknown means the form may have been filled or submitted without a conclusive result; inspect the page to see the result of the fill.
+          enum:
+          - fill_submitted
+          - fill_failed
+          - fill_unknown
+          type: string
+        type:
+          enum:
+          - 1pw_fill
+          type: string
+      required:
+      - type
+      - status
+      type: object
+    LinkWalletVaultItemSpec:
+      additionalProperties: false
+      properties:
+        authorization:
+          $ref: '#/components/schemas/LinkOAuthAuthorization'
+        provider:
+          enum:
+          - link
+          type: string
+      required:
+      - provider
+      - authorization
+      type: object
+    SpendApprovalAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - spend_approval
+          type: string
+        url:
+          format: uri
+          type: string
+      required:
+      - name
+      - url
+      type: object
+    LinkCardState:
+      additionalProperties: false
+      description: Issued Link cards retain encrypted card material for the fill operation. Link cards do not expose aliases or support egress substitution.
+      properties:
+        domains:
+          items:
+            type: string
+          type: array
+        masks:
+          $ref: '#/components/schemas/VaultItemMasks'
+        provider:
+          enum:
+          - link
+          type: string
+        status:
+          description: recovery_required means an original provider operation has an unresolved outcome and the card cannot be used. Reads keep observing a known provider request and may clear the recovery. To continue, delete this card and create a new one; deleting cancels the original request when its ID is known and keeps the recovery evidence. The user may see an approval request for the original card and should approve only the new one.
+          enum:
+          - requested
+          - pending_authorization
+          - ready
+          - consumed
+          - expired
+          - declined
+          - recovery_required
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    LinkOAuthClient:
+      discriminator:
+        mapping:
+          customer_managed: '#/components/schemas/CustomerManagedOAuthClient'
+          kernel_managed: '#/components/schemas/KernelManagedOAuthClient'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/KernelManagedOAuthClient'
+      - $ref: '#/components/schemas/CustomerManagedOAuthClient'
+    LinkOAuthAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - link_oauth
+          type: string
+        url:
+          format: uri
+          type: string
+      required:
+      - name
+      - url
+      type: object
+    VaultProviderConfigReference:
+      additionalProperties: false
+      description: Select a provider config by ID or name. Responses return the ID. Renaming a config does not change existing wallet bindings; an item cannot switch to a different config after creation.
+      oneOf:
+      - required:
+        - id
+      - required:
+        - name
+      properties:
+        id:
+          minLength: 1
+          type: string
+        name:
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+      type: object
+    CardVaultItem:
+      additionalProperties: false
+      properties:
+        action:
+          $ref: '#/components/schemas/VaultItemAction'
+        available_expansions:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemExpansion'
+          type: array
+        available_operations:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemOperation'
+          type: array
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          description: Immutable item key assigned when the item is created.
+          type: string
+        spec:
+          $ref: '#/components/schemas/CardVaultItemSpec'
+        state:
+          $ref: '#/components/schemas/CardVaultItemState'
+        type:
+          enum:
+          - card
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - key
+      - type
+      - spec
+      - state
+      - available_operations
+      - available_expansions
+      - created_at
+      - updated_at
+      type: object
+    CredentialVaultItemState:
+      discriminator:
+        mapping:
+          1password: '#/components/schemas/OnePasswordCredentialVaultItemState'
+          kernel: '#/components/schemas/KernelCredentialVaultItemState'
+          managed_auth: '#/components/schemas/ManagedAuthCredentialVaultItemState'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/KernelCredentialVaultItemState'
+      - $ref: '#/components/schemas/OnePasswordCredentialVaultItemState'
+      - $ref: '#/components/schemas/ManagedAuthCredentialVaultItemState'
+    FillVaultItemOperationResult:
+      additionalProperties: false
+      properties:
+        fields:
+          description: One result per request binding, in request order; empty when the fill used no bindings. After the first failed or unknown field, all remaining fields are not_attempted.
+          items:
+            $ref: '#/components/schemas/VaultFillFieldResult'
+          maxItems: 32
+          minItems: 0
+          type: array
+        status:
+          description: Completed when the fill finished. Failed when execution stopped with known outcomes. Unknown when an outcome cannot be determined. Completed means values were supplied to the page, not that the site accepted or submitted them.
+          enum:
+          - completed
+          - failed
+          - unknown
+          type: string
+        type:
+          enum:
+          - fill
+          type: string
+      required:
+      - type
+      - status
+      - fields
+      type: object
+    OnePasswordCredentialRequests:
+      additionalProperties: false
+      description: Credential Request v2 input sent to the extension. A credential item may request up to five login entries.
+      properties:
+        entries:
+          items:
+            $ref: '#/components/schemas/OnePasswordCredentialRequestEntry'
+          maxItems: 5
+          minItems: 1
+          type: array
+        goal:
+          maxLength: 140
+          type: string
+        version:
+          description: Must be 2.
+          type: integer
+      required:
+      - version
+      - entries
+      type: object
+    KernelCardState:
+      additionalProperties: false
+      description: A ready Kernel card supports authorize, fill, then submit checkout. Card details are delivered for a few minutes after fill; submit promptly. Repeated fill is safe and never submits checkout. Visa purchases require a spend_approval action before details are issued; Mastercard purchases need no hosted approval. masks.last4 is the enrolled card's last four digits; masks.token_last4, when present, is the token's last four digits shown to the merchant. Kernel does not observe whether the merchant charged the card.
+      properties:
+        domains:
+          description: Informational registrable domain. Fill is locked to merchant_url's exact origin.
+          items:
+            type: string
+          type: array
+        masks:
+          $ref: '#/components/schemas/VaultItemMasks'
+        provider:
+          enum:
+          - kernel
+          type: string
+        status:
+          description: pending_authorization on a Visa purchase waits for the cardholder to approve it through the spend_approval action; an unused link expires after 30 minutes. recovery_required means verification, approving the purchase or issuing the one-time code has an unresolved outcome. A server-classified initial attestation failure before intent dispatch may advertise restart_verification to prepare a fresh local verification link; this does not approve spending or replay any provider request. Unclassified legacy recovery and uncertain intent creation cannot restart. Kernel never approves again or issues another code for the item automatically. To continue, delete this card and create a new purchase; the cardholder approves the new purchase separately. Recovery while reporting a merchant transaction cannot be deleted and must be reconciled with support. When status_reason says the provider refused retrieval before acceptance, no code was issued and a later read retries. declined means the card network refused to issue a code.
+          enum:
+          - requested
+          - pending_authorization
+          - ready
+          - consumed
+          - expired
+          - declined
+          - recovery_required
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    AgentCardCardState:
+      additionalProperties: false
+      properties:
+        aliases:
+          $ref: '#/components/schemas/VaultCardAliases'
+        authorization:
+          $ref: '#/components/schemas/AgentCardCheckoutAuthorization'
+        masks:
+          $ref: '#/components/schemas/VaultItemMasks'
+        preparation:
+          $ref: '#/components/schemas/AgentCardCheckoutPreparation'
+        provider:
+          enum:
+          - agentcard
+          type: string
+        status:
+          description: ready_to_submit is device readiness for at most 30 seconds. consumed means the prepared attempt has settled, not that an order succeeded. stopped cannot be reused. outcome_unknown requires merchant reconciliation and blocks new requests. recovery_required means the original checkout outcome is unresolved. Automatic reuse is blocked. Known authorization IDs must be reconciled through provider observations or support. When no authorization ID was returned, an explicitly confirmed item deletion may abandon the unresolved attempt so the caller can create a replacement; deletion does not prove that the original attempt failed. It does not mean declined or expired.
+          enum:
+          - requested
+          - ready
+          - preparing
+          - ready_to_submit
+          - pending_approval
+          - consumed
+          - stopped
+          - outcome_unknown
+          - degraded
+          - recovery_required
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    VaultProviderConfigRequest:
+      description: Provider-specific settings and credentials for a configuration shared across the organization's projects.
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/VaultAgentCardProviderConfigRequest'
+          link: '#/components/schemas/VaultLinkProviderConfigRequest'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/VaultLinkProviderConfigRequest'
+      - $ref: '#/components/schemas/VaultAgentCardProviderConfigRequest'
+    CredentialVaultItemSpecUpdate:
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        add_fields:
+          description: Field definitions to append, with the same defaults as creation. Set their values in `fields` in the same update. Names must be unique after removals; at most 32 fields may result. A required totp or passkey field needs a value in `fields`.
+          items:
+            $ref: '#/components/schemas/CredentialVaultFieldDefinitionInput'
+          maxItems: 32
+          minItems: 1
+          type: array
+        description:
+          description: Recognizable site or service name used as the form title, without suffixes such as sign-in credentials. An empty string clears it. Display text only, not an enforced destination policy. The server also enforces a 16 KiB UTF-8 byte limit.
+          maxLength: 16384
+          type: string
+        fields:
+          additionalProperties:
+            $ref: '#/components/schemas/CredentialVaultFieldUpdate'
+          maxProperties: 32
+          minProperties: 1
+          type: object
+        remove_fields:
+          description: Names of fields to delete with their values. Unknown names return 400. At least one field must remain.
+          items:
+            maxLength: 64
+            minLength: 1
+            type: string
+          maxItems: 32
+          minItems: 1
+          type: array
+          uniqueItems: true
+      type: object
+    VaultCheckoutContext:
+      additionalProperties: false
+      description: Required when preparing an unused AgentCard card for a supported checkout processor. Consent is bound to this browser and declared merchant origin, not a tab. Wait for the item's ready_to_submit status before native Pay and submit within its readiness deadline. Unused preparations expire automatically; every preparation is single-use, including after failure or expiry.
+      properties:
+        browser_id:
+          description: Active browser session with this vault bound to it.
+          type: string
+        environment:
+          description: Use production or sandbox for Square, Braintree, Worldpay and Adyen; shared for Bambora and Mercado Pago. Shared endpoints do not establish test mode. Merchant credentials/configuration determine processor test mode, independently of the AgentCard credential mode.
+          enum:
+          - production
+          - sandbox
+          - shared
+          type: string
+        merchant_origin:
+          description: Canonical HTTPS origin of the top-level merchant document, not a processor iframe. HTTP localhost is accepted for tests.
+          type: string
+        psp:
+          $ref: '#/components/schemas/AgentCardPreparedProcessor'
+          description: Checkout processor. Omit for Square compatibility. Adyen supports fresh-card Sessions requests on Adyen hosts only. Use public dummy card fields, not vault aliases. The unique armed preparation is associated with the subsequent eligible request from this browser and declared merchant origin; competing preparations are rejected.
+      required:
+      - browser_id
+      - merchant_origin
+      - environment
+      type: object
+    CredentialVaultFieldUpdate:
+      additionalProperties: false
+      description: Set exactly one of value or encrypted_value. Use value unless the update comes from your own credential collection web app that encrypts values in the browser; see encrypted_value.
+      maxProperties: 1
+      minProperties: 1
+      properties:
+        encrypted_value:
+          $ref: '#/components/schemas/CredentialVaultEncryptedValue'
+        value:
+          description: Replacement value (at most 16 KiB in UTF-8 bytes), or null or an empty string to immediately clear the stored value. Clearing a required form-supported field reopens collection; clearing an optional field does not prevent readiness. Values must satisfy the declared field type. For totp, value is the generator seed, never a current code. For passkey, value is the JSON-encoded CXF passkey object. Clearing a required totp or passkey field returns 400 because it cannot be collected in a form.
+          maxLength: 16384
+          type:
+          - string
+          - 'null'
+      type: object
+    CredentialVaultItemAction:
+      discriminator:
+        mapping:
+          1password_access_approval: '#/components/schemas/OnePasswordAccessApprovalAction'
+          collect: '#/components/schemas/CredentialCollectionAction'
+        propertyName: name
+      oneOf:
+      - $ref: '#/components/schemas/CredentialCollectionAction'
+      - $ref: '#/components/schemas/OnePasswordAccessApprovalAction'
+    OnePasswordOAuthAuthorization:
+      additionalProperties: false
+      properties:
+        client:
+          $ref: '#/components/schemas/KernelManagedOAuthClient'
+        method:
+          enum:
+          - oauth
+          type: string
+      required:
+      - method
+      - client
+      type: object
+    VaultItemMasks:
+      additionalProperties:
+        type: string
+      properties:
+        brand:
+          type: string
+        last4:
+          maxLength: 4
+          minLength: 4
+          type: string
+        token_last4:
+          description: Last four digits of the network token presented to the merchant.
+          maxLength: 4
+          minLength: 4
+          type: string
+      type: object
+    VaultAgentCardProviderConfig:
+      additionalProperties: false
+      description: Response schema for an AgentCard configuration, without secret credentials. Kernel generates the ID and timestamps and introspects test_mode from the credentials. Configuration creation uses VaultAgentCardProviderConfigRequest.
+      properties:
+        client_id:
+          type: string
+        created_at:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        name:
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        provider:
+          enum:
+          - agentcard
+          type: string
+        test_mode:
+          description: Introspected mode of the selected credential; true means sandbox objects.
+          readOnly: true
+          type: boolean
+        updated_at:
+          format: date-time
+          readOnly: true
+          type: string
+      required:
+      - id
+      - name
+      - provider
+      - client_id
+      - test_mode
+      - created_at
+      - updated_at
+      type: object
+    OnePasswordCredentialAccountState:
+      additionalProperties: false
+      properties:
+        provider:
+          enum:
+          - 1password
+          type: string
+        status:
+          enum:
+          - pending_authorization
+          - connected
+          - reconnect_required
+          - declined
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    CardVaultItemRequest:
+      additionalProperties: false
+      properties:
+        spec:
+          $ref: '#/components/schemas/CardVaultItemSpec'
+        type:
+          enum:
+          - card
+          type: string
+      required:
+      - type
+      - spec
+      type: object
+    ManagedAuthCredentialVaultItemSpecInput:
+      additionalProperties: false
+      description: 'A credential backed by a managed auth connection. The item stores no values:
+
+        it reads the connection''s saved credential at fill time, so updates made
+
+        through managed auth apply immediately. The connection must be in the vault''s
+
+        project and hold a saved Kernel credential. The check is the saved credential,
+
+        not connection status: a connection that needs re-authentication qualifies,
+
+        and an authenticated one without a saved credential does not. Returns 404 for
+
+        an unknown connection, and 409 when the connection is in another project, has
+
+        no saved credential yet, or uses an external credential provider such as
+
+        1Password. No collection form is offered; managed auth collects the login.
+
+        '
+      properties:
+        connection_id:
+          description: ID of the managed auth connection whose saved credential this item reads. List connections with `GET /auth/connections`.
+          minLength: 1
+          type: string
+        description:
+          description: Optional display text for the item, such as the site or service name. Set at creation and cannot be changed later; repeating the request with a different description returns 409. At most 16 KiB in UTF-8 bytes.
+          maxLength: 16384
+          type: string
+        provider:
+          enum:
+          - managed_auth
+          type: string
+      required:
+      - provider
+      - connection_id
+      type: object
+    CardVaultItemState:
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/AgentCardCardState'
+          kernel: '#/components/schemas/KernelCardState'
+          link: '#/components/schemas/LinkCardState'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/LinkCardState'
+      - $ref: '#/components/schemas/AgentCardCardState'
+      - $ref: '#/components/schemas/KernelCardState'
+    VaultPaymentMethodCapability:
+      additionalProperties: false
+      properties:
+        eligible:
+          type: boolean
+        reasons:
+          items:
+            type: string
+          type: array
+      required:
+      - eligible
+      - reasons
+      type: object
+    CredentialVaultItemSpecInput:
+      discriminator:
+        mapping:
+          1password: '#/components/schemas/OnePasswordCredentialVaultItemSpecInput'
+          kernel: '#/components/schemas/KernelCredentialVaultItemSpecInput'
+          managed_auth: '#/components/schemas/ManagedAuthCredentialVaultItemSpecInput'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/KernelCredentialVaultItemSpecInput'
+      - $ref: '#/components/schemas/OnePasswordCredentialVaultItemSpecInput'
+      - $ref: '#/components/schemas/ManagedAuthCredentialVaultItemSpecInput'
+    VaultFillFieldResult:
+      additionalProperties: false
+      properties:
+        error_code:
+          description: Present only for failed or unknown fields. Never includes secret values, DOM content, or raw browser errors.
+          enum:
+          - target_changed
+          - element_not_found
+          - ambiguous_selector
+          - element_not_editable
+          - option_not_found
+          - timeout
+          - execution_failed
+          type: string
+        index:
+          description: Zero-based index into the request fields array.
+          maximum: 31
+          minimum: 0
+          type: integer
+        status:
+          description: Filled means the fill action completed, not that the website retained or accepted the value.
+          enum:
+          - filled
+          - failed
+          - not_attempted
+          - unknown
+          type: string
+      required:
+      - index
+      - status
+      type: object
+    PrepareCheckoutVaultItemOperationRequest:
+      additionalProperties: false
+      description: Prepare an unused AgentCard card for a supported checkout. Deliver the returned approval URL and keep the approval page open. Poll the item until ready_to_submit, then submit native Pay before preparation.expires_at. Readiness lasts at most 30 seconds. Unused preparations expire automatically. Preparations are single-use even after failure or expiry; do not automatically retry and reconcile uncertain outcomes with the merchant.
+      properties:
+        checkout:
+          $ref: '#/components/schemas/VaultCheckoutContext'
+        type:
+          enum:
+          - prepare_checkout
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      - checkout
+      type: object
+    CredentialVaultItem:
+      additionalProperties: false
+      properties:
+        action:
+          $ref: '#/components/schemas/CredentialVaultItemAction'
+        available_expansions:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemExpansion'
+          maxItems: 0
+          type: array
+        available_operations:
+          description: Kernel credentials advertise collect and fill when eligible. 1Password credentials advertise 1pw_create_access_request until a request is made, 1pw_access_request_status while its approval is pending, and 1pw_fill after access is granted. Managed auth credentials advertise fill while ready and nothing otherwise.
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemOperation'
+          type: array
+        created_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          description: Immutable item key assigned when the item is created.
+          type: string
+        spec:
+          $ref: '#/components/schemas/CredentialVaultItemSpec'
+        state:
+          $ref: '#/components/schemas/CredentialVaultItemState'
+        type:
+          enum:
+          - credential
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        version:
+          description: Starts at 1 and increments on PATCH and successful hosted submission, but not collection-link renewal. Managed auth credentials stay at 1; changes to the underlying credential are read at fill time and do not change the version.
+          minimum: 1
+          type: integer
+      required:
+      - id
+      - key
+      - type
+      - version
+      - spec
+      - state
+      - available_operations
+      - available_expansions
+      - created_at
+      - updated_at
+      type: object
+    OnePasswordCredentialVaultItemSpec:
+      additionalProperties: false
+      description: Stored-token credentials omit account and never return access_token or integration_key.
+      properties:
+        access_token_expires_at:
+          description: Customer-supplied expiry metadata, if provided.
+          format: date-time
+          type: string
+        account:
+          type: string
+        provider:
+          enum:
+          - 1password
+          type: string
+        requests:
+          $ref: '#/components/schemas/OnePasswordCredentialRequests'
+      required:
+      - provider
+      - requests
+      type: object
+    Vault:
+      additionalProperties: false
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        name:
+          description: Immutable name assigned when the vault is created.
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      type: object
+    VaultItemOperationType:
+      enum:
+      - authorize
+      - restart_verification
+      - confirm_transaction
+      - collect
+      - prepare_checkout
+      - fill
+      - 1pw_create_access_request
+      - 1pw_access_request_status
+      - 1pw_fill
+      - 1pw_recover
+      - 1pw_update_access_token
+      - webmcp_invoke
+      type: string
+    AvailableVaultItemExpansion:
+      additionalProperties: false
+      description: Live data that can currently be requested by passing its type to the item GET expand parameter.
+      properties:
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/VaultItemExpansionType'
+      required:
+      - type
+      - description
+      type: object
+    LinkTotal:
+      additionalProperties: false
+      properties:
+        amount:
+          description: Total amount in minor currency units.
+          type: integer
+        display_text:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - display_text
+      - amount
+      type: object
+    VaultEncryptionPublicJWK:
+      additionalProperties: false
+      description: P-256 public key in JWK form.
+      properties:
+        crv:
+          enum:
+          - P-256
+          type: string
+        kty:
+          enum:
+          - EC
+          type: string
+        'true':
+          description: Base64url-encoded y coordinate.
+          type: string
+        x:
+          description: Base64url-encoded x coordinate.
+          type: string
+      required:
+      - kty
+      - crv
+      - x
+      - true
+      type: object
+    CardVaultItemSpec:
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/AgentCardCardVaultItemSpec'
+          kernel: '#/components/schemas/KernelCardVaultItemSpec'
+          link: '#/components/schemas/LinkCardVaultItemSpec'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/LinkCardVaultItemSpec'
+      - $ref: '#/components/schemas/AgentCardCardVaultItemSpec'
+      - $ref: '#/components/schemas/KernelCardVaultItemSpec'
+    CredentialVaultFieldType:
+      description: 'Text, email, and password have form inputs; totp and passkey do not and are omitted from
+
+        both Kernel-hosted and customer React forms. Password, totp, and passkey must be sensitive.
+
+        A totp value is an RFC 4648 Base32 generator seed (case-insensitive, optional
+
+        trailing padding), not an otpauth URI or current code. Reject invalid or empty
+
+        decoded seeds. Browser fill generates an RFC 6238 code at execution time using
+
+        HMAC-SHA1, 6 digits, and a 30-second period. Preserve leading zeros; never fill
+
+        the seed. Custom algorithms, digits, periods, and form enrollment are unsupported.
+
+        A passkey value is a JSON-encoded FIDO Credential Exchange Format passkey object
+
+        with unpadded base64url `credentialId`, `userHandle` (at most 64 bytes), and `key`
+
+        (a PKCS#8 ECDSA P-256 private key), a lowercase `rpId` domain, and optional
+
+        `username` and `userDisplayName`. Other CXF members are ignored. Passkeys are never
+
+        filled into pages.
+
+        '
+      enum:
+      - text
+      - email
+      - password
+      - totp
+      - passkey
+      type: string
+    LinkOAuthAuthorization:
+      additionalProperties: false
+      properties:
+        client:
+          $ref: '#/components/schemas/LinkOAuthClient'
+        method:
+          enum:
+          - oauth
+          type: string
+      required:
+      - method
+      - client
+      type: object
+    VaultAgentCardProviderConfigRequest:
+      additionalProperties: false
+      description: Register application credentials for AgentCard wallet enrollment and checkout approvals. Kernel obtains application access tokens using client_credentials.
+      properties:
+        credentials:
+          $ref: '#/components/schemas/VaultAgentCardProviderClientCredentials'
+          writeOnly: true
+        name:
+          description: Unique within the organization.
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        provider:
+          enum:
+          - agentcard
+          type: string
+      required:
+      - name
+      - provider
+      - credentials
+      type: object
+    AgentCardWalletVaultItemSpec:
+      additionalProperties: false
+      description: 'AgentCard wallet. Omit provider_config to use Kernel-managed credentials, or select a customer-owned configuration. Mode (sandbox vs live) is determined by the selected credential; there is no per-item test flag. Without user_id, creation returns a hosted enrollment action and Kernel polls until the user connects. With a customer-owned provider_config, user_id imports an existing connection after verifying access with the selected credentials in their sandbox or live mode; no hosted enrollment is needed, even if the connected user has no stored cards. With Kernel-managed credentials, user_id may only reference a user already enrolled by a wallet in this organization under the same configuration. The user and configuration bindings cannot be changed after creation. Import validation is read-only and runs before creation: a failed validation leaves no wallet or reserved key, so the user_id can be corrected and retried. Concurrent imports of the same key may both validate, but create at most one wallet and connected event.'
+      properties:
+        provider:
+          enum:
+          - agentcard
+          type: string
+        provider_config:
+          $ref: '#/components/schemas/VaultProviderConfigReference'
+          description: Select an AgentCard configuration. The wallet's configuration cannot be changed after creation.
+        user_id:
+          pattern: ^usr_[A-Za-z0-9_]+$
+          type: string
+      required:
+      - provider
+      type: object
+    VaultProviderConfig:
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/VaultAgentCardProviderConfig'
+          link: '#/components/schemas/VaultLinkProviderConfig'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/VaultLinkProviderConfig'
+      - $ref: '#/components/schemas/VaultAgentCardProviderConfig'
+    FillVaultItemOperationRequest:
+      additionalProperties: false
+      description: 'Use a vault item in a browser session, for example to fill a login or
+
+        payment form. Only invoke when the item advertises `fill`; the advertised
+
+        operation describes the inputs that item needs. Requires `browser_id` and
+
+        usually `page_url`; some items also require `fields`. Browser and vault must
+
+        belong to the same project. Kernel checks access and allowed destinations
+
+        before filling; providing a page URL does not authorize a destination.
+
+
+        Fill never submits forms or clicks buttons, though input and change events
+
+        may trigger site behavior. It is not atomic: completed steps are not rolled
+
+        back. Fill does not consume the item, so a failed or indeterminate fill is
+
+        safe to retry. A retry right after an indeterminate fill may wait up to 15
+
+        seconds for the earlier attempt''s browser lock to expire.
+
+
+        Secret values are never returned or included in operation logs, traces,
+
+        audit events, or error details. This does not prevent an agent with
+
+        unrestricted browser access from reading values from the page or other
+
+        browser observation surfaces.
+
+        '
+      example:
+        browser_id: browser-session-id
+        fields:
+        - field: number
+          selector: '#card-number'
+        - field: exp_month
+          selector: '#expiry-month'
+        - field: exp_year
+          selector: '#expiry-year'
+        - field: cvc
+          selector: '#security-code'
+        page_url: https://shop.example/checkout
+        type: fill
+      properties:
+        browser_id:
+          description: Browser session ID, not a reusable browser name.
+          minLength: 1
+          type: string
+        fields:
+          description: 'Field bindings, when the item''s advertised fill operation requires them.
+
+            Each selector is searched in the main frame and all descendant frames and
+
+            must resolve to exactly one editable input or select, matched directly or
+
+            through a containing element; zero or multiple candidates fail, and no two
+
+            bindings may resolve to the same element. Select elements match an option
+
+            by value, not label. All bindings are validated before any write, then
+
+            filled in request order, stopping at the first failure. If the page
+
+            navigates or a target disappears, fill stops rather than choosing another
+
+            page or element.
+
+            '
+          items:
+            $ref: '#/components/schemas/VaultFillField'
+          maxItems: 32
+          minItems: 1
+          type: array
+          x-go-type-skip-optional-pointer: true
+        page_url:
+          description: Exact current top-level page URL, including path, query, and fragment. Must match exactly one open page in the browser; zero or multiple matches fail. No prefix or glob matching. When an item allows omitting it, the browser must have exactly one open page.
+          format: uri
+          pattern: ^\S+$
+          type: string
+          x-go-type-skip-optional-pointer: true
+        timeout_ms:
+          default: 30000
+          description: Total operation deadline in milliseconds, not a per-field timeout.
+          maximum: 30000
+          minimum: 1
+          type: integer
+        type:
+          enum:
+          - fill
+          type: string
+      required:
+      - type
+      - browser_id
+      type: object
+    WalletVaultItemSpec:
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/AgentCardWalletVaultItemSpec'
+          kernel: '#/components/schemas/KernelWalletVaultItemSpec'
+          link: '#/components/schemas/LinkWalletVaultItemSpec'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/LinkWalletVaultItemSpec'
+      - $ref: '#/components/schemas/AgentCardWalletVaultItemSpec'
+      - $ref: '#/components/schemas/KernelWalletVaultItemSpec'
+    KernelCredentialVaultItemSpec:
+      additionalProperties: false
+      properties:
+        description:
+          description: Recognizable site or service name displayed verbatim as the form title, without suffixes such as sign-in credentials. Display text only, not an enforced destination policy.
+          maxLength: 16384
+          type: string
+        fields:
+          description: Ordered field definitions rendered in this order by credential collection forms.
+          items:
+            $ref: '#/components/schemas/CredentialVaultFieldDefinition'
+          maxItems: 32
+          minItems: 1
+          type: array
+        provider:
+          enum:
+          - kernel
+          type: string
+      required:
+      - provider
+      - fields
+      type: object
+    VaultRequest:
+      additionalProperties: false
+      properties:
+        name:
+          description: Immutable name used to create or retrieve the vault.
+          maxLength: 255
+          minLength: 1
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+      required:
+      - name
+      type: object
+    PushApprovalAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - push_approval
+          type: string
+      required:
+      - name
+      type: object
+    VaultFillField:
+      additionalProperties: false
+      properties:
+        field:
+          description: A credential field name from the item's declared fields (Kernel) or state.fields from a single-item read (managed auth), or a supported card field. Unset credential fields cannot be filled.
+          minLength: 1
+          type: string
+        format:
+          description: Required only for a card's combined expiration field. Forbidden for other card fields and all credential fields.
+          enum:
+          - MM/YY
+          - MM/YYYY
+          type: string
+        selector:
+          minLength: 1
+          type: string
+      required:
+      - field
+      - selector
+      type: object
+    AgentCardCardVaultItemSpec:
+      additionalProperties: false
+      description: AgentCard reusable live payment card. Test-mode card creation is not supported. Each checkout creates an authorization for spec.merchant / spec.amount that the cardholder approves, unless AgentCard runs it under one of the cardholder's autopilot rules. The card stays ready after each authorization.
+      properties:
+        amount:
+          description: Integer amount in minor currency units.
+          format: int64
+          maximum: 9007199254740991
+          minimum: 1
+          type: integer
+        card_id:
+          description: Opaque card ID returned by AgentCard for a card in the connected wallet. Pass it through unchanged without assuming a prefix or format. Omitted, the cardholder picks on the approval screen.
+          maxLength: 256
+          minLength: 1
+          type: string
+        checkout_origin:
+          description: 'Origin of the top-level checkout page, such as https://shop.example.com: https, a lowercase host, a port only when it is not 443, and no path. http is accepted only for localhost test pages. Checkouts without a preparation send it to AgentCard, which uses it to match the cardholder''s autopilot rules; prepared checkouts send the preparation''s merchant_origin instead. Kernel sends the declared value and does not compare it with the page the browser has open. Omitted, those checkouts ask the cardholder to approve. Card updates replace the whole spec, so an update that omits it removes it.'
+          minLength: 1
+          type: string
+        currency:
+          maxLength: 3
+          minLength: 3
+          pattern: ^[A-Za-z]{3}$
+          type: string
+        merchant:
+          description: Merchant name shown on the cardholder's approval screen.
+          maxLength: 120
+          minLength: 1
+          type: string
+        provider:
+          enum:
+          - agentcard
+          type: string
+        wallet:
+          description: Wallet item key used to authorize checkouts.
+          type: string
+      required:
+      - provider
+      - wallet
+      - merchant
+      - amount
+      - currency
+      type: object
+    WalletVaultItemState:
+      discriminator:
+        mapping:
+          agentcard: '#/components/schemas/AgentCardWalletState'
+          kernel: '#/components/schemas/KernelWalletState'
+          link: '#/components/schemas/LinkWalletState'
+        propertyName: provider
+      oneOf:
+      - $ref: '#/components/schemas/LinkWalletState'
+      - $ref: '#/components/schemas/AgentCardWalletState'
+      - $ref: '#/components/schemas/KernelWalletState'
+    OnePasswordCredentialVaultItemState:
+      additionalProperties: false
+      properties:
+        access_request:
+          $ref: '#/components/schemas/OnePasswordAccessRequestState'
+        access_request_id:
+          description: Opaque request ID returned by the 1Password broker after a successful createAccessRequest call.
+          type: string
+        provider:
+          enum:
+          - 1password
+          type: string
+        status:
+          enum:
+          - pending_authorization
+          - ready
+          - declined
+          - failed
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    VaultItem:
+      discriminator:
+        mapping:
+          card: '#/components/schemas/CardVaultItem'
+          credential: '#/components/schemas/CredentialVaultItem'
+          credential_account: '#/components/schemas/CredentialAccountVaultItem'
+          wallet: '#/components/schemas/WalletVaultItem'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/WalletVaultItem'
+      - $ref: '#/components/schemas/CardVaultItem'
+      - $ref: '#/components/schemas/CredentialAccountVaultItem'
+      - $ref: '#/components/schemas/CredentialVaultItem'
+    CardVaultItemUpdateRequest:
+      additionalProperties: false
+      properties:
+        spec:
+          $ref: '#/components/schemas/CardVaultItemSpec'
+        type:
+          enum:
+          - card
+          type: string
+          x-go-type-skip-optional-pointer: true
+      required:
+      - spec
+      type: object
+    KernelWalletVaultItemSpec:
+      additionalProperties: false
+      description: 'One card stored with Kernel-managed credentials. Creation returns a card_enrollment action: the cardholder enters the card and their email on a Kernel-hosted page, and the wallet connects once the card is stored. Kernel then enrolls it for an agentic network token when the issuer supports it. The card number never reaches Kernel. The connected wallet''s payment_methods expansion lists the card; capabilities.single_use_card.eligible is false, with a network_token_* reason, until the card has a network token, and authorize returns 400 for such a card unless Kernel supports checkout delivery without a network token for that card. In that case, fill types the checkout details. Visa purchases require the cardholder to complete a spend_approval action before Kernel issues a one-time code; Mastercard purchases need no hosted approval.'
+      properties:
+        provider:
+          enum:
+          - kernel
+          type: string
+      required:
+      - provider
+      type: object
+    VaultAgentCardProviderClientCredentials:
+      $ref: '#/components/schemas/VaultOAuthClientCredentials'
+    VaultPaymentMethod:
+      additionalProperties: false
+      properties:
+        capabilities:
+          $ref: '#/components/schemas/VaultPaymentMethodCapabilities'
+        display:
+          $ref: '#/components/schemas/VaultPaymentMethodDisplay'
+        id:
+          type: string
+        is_default:
+          type: boolean
+        provider:
+          description: Provider that issued this payment-method ID.
+          type: string
+        type:
+          description: Provider-neutral payment-method type normalized to lowercase.
+          type: string
+      required:
+      - id
+      - provider
+      - type
+      - is_default
+      - display
+      - capabilities
+      type: object
+    CredentialAccountVaultItem:
+      additionalProperties: false
+      properties:
+        action:
+          $ref: '#/components/schemas/OnePasswordOAuthAction'
+        available_expansions:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemExpansion'
+          maxItems: 0
+          type: array
+        available_operations:
+          description: Advertises 1pw_recover when Kernel can recover a failed account link. Recovery is unavailable while authorization is pending or after the connection has already been reset.
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemOperation'
+          maxItems: 1
+          type: array
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          description: Immutable item key assigned when the item is created.
+          type: string
+        spec:
+          $ref: '#/components/schemas/OnePasswordCredentialAccountSpec'
+        state:
+          $ref: '#/components/schemas/OnePasswordCredentialAccountState'
+        type:
+          enum:
+          - credential_account
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - key
+      - type
+      - spec
+      - state
+      - available_operations
+      - available_expansions
+      - created_at
+      - updated_at
+      type: object
+    LinkWalletVaultItemRequestSpec:
+      additionalProperties: false
+      properties:
+        authorization:
+          oneOf:
+          - $ref: '#/components/schemas/KernelManagedLinkAuthorizationInput'
+          - $ref: '#/components/schemas/ImportedLinkAuthorizationInput'
+        provider:
+          enum:
+          - link
+          type: string
+      required:
+      - provider
+      - authorization
+      type: object
+    KernelCardVaultItemSpec:
+      additionalProperties: false
+      description: 'One live purchase with a Kernel-enrolled card. Authorization obtains an agentic network token number, expiry and one-time 3-digit code. They are stored encrypted for the fill operation, which types them only on merchant_url''s origin; the merchant''s own checkout submits the payment. The one-time code is valid until the item''s expires_at; fill and submit checkout before then. Mastercard purchases need no cardholder approval. A Visa purchase returns a spend_approval action: the cardholder approves it with a Visa passkey, and Kernel registers a Visa intent for one transaction up to the amount before issuing the code. For supported cards whose network cannot be enrolled for agentic tokens, authorize prepares checkout details without issuing a one-time code. The card can be filled into one checkout before its expires_at, one hour after authorization. Fill types those details on merchant_url''s origin. The amount, merchant_url and merchant_country are recorded but do not restrict payment requests sent by the browser. Card updates are not supported; delete and create a new item instead.'
+      properties:
+        amount:
+          description: Integer amount in minor currency units (at most 1000000), bound to the one-time code.
+          format: int64
+          maximum: 1000000
+          minimum: 1
+          type: integer
+        currency:
+          description: 'ISO 4217 code. Supported: aud, brl, cad, chf, czk, dkk, eur, gbp, hkd, inr, jpy, krw, mxn, nok, nzd, pln, sek, sgd, usd, zar.'
+          maxLength: 3
+          minLength: 3
+          pattern: ^[A-Za-z]{3}$
+          type: string
+        merchant_category:
+          description: Actual merchant category when known. Omit rather than invent a category.
+          maxLength: 255
+          minLength: 1
+          type: string
+        merchant_category_code:
+          description: Actual merchant MCC when known. Omit rather than invent a code. 0000 is not accepted.
+          pattern: ^[0-9]{4}$
+          type: string
+        merchant_country:
+          description: The merchant's ISO 3166-1 alpha-2 country code. Required for Visa cards, whose one-time code is issued for the merchant's country.
+          maxLength: 2
+          minLength: 2
+          pattern: ^[A-Za-z]{2}$
+          type: string
+        merchant_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        merchant_url:
+          description: Merchant checkout URL. Fill is allowed only on this URL's origin.
+          format: uri
+          pattern: ^https://
+          type: string
+        provider:
+          enum:
+          - kernel
+          type: string
+        wallet:
+          description: Key of the Kernel wallet item whose enrolled card pays.
+          type: string
+      required:
+      - provider
+      - wallet
+      - amount
+      - currency
+      - merchant_name
+      - merchant_url
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    KernelCredentialVaultItemSpecInput:
+      additionalProperties: false
+      description: Credential fields are for login and other non-payment credentials. Do not store, collect, or fill credit card data in credential items. Use wallet and card item types for credit cards and payment checkout instead. Field order is preserved in the user-facing collection form, so list fields in the same top-to-bottom order as the website.
+      properties:
+        description:
+          description: The site's recognizable display name, used verbatim as the user-facing form title (for example, Hacker News). Use only the site or service name; do not append sign-in, login, credentials, or task instructions. This is display text, not an enforced destination policy. At most 16 KiB in UTF-8 bytes.
+          maxLength: 16384
+          type: string
+        fields:
+          description: Ordered field definitions. Use the website's top-to-bottom field order; the collection form renders this order unchanged.
+          items:
+            $ref: '#/components/schemas/CredentialVaultFieldInput'
+          maxItems: 32
+          minItems: 1
+          type: array
+        provider:
+          enum:
+          - kernel
+          type: string
+      required:
+      - provider
+      - fields
+      type: object
+    CredentialVaultFieldDefinitionInput:
+      additionalProperties: false
+      description: A field definition without a value. Field updates add fields with this shape and set their values in `fields`.
+      properties:
+        label:
+          description: Optional human-readable display label. It is returned as non-secret metadata and never affects value keys, updates, or browser fills. Use single-line, trimmed display text without control or formatting characters. The server enforces a 128-byte UTF-8 limit.
+          maxLength: 128
+          minLength: 1
+          pattern: ^\S(?:.*\S)?$
+          type: string
+        name:
+          description: Unique stable field name used to key values, updates, and browser fills.
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,63}$
+          type: string
+        required:
+          default: true
+          type: boolean
+        sensitive:
+          default: true
+          description: Set false explicitly for ordinary usernames, email addresses, and other non-secret identifiers. Reserve true for secrets such as passwords, API tokens, and TOTP seeds. Password, totp, and passkey fields must be true. Omission defaults to true for safety; do not rely on that default for every field. False permits API reads and form prefilling.
+          type: boolean
+        type:
+          $ref: '#/components/schemas/CredentialVaultFieldType'
+      required:
+      - name
+      - type
+      type: object
+    VaultEncryptionKey:
+      additionalProperties: false
+      description: Public key for encrypted_value on credential fields. Use this only if you run your own credential collection web app and want values encrypted in the browser, sent to your backend still encrypted, and forwarded to Kernel's API still encrypted. In every other case, including server-side code that already holds the plaintext, use value. Each vault has its own key; a value encrypted for one vault is rejected by every other vault. The key is created on first request and stays the same for the vault's lifetime, so it may be cached.
+      properties:
+        alg:
+          description: JWE key management algorithm.
+          enum:
+          - ECDH-ES
+          type: string
+        enc:
+          description: JWE content encryption algorithm.
+          enum:
+          - A256GCM
+          type: string
+        jwk:
+          $ref: '#/components/schemas/VaultEncryptionPublicJWK'
+        kid:
+          description: Key ID. Set it as the kid protected header of every encrypted_value.
+          type: string
+      required:
+      - kid
+      - alg
+      - enc
+      - jwk
+      type: object
+    VaultItemAction:
+      discriminator:
+        mapping:
+          1password_oauth: '#/components/schemas/OnePasswordOAuthAction'
+          card_enrollment: '#/components/schemas/CardEnrollmentAction'
+          collect: '#/components/schemas/CollectAction'
+          embedded_ceremony: '#/components/schemas/EmbeddedCeremonyAction'
+          link_oauth: '#/components/schemas/LinkOAuthAction'
+          mfa: '#/components/schemas/MfaAction'
+          push_approval: '#/components/schemas/PushApprovalAction'
+          spend_approval: '#/components/schemas/SpendApprovalAction'
+        propertyName: name
+      oneOf:
+      - $ref: '#/components/schemas/LinkOAuthAction'
+      - $ref: '#/components/schemas/OnePasswordOAuthAction'
+      - $ref: '#/components/schemas/SpendApprovalAction'
+      - $ref: '#/components/schemas/PushApprovalAction'
+      - $ref: '#/components/schemas/CollectAction'
+      - $ref: '#/components/schemas/MfaAction'
+      - $ref: '#/components/schemas/EmbeddedCeremonyAction'
+      - $ref: '#/components/schemas/CardEnrollmentAction'
+    VaultItemOperationResponse:
+      description: Authorization and preparation return the existing item shape. Fill returns a value-free result; WebMCP invocation returns the tool's output. Neither persists transient outcomes on the item.
+      oneOf:
+      - $ref: '#/components/schemas/VaultItem'
+      - $ref: '#/components/schemas/FillVaultItemOperationResult'
+      - $ref: '#/components/schemas/OnePasswordFillVaultItemOperationResult'
+      - $ref: '#/components/schemas/WebMCPInvokeVaultItemOperationResult'
+    RestartVerificationVaultItemOperationRequest:
+      additionalProperties: false
+      description: Explicitly prepare a fresh local verification session for the same Kernel Visa purchase and connected wallet, only when restart_verification is advertised. Kernel must have durable proof of an initial attestation failure before intent dispatch. Replaces the spend_approval capability and discards session-bound verification data without calling the provider or granting spend consent. The cardholder must use the new link, verify again and explicitly approve the purchase. Unknown intent creation, legacy unclassified recovery, enrollment completion, issuance and confirmation cannot restart. Do not automatically retry this operation.
+      properties:
+        type:
+          enum:
+          - restart_verification
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      type: object
+    AgentCardCheckoutAuthorization:
+      additionalProperties: false
+      description: The in-flight or most recent checkout authorization. Present while a checkout is pending approval and after it settles.
+      properties:
+        actual_cents:
+          format: int64
+          type: integer
+        amount:
+          description: Display amount shown on the approval screen.
+          type: string
+        amount_authority:
+          enum:
+          - display_only
+          - stripe_payment_intent
+          type: string
+        amount_cents:
+          format: int64
+          type: integer
+        amount_verified:
+          type: boolean
+        approval_url:
+          format: uri
+          type: string
+        browser_id:
+          description: Browser session that submitted the checkout.
+          type: string
+        charged_amount_cents:
+          format: int64
+          type: integer
+        charged_currency:
+          type: string
+        charged_kind:
+          enum:
+          - captured
+          - authorized
+          - none
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        currency:
+          type: string
+        expected_cents:
+          format: int64
+          type: integer
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        merchant:
+          type: string
+        psp:
+          type: string
+        psp_error_code:
+          type: string
+        reason:
+          type: string
+        replay_attempted:
+          type: boolean
+        replay_delivered:
+          description: Whether the processor response was delivered to the browser.
+          type: boolean
+        replay_status:
+          description: HTTP status of the replayed processor response.
+          type: integer
+        status:
+          enum:
+          - awaiting_approval
+          - approved
+          - declined
+          - expired
+          type: string
+      required:
+      - id
+      - status
+      - psp
+      - merchant
+      - amount_cents
+      - currency
+      - created_at
+      type: object
+    LinkWalletTokenInput:
+      additionalProperties: false
+      description: Send the token pair from your backend. Both tokens must be from the same Link grant under the referenced client. Supply a currently valid access token. Kernel refreshes when needed after import and uses the expiry returned by Link for subsequent tokens. Tokens are never returned in wallet responses, events, or logs.
+      properties:
+        access_token:
+          minLength: 1
+          type: string
+          writeOnly: true
+        refresh_token:
+          minLength: 1
+          type: string
+          writeOnly: true
+      required:
+      - access_token
+      - refresh_token
+      type: object
+    OnePasswordCredentialRequestEntry:
+      additionalProperties: false
+      properties:
+        keywords:
+          items:
+            maxLength: 50
+            minLength: 1
+            type: string
+          maxItems: 5
+          minItems: 1
+          type: array
+        parameters:
+          additionalProperties: false
+          properties:
+            website:
+              format: uri
+              maxLength: 2083
+              pattern: ^https://
+              type: string
+          required:
+          - website
+          type: object
+        reason:
+          maxLength: 100
+          type: string
+        type:
+          description: Must be login.
+          type: string
+      required:
+      - type
+      - parameters
+      type: object
+    VaultWebMCPBinding:
+      additionalProperties: false
+      properties:
+        field:
+          description: A declared, populated credential field or supported card field. A TOTP field supplies a fresh code, never its seed. Passkey fields cannot be filled.
+          minLength: 1
+          type: string
+        format:
+          description: Required for card expiration (MM/YY or MM/YYYY), forbidden for other fields. Invalid formats are rejected before invocation.
+          type: string
+        input_path:
+          description: RFC 6901 JSON Pointer to an existing null value in input. Object keys are exact; array indices must be canonical and in range. No root or array-append paths. Each path and each field may occur only once.
+          minLength: 1
+          type: string
+      required:
+      - field
+      - input_path
+      type: object
+    OnePasswordOAuthAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - 1password_oauth
+          type: string
+        url:
+          description: 1Password-hosted OAuth authorization URL for the human to open.
+          format: uri
+          type: string
+      required:
+      - name
+      - url
+      type: object
+    MfaAction:
+      additionalProperties: false
+      properties:
+        name:
+          enum:
+          - mfa
+          type: string
+      required:
+      - name
+      type: object
+    CollectVaultItemOperationRequest:
+      additionalProperties: false
+      description: 'Return the credential item with its collection action. Supported for ready
+
+        and pending_collection credential items. Always render the same form from
+
+        every form-supported field; totp and passkey fields have no form input and are omitted.
+
+        No caller-selected field subsets or form overrides are accepted.
+
+        Reuse an active Kernel-hosted session or renew an expired session atomically.
+
+        Customer-hosted forms use their own backend and ordinary item GET/PATCH. Opening
+
+        the form does not clear values or change readiness or item version.
+
+        To observe edits on a ready item, record its version and poll GET without
+
+        wait until the version changes, then reconcile the returned state. Version
+
+        changes may also come from PATCH; they do not identify a particular form
+
+        submission. Customer-hosted apps use their own submission callback, including
+
+        for unchanged forms. The wait parameter waits for readiness, not edits.
+
+        '
+      properties:
+        type:
+          enum:
+          - collect
+          type: string
+      required:
+      - type
+      type: object
+    ManagedAuthCredentialVaultItemSpec:
+      additionalProperties: false
+      properties:
+        connection_id:
+          description: ID of the managed auth connection whose saved credential this item reads. List connections with `GET /auth/connections`.
+          type: string
+        description:
+          description: Display text supplied when the item was created. Omitted when none was given.
+          maxLength: 16384
+          type: string
+        provider:
+          enum:
+          - managed_auth
+          type: string
+      required:
+      - provider
+      - connection_id
+      type: object
+    OnePasswordCredentialAccountSpec:
+      additionalProperties: false
+      properties:
+        authorization:
+          $ref: '#/components/schemas/OnePasswordOAuthAuthorization'
+        provider:
+          enum:
+          - 1password
+          type: string
+      required:
+      - provider
+      - authorization
+      type: object
+    WalletVaultItemRequest:
+      additionalProperties: false
+      properties:
+        spec:
+          discriminator:
+            mapping:
+              agentcard: '#/components/schemas/AgentCardWalletVaultItemSpec'
+              kernel: '#/components/schemas/KernelWalletVaultItemSpec'
+              link: '#/components/schemas/LinkWalletVaultItemRequestSpec'
+            propertyName: provider
+          oneOf:
+          - $ref: '#/components/schemas/LinkWalletVaultItemRequestSpec'
+          - $ref: '#/components/schemas/AgentCardWalletVaultItemSpec'
+          - $ref: '#/components/schemas/KernelWalletVaultItemSpec'
+        type:
+          enum:
+          - wallet
+          type: string
+      required:
+      - type
+      - spec
+      type: object
+    VaultLinkProviderClientCredentials:
+      additionalProperties: false
+      properties:
+        client_id:
+          minLength: 1
+          type: string
+        client_secret:
+          minLength: 1
+          type: string
+          writeOnly: true
+        publishable_key:
+          description: Stripe publishable key for the account that owns the Link OAuth client. Link requires it as the bearer credential when Kernel refreshes or revokes imported wallet grants; without it, those wallets stop working when the imported access token expires.
+          pattern: ^pk_(live|test)_[A-Za-z0-9]+$
+          type: string
+      required:
+      - client_id
+      - client_secret
+      type: object
+    OnePasswordRecoverVaultItemOperationRequest:
+      additionalProperties: false
+      description: Kernel encountered a recoverable error while linking this 1Password account. Use this action to get a new link to recover the connection. After recovery completes, start a new authorization on the same item.
+      properties:
+        type:
+          enum:
+          - 1pw_recover
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    OnePasswordPollAccessVaultItemOperationRequest:
+      additionalProperties: false
+      description: Retrieve the status of a 1Password access request after presenting the approval link. On a confirmed failed status, ask the end-user before deleting and recreating the credential item for at most one new request. Do not retry an uncertain dispatched request. The response remains non-secret; approved references are retained only for fill.
+      properties:
+        timeout_seconds:
+          default: 10
+          maximum: 120
+          minimum: 0
+          type: integer
+        type:
+          enum:
+          - 1pw_access_request_status
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      type: object
+    CredentialVaultEncryptedValue:
+      description: Alternative to value for custom credential collection web apps. Use this only if you run your own credential collection web app and want values encrypted in the browser, sent to your backend still encrypted, and forwarded to Kernel's API still encrypted. In every other case, including server-side code that already holds the plaintext, use value. The field's value encrypted client-side as a compact JWE with alg ECDH-ES and enc A256GCM to the key from GET /vaults/{id_or_name}/encryption_key, with that key's kid in the protected header. Compression is not supported. The decrypted value follows the same rules as value, including that an empty string clears the field on update. A kid that is not this vault's key returns 400 encryption_key_mismatch; fetch the key again and re-encrypt. Other malformed or undecryptable values return 400 invalid_request. The whole request body is limited to 128 KiB.
+      maxLength: 24576
+      minLength: 1
+      type: string
+    OnePasswordAccessRequestState:
+      additionalProperties: false
+      description: Non-secret broker state. Granted credential references stay encrypted server-side and can only be used by the fill operation.
+      properties:
+        createdAt:
+          description: Provider-created timestamp as returned by the broker.
+          type: string
+        entries:
+          description: Login entries returned directly on accessRequest by the observed extension build. Omitted when the provider does not supply them.
+          items:
+            $ref: '#/components/schemas/OnePasswordReturnedRequestEntry'
+          type: array
+        goal:
+          description: Goal echoed by the observed createAccessRequest response when present.
+          type: string
+        granted_count:
+          minimum: 0
+          type: integer
+        has_autofill_token:
+          type: boolean
+        id:
+          type: string
+        identity:
+          description: Opaque provider identity returned by the broker.
+          type: string
+        path:
+          description: Provider path if supplied in the broker response.
+          type: string
+        request:
+          $ref: '#/components/schemas/OnePasswordReturnedRequest'
+        state:
+          description: One of pending, resolved, denied, or failed.
+          type: string
+      required:
+      - id
+      - state
+      - has_autofill_token
+      type: object
+    VaultItemUpdateRequest:
+      description: Type must match the stored item; an update cannot change item type. Legacy card updates may omit type. Credential updates require explicit type and version. Wallet updates are unsupported.
+      oneOf:
+      - $ref: '#/components/schemas/CardVaultItemUpdateRequest'
+      - $ref: '#/components/schemas/CredentialVaultItemUpdateRequest'
+    VaultPaymentMethodCapabilities:
+      additionalProperties: false
+      description: Provider-reported advisory capabilities. A missing capability is unknown, not ineligible; only eligible=false is an explicit negative signal.
+      properties:
+        single_use_card:
+          $ref: '#/components/schemas/VaultPaymentMethodCapability'
+      type: object
+    KernelWalletState:
+      additionalProperties: false
+      properties:
+        provider:
+          enum:
+          - kernel
+          type: string
+        status:
+          description: pending_authorization asks the cardholder to use the card_enrollment action. connected means the card is stored; it can pay once payment_methods reports capabilities.single_use_card.eligible. reconnect_required asks the cardholder to use a new card_enrollment action after an uncertain enrollment was safely removed. degraded means the enrollment outcome is unknown and the wallet must be deleted before adding another card.
+          enum:
+          - pending_authorization
+          - connected
+          - reconnect_required
+          - degraded
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    CredentialVaultItemRequest:
+      additionalProperties: false
+      description: 'Ask the end-user whether to link their site credential through 1Password.
+
+        If they choose 1Password, connect their account and request access to a login
+
+        in their own non-shared vault; passkeys are not supported. If they decline
+
+        or that path fails, collect a Kernel-hosted credential item instead. Never
+
+        automatically retry an uncertain 1Password request. After an uncertain fill,
+
+        inspect the page to see the result of the fill.
+
+        Do not use credential items for credit card data. Use wallet and card item types instead.
+
+        Kernel credentials declare fields and may enter pending_collection.
+
+        1Password credentials either reference a connected credential_account or
+
+        store a supplied access token and integration key encrypted on the item.
+
+        They store no login values or selectors.
+
+        Managed auth credentials reference a managed auth connection in the same
+
+        project that already has a saved credential, and read it at fill time;
+
+        they store no values.
+
+        Repeating the original creation request returns the current item without
+
+        overwriting later state. A different request at the same key returns 409.
+
+        '
+      properties:
+        spec:
+          $ref: '#/components/schemas/CredentialVaultItemSpecInput'
+        type:
+          enum:
+          - credential
+          type: string
+      required:
+      - type
+      - spec
+      type: object
+    CredentialVaultFieldDefinition:
+      additionalProperties: false
+      properties:
+        label:
+          description: Optional human-readable display label. It is returned as non-secret metadata and never affects value keys, updates, or browser fills. Use single-line, trimmed display text without control or formatting characters. The server enforces a 128-byte UTF-8 limit.
+          maxLength: 128
+          minLength: 1
+          pattern: ^\S(?:.*\S)?$
+          type: string
+        name:
+          description: Stable field name used to key values, updates, and browser fills.
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,63}$
+          type: string
+        required:
+          description: Whether a nonempty value is required for readiness and form submission.
+          type: boolean
+        sensitive:
+          description: Whether the value is omitted from every item response. Reserve true for secrets such as passwords, API tokens, and TOTP seeds. Ordinary usernames and email addresses should be false so the form can display and prefill them.
+          type: boolean
+        type:
+          $ref: '#/components/schemas/CredentialVaultFieldType'
+      required:
+      - name
+      - type
+      - required
+      - sensitive
+      type: object
+    AgentCardPreparedProcessor:
+      enum:
+      - square
+      - braintree
+      - worldpay
+      - bambora
+      - mercado_pago
+      - adyen
+      type: string
+    WalletVaultItem:
+      additionalProperties: false
+      properties:
+        action:
+          $ref: '#/components/schemas/VaultItemAction'
+        available_expansions:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemExpansion'
+          type: array
+        available_operations:
+          items:
+            $ref: '#/components/schemas/AvailableVaultItemOperation'
+          type: array
+        created_at:
+          format: date-time
+          type: string
+        description:
+          description: Server-generated provider and lifecycle guidance for agents.
+          readOnly: true
+          type: string
+        expanded:
+          $ref: '#/components/schemas/VaultItemExpanded'
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          description: Immutable item key assigned when the item is created.
+          type: string
+        spec:
+          $ref: '#/components/schemas/WalletVaultItemSpec'
+        state:
+          $ref: '#/components/schemas/WalletVaultItemState'
+        type:
+          enum:
+          - wallet
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - key
+      - type
+      - spec
+      - state
+      - available_operations
+      - available_expansions
+      - created_at
+      - updated_at
+      type: object
+    VaultItemOperationRequest:
+      discriminator:
+        mapping:
+          1pw_access_request_status: '#/components/schemas/OnePasswordPollAccessVaultItemOperationRequest'
+          1pw_create_access_request: '#/components/schemas/OnePasswordRequestAccessVaultItemOperationRequest'
+          1pw_fill: '#/components/schemas/OnePasswordFillVaultItemOperationRequest'
+          1pw_recover: '#/components/schemas/OnePasswordRecoverVaultItemOperationRequest'
+          1pw_update_access_token: '#/components/schemas/OnePasswordUpdateAccessTokenVaultItemOperationRequest'
+          authorize: '#/components/schemas/AuthorizeVaultItemOperationRequest'
+          collect: '#/components/schemas/CollectVaultItemOperationRequest'
+          confirm_transaction: '#/components/schemas/ConfirmTransactionVaultItemOperationRequest'
+          fill: '#/components/schemas/FillVaultItemOperationRequest'
+          prepare_checkout: '#/components/schemas/PrepareCheckoutVaultItemOperationRequest'
+          restart_verification: '#/components/schemas/RestartVerificationVaultItemOperationRequest'
+          webmcp_invoke: '#/components/schemas/WebMCPInvokeVaultItemOperationRequest'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/AuthorizeVaultItemOperationRequest'
+      - $ref: '#/components/schemas/RestartVerificationVaultItemOperationRequest'
+      - $ref: '#/components/schemas/ConfirmTransactionVaultItemOperationRequest'
+      - $ref: '#/components/schemas/CollectVaultItemOperationRequest'
+      - $ref: '#/components/schemas/PrepareCheckoutVaultItemOperationRequest'
+      - $ref: '#/components/schemas/FillVaultItemOperationRequest'
+      - $ref: '#/components/schemas/OnePasswordRequestAccessVaultItemOperationRequest'
+      - $ref: '#/components/schemas/OnePasswordPollAccessVaultItemOperationRequest'
+      - $ref: '#/components/schemas/OnePasswordFillVaultItemOperationRequest'
+      - $ref: '#/components/schemas/OnePasswordRecoverVaultItemOperationRequest'
+      - $ref: '#/components/schemas/OnePasswordUpdateAccessTokenVaultItemOperationRequest'
+      - $ref: '#/components/schemas/WebMCPInvokeVaultItemOperationRequest'
+    CredentialVaultFieldInput:
+      additionalProperties: false
+      properties:
+        encrypted_value:
+          $ref: '#/components/schemas/CredentialVaultEncryptedValue'
+        label:
+          description: Optional human-readable display label. It is returned as non-secret metadata and never affects value keys, updates, or browser fills. Use single-line, trimmed display text without control or formatting characters. The server enforces a 128-byte UTF-8 limit.
+          maxLength: 128
+          minLength: 1
+          pattern: ^\S(?:.*\S)?$
+          type: string
+        name:
+          description: Unique stable field name used to key values, updates, and browser fills.
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,63}$
+          type: string
+        required:
+          default: true
+          type: boolean
+        sensitive:
+          default: true
+          description: Set false explicitly for ordinary usernames, email addresses, and other non-secret identifiers. Reserve true for secrets such as passwords, API tokens, and TOTP seeds. Password, totp, and passkey fields must be true. Omission defaults to true for safety; do not rely on that default for every field. False permits API reads and form prefilling.
+          type: boolean
+        type:
+          $ref: '#/components/schemas/CredentialVaultFieldType'
+        value:
+          description: Optional initial value satisfying the declared type, at most 16 KiB in UTF-8 bytes. Omit to leave unset; null and empty strings are rejected on creation. Sensitive values are encrypted and never copied into the returned spec. Use this unless your own credential collection web app encrypts values in the browser; mutually exclusive with encrypted_value.
+          maxLength: 16384
+          minLength: 1
+          type: string
+      required:
+      - name
+      - type
+      type: object
+    OnePasswordRequestAccessVaultItemOperationRequest:
+      additionalProperties: false
+      description: Request access to login entries in the end-user's own, non-shared 1Password vault. No browser is needed; the end-user approves access in the 1Password app. Shared-vault items and passkeys are not supported. Per-entry reason and keywords overrides are only supported for a single login entry.
+      properties:
+        goal:
+          maxLength: 140
+          type: string
+        keywords:
+          items:
+            maxLength: 50
+            minLength: 1
+            type: string
+          maxItems: 5
+          minItems: 1
+          type: array
+        reason:
+          maxLength: 100
+          type: string
+        type:
+          enum:
+          - 1pw_create_access_request
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      type: object
+    VaultLinkProviderConfig:
+      additionalProperties: false
+      description: Response schema for a Link configuration, without secret credentials. Kernel generates the ID and timestamps. Configuration creation uses VaultLinkProviderConfigRequest.
+      properties:
+        client_id:
+          description: OAuth client identity; immutable. Secret credentials are never returned.
+          type: string
+        created_at:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        name:
+          description: Unique within the organization.
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        provider:
+          enum:
+          - link
+          type: string
+        publishable_key:
+          description: Stripe publishable key sent to Link when refreshing and revoking wallet grants. Omitted when not configured.
+          type: string
+        updated_at:
+          format: date-time
+          readOnly: true
+          type: string
+      required:
+      - id
+      - name
+      - provider
+      - client_id
+      - created_at
+      - updated_at
+      type: object
+    KernelCredentialVaultItemState:
+      additionalProperties: false
+      properties:
+        fields:
+          additionalProperties:
+            $ref: '#/components/schemas/CredentialVaultFieldState'
+          description: Exactly one entry for each declared field.
+          minProperties: 1
+          type: object
+        provider:
+          enum:
+          - kernel
+          type: string
+        status:
+          description: Ready means all required fields have values, not that a login succeeded. Optional fields may remain unset.
+          enum:
+          - pending_collection
+          - ready
+          type: string
+      required:
+      - provider
+      - status
+      - fields
+      type: object
+    CredentialCollectionAction:
+      additionalProperties: false
+      description: 'One schema-derived form for the item, available in ready or pending_collection
+
+        state. Render every form-supported field as editable; omit totp and passkey
+
+        fields and preserve their stored values. Prefill non-sensitive values,
+
+        and allow existing sensitive values to be preserved or replaced without ever
+
+        revealing them. No field subsets or per-request form configuration exist.
+
+        Validate required fields against the resulting values, including preserved
+
+        secrets. Submit changed values only, using the version used to render the form.
+
+        Scoped hosted submission rejects totp and passkey edits; those writes require the ordinary
+
+        authenticated item API. Customer forms likewise omit them from their payloads.
+
+        Save edits atomically. A successful hosted submission increments the version,
+
+        marks ready, and consumes the session; an empty edit may complete collection
+
+        while preserving values. A customer form uses PATCH for changed values and
+
+        does not send an empty PATCH when nothing changed.
+
+        Kernel-hosted bearer sessions require no Kernel account and are bound to the
+
+        item version. Expired, superseded, consumed, or deleted-item sessions cannot
+
+        submit. Authenticated item GET renews expired active sessions for ready or pending items; pending
+
+        items always receive an action. A ready item with no active session omits the
+
+        action until collect is invoked. Concurrent renewals return the same link.
+
+        Renewal changes neither values nor item version. An expired link cannot renew
+
+        itself. The hosted form handles its collection protocol; callers only open
+
+        the returned URL and do not extract or submit its token through the public API.
+
+        For customer-hosted forms, use @onkernel/vault-react and an authenticated
+
+        customer backend calling the ordinary item GET/PATCH API. Kernel does not
+
+        store customer collection URLs or authenticate the customer''s end users.
+
+        Treat URLs and submitted values as secrets and exclude them from logs,
+
+        traces, and errors.
+
+        '
+      properties:
+        expires_at:
+          description: Expiry of the Kernel-hosted collection link (30 minutes after issuance).
+          format: date-time
+          type: string
+        name:
+          enum:
+          - collect
+          type: string
+        url:
+          description: Time-scoped hosted form URL (vault.kernel.sh in production). Open this URL as returned; treat it as a secret.
+          format: uri
+          type: string
+      required:
+      - name
+      - url
+      - expires_at
+      type: object
+    OnePasswordFillVaultItemOperationRequest:
+      additionalProperties: false
+      description: Fill and submit an approved 1Password login in the selected browser page. The page must share the selected entry's login origin. Supply entry_id when more than one approved entry matches the page origin. The extension selects fields; callers cannot supply selectors or secret values. Submission does not confirm website authentication.
+      properties:
+        browser_id:
+          description: Browser session ID, not a reusable browser name.
+          minLength: 1
+          type: string
+        entry_id:
+          description: ID of an approved request entry. Required when several approved entries have the page's origin.
+          minLength: 1
+          type: string
+        page_url:
+          description: Exact current top-level page URL. Must match exactly one open page in the browser.
+          format: uri
+          pattern: ^\S+$
+          type: string
+        timeout_ms:
+          default: 30000
+          maximum: 30000
+          minimum: 1
+          type: integer
+        type:
+          enum:
+          - 1pw_fill
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      - browser_id
+      - page_url
+      type: object
+    CustomerManagedOAuthClient:
+      additionalProperties: false
+      properties:
+        provider_config:
+          $ref: '#/components/schemas/VaultProviderConfigReference'
+        type:
+          enum:
+          - customer_managed
+          type: string
+      required:
+      - type
+      - provider_config
+      type: object
+    LinkWalletState:
+      additionalProperties: false
+      properties:
+        provider:
+          enum:
+          - link
+          type: string
+        status:
+          enum:
+          - pending_authorization
+          - connected
+          - declined
+          - reconnect_required
+          - degraded
+          type: string
+        status_reason:
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    AgentCardWalletState:
+      additionalProperties: false
+      properties:
+        provider:
+          enum:
+          - agentcard
+          type: string
+        status:
+          enum:
+          - pending_authorization
+          - connected
+          - degraded
+          type: string
+        status_reason:
+          type: string
+        user_id:
+          description: AgentCard user id linked to this wallet. Present once connected.
+          type: string
+      required:
+      - provider
+      - status
+      type: object
+    KernelManagedOAuthClient:
+      additionalProperties: false
+      properties:
+        type:
+          enum:
+          - kernel_managed
+          type: string
+      required:
+      - type
+      type: object
+    OnePasswordUpdateAccessTokenVaultItemOperationRequest:
+      additionalProperties: false
+      description: Replace only the access token on a stored-token 1Password credential. Preserves its integration key, request and approved references. Does not invoke 1Password or retry a pending/uncertain operation.
+      properties:
+        access_token:
+          maxLength: 16384
+          minLength: 1
+          type: string
+          writeOnly: true
+        access_token_expires_at:
+          description: Optional supplied expiry. Omit to clear the old expiry.
+          format: date-time
+          type: string
+        type:
+          enum:
+          - 1pw_update_access_token
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      - access_token
+      type: object
+    OnePasswordReturnedRequestEntry:
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        keywords:
+          items:
+            type: string
+          type: array
+        parameters:
+          additionalProperties: false
+          properties:
+            website:
+              format: uri
+              type: string
+          type: object
+        reason:
+          type: string
+        type:
+          type: string
+      type: object
+    OnePasswordAccessApprovalAction:
+      additionalProperties: false
+      properties:
+        instructions:
+          description: Steps for the agent to hand approval to the human and poll the resulting decision.
+          type: string
+        name:
+          enum:
+          - 1password_access_approval
+          type: string
+        url:
+          description: Native 1Password approval link. Present it to the account owner without modifying it; it does not grant access until they approve in their app.
+          format: uri
+          pattern: ^onepassword://grant-brokered-access\?access_request_reference=
+          type: string
+      required:
+      - name
+      - url
+      - instructions
+      type: object
+    WebMCPInvokeVaultItemOperationRequest:
+      additionalProperties: false
+      description: 'Invoke a WebMCP tool using values from a vaulted item. The browser must be
+
+        attached to the item''s vault. Discover the tool_ref, inputSchema, and source
+
+        with GET /browsers/{id_or_name}/webmcp/tools or webmcp.listTools() in the
+
+        Browser REPL (POST /browsers/{id_or_name}/repl) before invoking it.
+
+        Input paths replace existing null slots in input. Tool output is returned
+
+        without redaction and may include the supplied values. The tool may submit
+
+        or perform other side effects. Any item destination
+
+        restrictions apply to the tool''s top-level page and registering frame (if any).
+
+        '
+      example:
+        bindings:
+        - field: email
+          input_path: /email
+        - field: password
+          input_path: /password
+        browser_id: browser-session-id
+        input:
+          email: null
+          password: null
+        page_url: https://accounts.example.com/signin
+        tool_ref: opaque-live-tool-ref
+        type: webmcp_invoke
+      properties:
+        bindings:
+          items:
+            $ref: '#/components/schemas/VaultWebMCPBinding'
+          maxItems: 32
+          minItems: 1
+          type: array
+        browser_id:
+          description: Browser session ID, not a reusable browser name.
+          minLength: 1
+          type: string
+        input:
+          additionalProperties: true
+          description: Public tool arguments with an existing null slot at each binding path. At most 64 KiB after JSON serialization, including substituted values. Never include vault values here.
+          type: object
+        page_url:
+          description: Exact top-level URL from the discovered tool source (fragment omitted). This pins the target page; it does not authorize a destination.
+          format: uri
+          type: string
+        timeout_sec:
+          default: 15
+          description: Tool invocation timeout in seconds; preflight and response handling have an additional bounded allowance. An indeterminate outcome is not retried.
+          maximum: 120
+          minimum: 1
+          type: integer
+        tool_ref:
+          description: Opaque reference to the exact live WebMCP registration.
+          maxLength: 128
+          minLength: 1
+          type: string
+        type:
+          enum:
+          - webmcp_invoke
+          type: string
+      required:
+      - type
+      - browser_id
+      - tool_ref
+      - page_url
+      - input
+      - bindings
+      type: object
+    VaultLinkProviderConfigRequest:
+      additionalProperties: false
+      description: Register a customer-owned Link OAuth client for refreshing and revoking imported wallet grants. The customer is responsible for initiating OAuth flows to connect a user's wallet and handling the redirect to obtain a Link access token and refresh token.
+      properties:
+        credentials:
+          allOf:
+          - $ref: '#/components/schemas/VaultLinkProviderClientCredentials'
+          writeOnly: true
+        name:
+          description: Unique within the organization.
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+        provider:
+          enum:
+          - link
+          type: string
+      required:
+      - name
+      - provider
+      - credentials
+      type: object
+    VaultProviderConfigUpdateRequest:
+      additionalProperties: false
+      description: Update a provider configuration. Omitted fields are left unchanged. Renaming preserves item bindings. Credential updates apply to all wallets using this configuration. Provider and client ID are immutable; changing clients requires a new configuration. The selected configuration determines how credentials are validated; its identity and mode must not change during secret rotation.
+      properties:
+        credentials:
+          additionalProperties: false
+          description: Fields to update. Omitted credentials are left unchanged. A rejected update leaves existing credentials unchanged.
+          properties:
+            client_secret:
+              minLength: 1
+              type: string
+              writeOnly: true
+            publishable_key:
+              description: Link configurations only. Stripe publishable key sent to Link when refreshing and revoking wallet grants.
+              pattern: ^pk_(live|test)_[A-Za-z0-9]+$
+              type: string
+          type: object
+          writeOnly: true
+        name:
+          description: Unique within the organization.
+          pattern: ^[a-zA-Z0-9._-]{1,255}$
+          type: string
+      type: object
+    AuthorizeVaultItemOperationRequest:
+      additionalProperties: false
+      description: 'Authorize a Link or Kernel card using its existing purchase specification. Use only after explicit user approval and when the item advertises authorize; follow the advertised operation''s description. For a Link card, pass browser_id and page_url together while the browser is on the final checkout page: Kernel inspects that checkout, chooses how the credential is delivered, and limits fill to that checkout''s origin in any browser with this vault attached. Omitting both issues a virtual card that fills any page on the merchant origin. Once approval has been requested, browser_id and page_url are ignored and authorize only re-checks the request. Browser and checkout inspection errors occur before any provider request and can be retried once the browser is on the checkout page. Kernel cards do not accept browser_id or page_url.'
+      properties:
+        browser_id:
+          description: Browser session ID, not a reusable browser name. The browser must have this vault attached.
+          minLength: 1
+          type: string
+        page_url:
+          description: Exact current top-level URL of the final checkout page open in browser_id.
+          format: uri
+          pattern: ^https://[^/?#@*\s]+(?:[/?#][^\s]*)?$
+          type: string
+        type:
+          enum:
+          - authorize
+          type: string
+          x-go-type: VaultItemOperationType
+      required:
+      - type
+      type: object
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Too Many Requests – rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    Conflict:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Conflict – resource already exists
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    ServiceUnavailable:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Service unavailable
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+  examples:
+    ExampleLinkCard:
+      summary: Requested Link card; identical PUT returns the same item without authorization
+      value:
+        available_expansions: []
+        available_operations:
+        - description: Request cardholder approval for this payment at the final checkout page.
+          type: authorize
+        created_at: '2026-01-01T12:00:00Z'
+        id: card_link_example
+        key: link-card
+        spec:
+          amount: 2599
+          context: Purchase one notebook for USD 25.99 including shipping and taxes. This is a new order at Example Store, not a retry of an earlier payment.
+          currency: usd
+          merchant_name: Example Store
+          merchant_url: https://store.example.com
+          payment_method_id: pm_example
+          provider: link
+          wallet: link-wallet
+        state:
+          provider: link
+          status: requested
+        type: card
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleLinkConfigRenamed:
+      summary: Renaming preserves the configuration ID and wallet bindings
+      value:
+        client_id: example-client-id
+        created_at: '2026-01-01T12:00:00Z'
+        id: vpc_link_example
+        name: renamed-link-client
+        provider: link
+        publishable_key: pk_live_example
+        updated_at: '2026-01-02T12:00:00Z'
+    ExampleAgentCardConfigRotated:
+      summary: Rotating the secret preserves client identity and mode
+      value:
+        client_id: example-client-id
+        created_at: '2026-01-01T12:00:00Z'
+        id: vpc_agentcard_example
+        name: my-agentcard
+        provider: agentcard
+        test_mode: false
+        updated_at: '2026-01-02T12:00:00Z'
+    ExampleAgentCardCardInput:
+      summary: Create a reusable USD 25.99 card at key agentcard-card after its wallet connects
+      value:
+        spec:
+          amount: 2599
+          card_id: vc_example
+          currency: usd
+          merchant: Example Store
+          provider: agentcard
+          wallet: agentcard-wallet
+        type: card
+    ExampleConfiguredAgentCardWallet:
+      summary: Hosted enrollment using a customer-owned configuration
+      value:
+        action:
+          name: card_enrollment
+          url: https://example.com/card-enrollment
+        available_expansions: []
+        available_operations: []
+        created_at: '2026-01-01T12:00:00Z'
+        expires_at: '2026-01-01T13:00:00Z'
+        id: wallet_agentcard_example
+        key: agentcard-wallet
+        spec:
+          provider: agentcard
+          provider_config:
+            id: vpc_agentcard_example
+        state:
+          provider: agentcard
+          status: pending_authorization
+        type: wallet
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleLinkCardUpdated:
+      summary: Updated Link request retains its key and ID
+      value:
+        available_expansions: []
+        available_operations:
+        - description: Request cardholder approval for this payment.
+          type: authorize
+        created_at: '2026-01-01T12:00:00Z'
+        id: card_link_example
+        key: link-card
+        spec:
+          amount: 3000
+          context: The order total changed to USD 30.00 including shipping and taxes for one notebook. Update this unapproved request rather than creating a second payment.
+          currency: usd
+          merchant_name: Example Store
+          merchant_url: https://store.example.com
+          payment_method_id: pm_example
+          provider: link
+          wallet: link-wallet
+        state:
+          provider: link
+          status: requested
+        type: card
+        updated_at: '2026-01-02T12:00:00Z'
+    ExampleLinkConfig:
+      summary: Link configuration response; no secret credentials
+      value:
+        client_id: example-client-id
+        created_at: '2026-01-01T12:00:00Z'
+        id: vpc_link_example
+        name: my-link-client
+        provider: link
+        publishable_key: pk_live_example
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleManagedLinkWallet:
+      summary: Pending OAuth through Kernel-managed credentials at key link-wallet
+      value:
+        action:
+          name: link_oauth
+          url: https://example.com/link-authorization
+        available_expansions: []
+        available_operations: []
+        created_at: '2026-01-01T12:00:00Z'
+        expires_at: '2026-01-01T12:10:00Z'
+        id: wallet_link_example
+        key: link-wallet
+        spec:
+          authorization:
+            client:
+              type: kernel_managed
+            method: oauth
+          provider: link
+        state:
+          provider: link
+          status: pending_authorization
+        type: wallet
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleLinkApproval:
+      summary: Link authorization binds the checkout and creates a spend awaiting cardholder approval
+      value:
+        action:
+          name: spend_approval
+          url: https://example.com/spend-approval
+        available_expansions: []
+        available_operations:
+        - description: Re-check this existing spend request without creating another payment.
+          type: authorize
+        created_at: '2026-01-01T12:00:00Z'
+        expires_at: '2026-01-01T13:00:00Z'
+        id: card_link_example
+        key: link-card
+        spec:
+          amount: 2599
+          context: Purchase one notebook for USD 25.99 including shipping and taxes. This is a new order at Example Store, not a retry of an earlier payment.
+          currency: usd
+          merchant_name: Example Store
+          merchant_url: https://store.example.com
+          payment_method_id: pm_example
+          provider: link
+          wallet: link-wallet
+        state:
+          domains:
+          - example.com
+          provider: link
+          status: pending_authorization
+        type: card
+        updated_at: '2026-01-01T12:01:00Z'
+    ExampleManagedAuthCredentialInput:
+      summary: Credential backed by a managed auth connection
+      value:
+        spec:
+          connection_id: ma_abc123xyz
+          description: Amazon
+          provider: managed_auth
+        type: credential
+    ExampleAgentCardCardEdit:
+      summary: Set the reusable checkout card to USD 30.00 between authorizations
+      value:
+        spec:
+          amount: 3000
+          card_id: vc_example
+          currency: usd
+          merchant: Example Store
+          provider: agentcard
+          wallet: agentcard-wallet
+        type: card
+    ExampleImportedLinkWallet:
+      summary: Connected imported grant; tokens are absent from the response
+      value:
+        available_expansions:
+        - description: List funding methods available to this wallet.
+          type: payment_methods
+        available_operations: []
+        created_at: '2026-01-01T12:00:00Z'
+        id: wallet_imported_example
+        key: imported-wallet
+        spec:
+          authorization:
+            client:
+              provider_config:
+                id: vpc_link_example
+              type: customer_managed
+            method: oauth
+          provider: link
+        state:
+          provider: link
+          status: connected
+        type: wallet
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleLinkCardInput:
+      summary: Create a USD 25.99 request at key link-card after its wallet connects
+      value:
+        spec:
+          amount: 2599
+          context: Purchase one notebook for USD 25.99 including shipping and taxes. This is a new order at Example Store, not a retry of an earlier payment.
+          currency: usd
+          merchant_name: Example Store
+          merchant_url: https://store.example.com
+          payment_method_id: pm_example
+          provider: link
+          wallet: link-wallet
+        type: card
+    ExampleLinkCardEdit:
+      summary: Set an unapproved Link card request to USD 30.00
+      value:
+        spec:
+          amount: 3000
+          context: The order total changed to USD 30.00 including shipping and taxes for one notebook. Update this unapproved request rather than creating a second payment.
+          currency: usd
+          merchant_name: Example Store
+          merchant_url: https://store.example.com
+          payment_method_id: pm_example
+          provider: link
+          wallet: link-wallet
+        type: card
+    ExampleManagedAgentCardWallet:
+      summary: Hosted enrollment using Kernel-managed credentials at key agentcard-wallet
+      value:
+        action:
+          name: card_enrollment
+          url: https://example.com/card-enrollment
+        available_expansions: []
+        available_operations: []
+        created_at: '2026-01-01T12:00:00Z'
+        expires_at: '2026-01-01T13:00:00Z'
+        id: wallet_managed_agentcard_example
+        key: agentcard-wallet
+        spec:
+          provider: agentcard
+        state:
+          provider: agentcard
+          status: pending_authorization
+        type: wallet
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleAgentCardConfig:
+      summary: AgentCard configuration response with introspected live mode
+      value:
+        client_id: example-client-id
+        created_at: '2026-01-01T12:00:00Z'
+        id: vpc_agentcard_example
+        name: my-agentcard
+        provider: agentcard
+        test_mode: false
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleManagedAuthCredential:
+      summary: Ready managed auth credential
+      value:
+        available_expansions: []
+        available_operations:
+        - description: Fill selected fields from the connection's saved credential into a browser linked to this vault, without submitting.
+          type: fill
+        created_at: '2026-01-01T12:00:00Z'
+        id: credential_managed_auth_example
+        key: amazon-login
+        spec:
+          connection_id: ma_abc123xyz
+          description: Amazon
+          provider: managed_auth
+        state:
+          fields:
+            email:
+              type: email
+            password:
+              type: password
+            totp:
+              type: totp
+          provider: managed_auth
+          status: ready
+        type: credential
+        updated_at: '2026-01-01T12:00:00Z'
+        version: 1
+    ExampleVault:
+      summary: Provider-neutral vault; an identical name returns this same vault
+      value:
+        created_at: '2026-01-01T12:00:00Z'
+        id: vault_example
+        name: checkout
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleAgentCardCard:
+      summary: Ready AgentCard item with prepared checkout enabled. Alias values are synthetic.
+      value:
+        available_expansions: []
+        available_operations:
+        - description: Prepare this unused AgentCard card before the first Square Pay action. POST to this item's operations endpoint with a body like {"type":"prepare_checkout","checkout":{"browser_id":"<browser-session-id>","merchant_origin":"https://shop.example.com","environment":"production"}}. Use the active browser session with this vault bound. merchant_origin is the top-level merchant document's origin, not the Square iframe. environment must be production or sandbox and describes Square, not the AgentCard credential mode. Deliver the returned approval URL and keep the approval page open. Poll the item until ready_to_submit, then submit native Pay before preparation.expires_at; readiness lasts at most 30 seconds. Unused preparations expire automatically. Preparation is single-use, including after failure or expiry. Do not automatically retry; reconcile uncertain outcomes with the merchant.
+          type: prepare_checkout
+        created_at: '2026-01-01T12:00:00Z'
+        id: card_agentcard_example
+        key: agentcard-card
+        spec:
+          amount: 2599
+          card_id: vc_example
+          currency: usd
+          merchant: Example Store
+          provider: agentcard
+          wallet: agentcard-wallet
+        state:
+          aliases:
+            cvc: '123'
+            exp_month: '12'
+            exp_year: '2030'
+            number: '4242424242424242'
+          provider: agentcard
+          status: ready
+        type: card
+        updated_at: '2026-01-01T12:00:00Z'
+    ExampleAgentCardCardUpdated:
+      summary: Updated checkout amount retains the same card identity and synthetic aliases
+      value:
+        available_expansions: []
+        available_operations: []
+        created_at: '2026-01-01T12:00:00Z'
+        id: card_agentcard_example
+        key: agentcard-card
+        spec:
+          amount: 3000
+          card_id: vc_example
+          currency: usd
+          merchant: Example Store
+          provider: agentcard
+          wallet: agentcard-wallet
+        state:
+          aliases:
+            cvc: '123'
+            exp_month: '12'
+            exp_year: '2030'
+            number: '4242424242424242'
+          provider: agentcard
+          status: ready
+        type: card
+        updated_at: '2026-01-02T12:00:00Z'
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

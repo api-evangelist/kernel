@@ -1,260 +1,162 @@
 openapi: 3.2.0
 info:
-  title: Kernel API Keys API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel API Keys API
   version: 0.1.0
 servers:
-- url: https://api.onkernel.com
-  description: API Server
+- description: API Server
+  url: https://api.onkernel.com
 security:
 - bearerAuth: []
 tags:
-- name: API Keys
-  description: Create and manage API keys for organization and project-scoped access.
+- description: Create and manage API keys for organization and project-scoped access.
+  name: API Keys
 paths:
   /org/api_keys:
-    post:
-      operationId: postApiKeys
-      tags:
-      - API Keys
-      summary: Create an API key
-      description: Create a new API key within the authenticated organization.
-      security:
-      - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateApiKeyRequest'
-      responses:
-        '201':
-          description: API key created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreatedApiKey'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst createdAPIKey = await client.apiKeys.create({ name: 'staging' });\n\nconsole.log(createdAPIKey);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ncreated_api_key = client.api_keys.create(\n    name=\"staging\",\n)\nprint(created_api_key)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tcreatedAPIKey, err := client.APIKeys.New(context.TODO(), kernel.APIKeyNewParams{\n\t\tName: \"staging\",\n\t})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", createdAPIKey)\n}\n"
     get:
-      operationId: listApiKeys
-      tags:
-      - API Keys
-      summary: List API keys
       description: List API keys for the authenticated organization. API keys are masked.
-      security:
-      - bearerAuth: []
+      operationId: listApiKeys
       parameters:
-      - name: limit
+      - description: Maximum number of results to return
         in: query
+        name: limit
         required: false
         schema:
-          type: integer
           default: 20
           maximum: 100
-        description: Maximum number of results to return
-      - name: offset
-        in: query
-        required: false
-        schema:
           type: integer
+      - description: Number of results to skip
+        in: query
+        name: offset
+        required: false
+        schema:
           default: 0
-        description: Number of results to skip
-      - name: query
+          type: integer
+      - description: Case-insensitive substring match against API key name, creator, and project. API key identifiers and masked keys match by exact value or prefix.
         in: query
+        name: query
         required: false
         schema:
           type: string
-        description: Case-insensitive substring match against API key name, creator, and project. API key identifiers and masked keys match by exact value or prefix.
-      - name: name
+      - description: Exact-match filter on API key name using the database collation. In production, matching is case- and accent-insensitive. Names are not required to be unique, so multiple keys may match. When status=all or include_deleted=true is set, soft-deleted keys with the same name may also match.
         in: query
+        name: name
         required: false
         schema:
           type: string
-        description: Exact-match filter on API key name using the database collation. In production, matching is case- and accent-insensitive. Names are not required to be unique, so multiple keys may match. When status=all or include_deleted=true is set, soft-deleted keys with the same name may also match.
-      - name: sort_by
+      - description: Field to sort API keys by.
         in: query
+        name: sort_by
         required: false
         schema:
-          type: string
+          default: created_at
           enum:
           - created_at
           - name
           - expires_at
-          default: created_at
-        description: Field to sort API keys by.
-      - name: sort_direction
+          type: string
+      - description: Sort direction for API keys.
         in: query
+        name: sort_direction
         required: false
         schema:
-          type: string
+          default: desc
           enum:
           - asc
           - desc
-          default: desc
-        description: Sort direction for API keys.
-      - name: status
-        in: query
-        required: false
-        description: Filter API keys by status. "active" returns keys that are not deleted (default; expired-but-not-deleted keys are still included), "deleted" returns only soft-deleted keys, "all" returns both.
-        schema:
           type: string
+      - description: Filter API keys by status. "active" returns keys that are not deleted (default; expired-but-not-deleted keys are still included), "deleted" returns only soft-deleted keys, "all" returns both.
+        in: query
+        name: status
+        required: false
+        schema:
+          default: active
           enum:
           - active
           - deleted
           - all
-          default: active
-      - name: include_deleted
-        in: query
-        required: false
-        deprecated: true
+          type: string
+          x-enum-varnames:
+          - ListApiKeysParamsStatusActive
+          - ListApiKeysParamsStatusDeleted
+          - ListApiKeysParamsStatusAll
+      - deprecated: true
         description: 'Deprecated: use status=all instead. When true, include deleted (soft-deleted) API keys in the results for audit purposes.'
+        in: query
+        name: include_deleted
+        required: false
         schema:
-          type: boolean
           default: false
+          type: boolean
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+                type: array
           description: List of API keys
           headers:
             X-Has-More:
+              description: Whether there are more results
               schema:
                 type: boolean
-              description: Whether there are more results
             X-Next-Offset:
+              description: The offset where the next page starts. 0 when there are no more results.
               schema:
                 type: integer
-              description: The offset where the next page starts. 0 when there are no more results.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiKey'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\n// Automatically fetches more pages as needed.\nfor await (const apiKey of client.apiKeys.list()) {\n  console.log(apiKey.id);\n}"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\npage = client.api_keys.list()\npage = page.items[0]\nprint(page.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tpage, err := client.APIKeys.List(context.TODO(), kernel.APIKeyListParams{})\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", page)\n}\n"
-  /org/api_keys/{id}:
-    get:
-      operationId: getApiKeysById
-      tags:
-      - API Keys
-      summary: Get an API key
-      description: Retrieve an API key by ID for the authenticated organization. API keys are masked.
       security:
       - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: API key ID
-      - name: include_deleted
-        in: query
-        required: false
-        schema:
-          type: boolean
-          default: false
-        description: When true, return the API key even if it has been deleted (soft-deleted), for audit purposes. Defaults to false, which returns 404 for a deleted key.
-      responses:
-        '200':
-          description: API key details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiKey'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst apiKey = await client.apiKeys.retrieve('id');\n\nconsole.log(apiKey.id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\napi_key = client.api_keys.retrieve(\n    id=\"id\",\n)\nprint(api_key.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tapiKey, err := client.APIKeys.Get(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyGetParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", apiKey.ID)\n}\n"
-    patch:
-      operationId: patchApiKeysById
+      summary: List API keys
       tags:
       - API Keys
-      summary: Update an API key
-      description: Update an API key's name.
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: API key ID
+    post:
+      description: Create a new API key. API keys may be scoped by project and may include a policy.
+      operationId: postApiKeys
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateApiKeyRequest'
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+        required: true
       responses:
-        '200':
-          description: API key updated
+        '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKey'
+                $ref: '#/components/schemas/CreatedApiKey'
+          description: API key created successfully
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst apiKey = await client.apiKeys.update('id', { name: 'new-api-name' });\n\nconsole.log(apiKey.id);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\napi_key = client.api_keys.update(\n    id=\"id\",\n    name=\"new-api-name\",\n)\nprint(api_key.id)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tapiKey, err := client.APIKeys.Update(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyUpdateParams{\n\t\t\tName: \"new-api-name\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", apiKey.ID)\n}\n"
-    delete:
-      operationId: deleteApiKeysById
-      tags:
-      - API Keys
-      summary: Delete an API key
-      description: Delete an API key. A key cannot delete itself; use a different key to delete this one.
       security:
       - bearerAuth: []
+      summary: Create an API key
+      tags:
+      - API Keys
+  /org/api_keys/{id}:
+    delete:
+      description: Delete an API key. A key cannot delete itself; use a different key to delete this one.
+      operationId: deleteApiKeysById
       parameters:
-      - name: id
+      - description: API key ID
         in: path
+        name: id
         required: true
         schema:
           type: string
-        description: API key ID
       responses:
         '204':
           description: API key deleted.
@@ -266,42 +168,69 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nawait client.apiKeys.delete('id');"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nclient.api_keys.delete(\n    \"id\",\n)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\terr := client.APIKeys.Delete(context.TODO(), \"id\")\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n}\n"
-  /org/api_keys/{id}/rotate:
-    post:
-      operationId: rotateApiKey
-      tags:
-      - API Keys
-      summary: Rotate an API key
-      description: Rotate an API key. Issues a new key that copies the name and project of the rotated key, and schedules the rotated key to expire after a grace period so in-flight callers can swap over. The new plaintext key is returned once.
       security:
       - bearerAuth: []
+      summary: Delete an API key
+      tags:
+      - API Keys
+    get:
+      description: Retrieve an API key by ID for the authenticated organization. API keys are masked.
+      operationId: getApiKeysById
       parameters:
-      - name: id
+      - description: API key ID
         in: path
+        name: id
         required: true
         schema:
           type: string
-        description: API key ID
-      requestBody:
+      - description: When true, return the API key even if it has been deleted (soft-deleted), for audit purposes. Defaults to false, which returns 404 for a deleted key.
+        in: query
+        name: include_deleted
         required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RotateApiKeyRequest'
+        schema:
+          default: false
+          type: boolean
       responses:
-        '201':
-          description: New API key created from the rotation
+        '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedApiKey'
+                $ref: '#/components/schemas/ApiKey'
+          description: API key details
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get an API key
+      tags:
+      - API Keys
+    patch:
+      description: Update an API key's name.
+      operationId: patchApiKeysById
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApiKeyRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+          description: API key updated
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -310,120 +239,123 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst createdAPIKey = await client.apiKeys.rotate('id');\n\nconsole.log(createdAPIKey);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\ncreated_api_key = client.api_keys.rotate(\n    id=\"id\",\n)\nprint(created_api_key)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tcreatedAPIKey, err := client.APIKeys.Rotate(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.APIKeyRotateParams{},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", createdAPIKey)\n}\n"
+      security:
+      - bearerAuth: []
+      summary: Update an API key
+      tags:
+      - API Keys
+  /org/api_keys/{id}/rotate:
+    post:
+      description: Rotate an API key. Issues a new key that copies the name and project of the rotated key, and schedules the rotated key to expire after a grace period so in-flight callers can swap over. The new plaintext key is returned once.
+      operationId: rotateApiKey
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateApiKeyRequest'
+        required: false
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedApiKey'
+          description: New API key created from the rotation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Rotate an API key
+      tags:
+      - API Keys
 components:
-  responses:
-    Unauthorized:
-      description: Unauthorized – missing or invalid authorization token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    UpdateApiKeyRequest:
-      type: object
-      required:
-      - name
+    ApiKeyPolicy:
       properties:
-        name:
-          type: string
-          description: New API key name
-          minLength: 1
-          maxLength: 255
-          example: new-api-name
-    CreatedApiKey:
-      description: API key returned immediately after creation. Includes the plaintext key once.
-      allOf:
-      - $ref: '#/components/schemas/ApiKey'
-      - type: object
-        required:
-        - key
-        properties:
-          key:
-            type: string
-            description: Plaintext API key. Only returned once when the key is created.
-            example: sk_1234abcd
-    ErrorDetail:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
-        message:
-          type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
+        statements:
+          description: Allow statements. Every action and resource not listed is denied.
           items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    CreateApiKeyRequest:
-      type: object
+            $ref: '#/components/schemas/ApiKeyPolicyStatement'
+          maxItems: 256
+          minItems: 1
+          type: array
       required:
-      - name
+      - statements
+      type: object
+    RotateApiKeyRequest:
       properties:
-        name:
-          type: string
-          description: Label for the API key (1-255 characters). API keys are not addressable by name.
-          minLength: 1
-          maxLength: 255
-          example: staging
         days_to_expire:
-          type: integer
-          description: Number of days until expiry, up to 3650. Use null for never.
-          minimum: 1
-          maximum: 3650
+          description: Lifetime in days for the new key, up to 3650. Omit to reuse the rotated key's original lifetime, or never-expires if it had none.
           example: 30
+          maximum: 3650
+          minimum: 1
+          nullable: true
+          type: integer
+        expire_in_days:
+          description: Grace period in days before the rotated key expires. Use 0 to expire it immediately. Omit for the default grace period of 7 days.
+          example: 7
+          maximum: 3650
+          minimum: 0
+          nullable: true
+          type: integer
+      type: object
+    ApiKey:
+      properties:
+        created_at:
+          description: When the API key was created
+          format: date-time
+          type: string
+        created_by:
+          $ref: '#/components/schemas/ApiKeyCreator'
+        deleted_at:
+          description: When the API key was deleted (soft-deleted). Null for keys that have not been deleted.
+          format: date-time
+          nullable: true
+          type: string
+        expires_at:
+          description: When the API key expires
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          description: Unique API key identifier
+          example: ckv9w8q2f000001l5r3j7k9m4
+          type: string
+        masked_key:
+          description: Masked version of the API key
+          example: sk_1234...abcd
+          type: string
+        name:
+          description: Label for the API key. API keys are not addressable by name; use the ID or key identifier for stable references.
+          example: production
+          type: string
+        policy:
+          $ref: '#/components/schemas/ApiKeyPolicy'
+          description: Permissions granted to a scoped API key. Absent for an ordinary key, which keeps unrestricted access within its organization or project.
           nullable: true
         project_id:
-          type: string
-          description: Unique project identifier
+          description: Project identifier for project-scoped API keys. Null means org-wide.
           example: proj_abc123
           nullable: true
-    ApiKey:
-      type: object
+          type: string
+        project_name:
+          description: Project name for project-scoped API keys. Null means the key is org-wide or the project name is unavailable.
+          example: Production
+          nullable: true
+          type: string
       required:
       - id
       - name
@@ -434,84 +366,168 @@ components:
       - project_id
       - project_name
       - masked_key
+      type: object
+    UpdateApiKeyRequest:
       properties:
-        id:
-          type: string
-          description: Unique API key identifier
-          example: ckv9w8q2f000001l5r3j7k9m4
         name:
+          description: New API key name
+          example: new-api-name
+          maxLength: 255
+          minLength: 1
           type: string
-          description: Label for the API key. API keys are not addressable by name; use the ID or key identifier for stable references.
-          example: production
-        created_at:
+      required:
+      - name
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
           type: string
-          format: date-time
-          description: When the API key was created
-        created_by:
-          $ref: '#/components/schemas/ApiKeyCreator'
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    CreateApiKeyRequest:
+      properties:
+        days_to_expire:
+          description: Number of days until expiry, up to 3650. Use null for never. Cannot be combined with expires_at.
+          example: 30
+          maximum: 3650
+          minimum: 1
+          nullable: true
+          type: integer
         expires_at:
-          type: string
+          description: Exact expiry time. Must be in the future and no later than the issuing credential's own expiry. Cannot be combined with days_to_expire.
+          example: '2025-01-15T09:00:00Z'
           format: date-time
-          description: When the API key expires
           nullable: true
-        deleted_at:
           type: string
-          format: date-time
-          description: When the API key was deleted (soft-deleted). Null for keys that have not been deleted.
-          nullable: true
+        name:
+          description: Label for the API key (1-255 characters). API keys are not addressable by name.
+          example: staging
+          maxLength: 255
+          minLength: 1
+          type: string
+        policy:
+          $ref: '#/components/schemas/ApiKeyPolicy'
+          description: Issue a scoped key that may only perform the listed actions on the listed resources.
         project_id:
-          type: string
-          description: Project identifier for project-scoped API keys. Null means org-wide.
+          description: Unique project identifier
           example: proj_abc123
           nullable: true
-        project_name:
           type: string
-          description: Project name for project-scoped API keys. Null means the key is org-wide or the project name is unavailable.
-          example: Production
-          nullable: true
-        masked_key:
-          type: string
-          description: Masked version of the API key
-          example: sk_1234...abcd
-    ApiKeyCreator:
+      required:
+      - name
       type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    ApiKeyCreator:
+      properties:
+        email:
+          description: Email address of the creator.
+          example: user@example.com
+          format: email
+          type: string
+        id:
+          description: Kernel user ID of the creator.
+          example: user-abc123
+          type: string
+        name:
+          description: Display name of the creator, if available.
+          example: Jane Doe
+          nullable: true
+          type: string
       required:
       - id
       - email
       - name
-      properties:
-        id:
-          type: string
-          description: Kernel user ID of the creator.
-          example: user-abc123
-        email:
-          type: string
-          format: email
-          description: Email address of the creator.
-          example: user@example.com
-        name:
-          type: string
-          nullable: true
-          description: Display name of the creator, if available.
-          example: Jane Doe
-    RotateApiKeyRequest:
       type: object
+    CreatedApiKey:
+      allOf:
+      - $ref: '#/components/schemas/ApiKey'
+      - properties:
+          key:
+            description: Plaintext API key. Only returned once when the key is created.
+            example: sk_1234abcd
+            type: string
+        required:
+        - key
+        type: object
+      description: API key returned immediately after creation. Includes the plaintext key once.
+    ApiKeyPolicyStatement:
       properties:
-        days_to_expire:
-          type: integer
-          description: Lifetime in days for the new key, up to 3650. Omit to reuse the rotated key's original lifetime, or never-expires if it had none.
-          minimum: 1
-          maximum: 3650
-          example: 30
-          nullable: true
-        expire_in_days:
-          type: integer
-          description: Grace period in days before the rotated key expires. Use 0 to expire it immediately. Omit for the default grace period of 7 days.
-          minimum: 0
-          maximum: 3650
-          example: 7
-          nullable: true
+        action:
+          description: Permitted action, such as browsers:use or vaults:read.
+          example: browsers:use
+          type: string
+        resource:
+          description: Resource the action applies to, in the format projects/{project_id}/{kind}/{id}. Wildcards are supported.
+          example: projects/proj_abc123/browsers/br_abc123
+          type: string
+      required:
+      - action
+      - resource
+      type: object
+  responses:
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden – insufficient permissions or plan
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
   securitySchemes:
     bearerAuth:
-      type: http
       scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

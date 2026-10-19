@@ -1,73 +1,338 @@
 openapi: 3.2.0
 info:
-  title: Kernel Browser Playwright API
   description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Browser Playwright API
   version: 0.1.0
 servers:
-- url: https://api.onkernel.com
-  description: API Server
+- description: API Server
+  url: https://api.onkernel.com
 security:
 - bearerAuth: []
 tags:
-- name: Browser Playwright
-  description: Execute Playwright code against the browser instance.
+- description: Execute Playwright code against the browser instance and manage the executors it runs in.
+  name: Browser Playwright
 paths:
-  /browsers/{id}/playwright/execute:
+  /browsers/{id_or_name}/playwright/execute:
     post:
-      summary: Execute Playwright/TypeScript code against the browser
       description: 'Execute arbitrary Playwright code in a fresh execution context against the browser.
 
         The code runs in the same VM as the browser, minimizing latency and maximizing throughput.
 
-        It has access to ''page'', ''context'', and ''browser'' variables.
+        It has access to ''page'', ''context'', ''browser'', and ''webmcp'' variables.
 
-        It can `return` a value, and this value is returned in the response.'
+        Use ''webmcp.listTools()'' to discover browser-wide WebMCP tools and
+
+        ''webmcp.invokeTool(toolRef, input?, { timeoutSec? })'' to invoke an exact registration.
+
+        It can `return` a value, and this value is returned in the response.
+
+
+        Every call runs in an executor: a dedicated Node.js process with its own browser
+
+        connection. Calls on different executors run concurrently; calls on the same executor run
+
+        one at a time. A timeout, crash, or blocked event loop in one executor does not affect
+
+        other executors. After a timeout the executor keeps its process and drops its browser
+
+        connection, so code abandoned by the timeout cannot keep driving the browser. After a
+
+        crash or a blocked event loop, the next call on that executor starts a fresh process.
+
+
+        Calls without ''executor'' run in the executor named ''default'', which always exists and is
+
+        the same as passing ''executor: "default"''. In the default executor, ''page'' is bound to an
+
+        active tab reported by Chrome. In single-window sessions, this is the foreground tab. When
+
+        multiple browser windows are open, Chrome reports one active tab per window and the
+
+        selected window is unspecified. ''context'' is the BrowserContext that owns the selected
+
+        page. Use ''browser.contexts()'' to select a context or page explicitly.
+
+
+        Pass any other name to run the call in a named executor. The first call with a new name
+
+        creates it. Each named executor owns a tab: its first call opens a new background tab in
+
+        the default browser context, and ''page'' is bound to that tab on every later call while it
+
+        stays open. Opening it does not change the active tab of an existing window. If the tab is
+
+        closed, the next call opens a new one and reports ''tab.created: true''. Executor code can
+
+        still reach other tabs through ''context'' and ''browser''; ownership only decides what ''page''
+
+        is bound to. Use named executors to drive several tabs of one browser in parallel.
+
+
+        A browser can have at most 8 named executors; the default executor does not count. A call
+
+        that would create another returns 409 with the current executors; delete one with
+
+        DELETE /browsers/{id_or_name}/playwright/executors/{name}. Named executors are not removed
+
+        automatically while the browser runs; when it shuts down, they are removed and their tabs
+
+        closed.'
       operationId: executePlaywrightCode
-      tags:
-      - Browser Playwright
-      security:
-      - bearerAuth: []
       parameters:
-      - name: id
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
         in: path
+        name: id_or_name
         required: true
         schema:
           type: string
-        description: Browser session ID
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExecutePlaywrightRequest'
+        required: true
       responses:
         '200':
-          description: Code executed successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecutePlaywrightResult'
+          description: Code executed successfully
         '400':
           $ref: '#/components/responses/BadRequest'
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaywrightExecutorLimitError'
+          description: The call would create a named executor beyond the per-browser limit
         '500':
           $ref: '#/components/responses/InternalError'
-      x-codeSamples:
-      - lang: JavaScript
-        source: "import Kernel from '@onkernel/sdk';\n\nconst client = new Kernel({\n  apiKey: process.env['KERNEL_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.browsers.playwright.execute('id', { code: 'code' });\n\nconsole.log(response.success);"
-      - lang: Python
-        source: "import os\nfrom kernel import Kernel\n\nclient = Kernel(\n    api_key=os.environ.get(\"KERNEL_API_KEY\"),  # This is the default and can be omitted\n)\nresponse = client.browsers.playwright.execute(\n    id=\"id\",\n    code=\"code\",\n)\nprint(response.success)"
-      - lang: Go
-        source: "package main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"github.com/kernel/kernel-go-sdk\"\n\t\"github.com/kernel/kernel-go-sdk/option\"\n)\n\nfunc main() {\n\tclient := kernel.NewClient(\n\t\toption.WithAPIKey(\"My API Key\"),\n\t)\n\tresponse, err := client.Browsers.Playwright.Execute(\n\t\tcontext.TODO(),\n\t\t\"id\",\n\t\tkernel.BrowserPlaywrightExecuteParams{\n\t\t\tCode: \"code\",\n\t\t},\n\t)\n\tif err != nil {\n\t\tpanic(err.Error())\n\t}\n\tfmt.Printf(\"%+v\\n\", response.Success)\n}\n"
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Execute Playwright/TypeScript code against the browser
+      tags:
+      - Browser Playwright
+  /browsers/{id_or_name}/playwright/executors:
+    get:
+      description: 'Lists the default executor first, then the named executors created by
+
+        POST /browsers/{id_or_name}/playwright/execute. Each entry reports whether a call is
+
+        running on it and, for named executors, the target ID and URL of the tab it owns.
+
+        Returns 404 for a browser whose image predates executors.'
+      operationId: listPlaywrightExecutors
+      parameters:
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaywrightExecutorList'
+          description: Open executors
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: List Playwright executors
+      tags:
+      - Browser Playwright
+  /browsers/{id_or_name}/playwright/executors/{name}:
+    delete:
+      description: 'Stops the executor''s process. A call running on it fails with an error saying the
+
+        executor was deleted. By default the executor''s tab is closed too. The name can be
+
+        reused; the next call with it creates a new executor and tab.
+
+
+        The default executor is restarted instead of removed: its process is stopped, a call
+
+        running on it fails with an error saying the executor was restarted, and queued and later
+
+        calls run on a new process. It owns no tab, so ''close_tab'' has no effect on it.'
+      operationId: deletePlaywrightExecutor
+      parameters:
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      - description: Executor name
+        in: path
+        name: name
+        required: true
+        schema:
+          $ref: '#/components/schemas/PlaywrightExecutorName'
+      - description: Close the executor's tab. Defaults to true.
+        in: query
+        name: close_tab
+        required: false
+        schema:
+          default: true
+          type: boolean
+      responses:
+        '204':
+          description: Executor deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Delete a Playwright executor
+      tags:
+      - Browser Playwright
 components:
   schemas:
-    ExecutePlaywrightRequest:
-      type: object
-      description: Request to execute Playwright code
+    PlaywrightExecutor:
+      additionalProperties: false
+      description: A Playwright executor on the browser
+      properties:
+        busy:
+          description: Whether a call is running on the executor
+          type: boolean
+        created_at:
+          description: When the executor was created
+          format: date-time
+          type: string
+        last_used_at:
+          description: When the most recent call on the executor started
+          format: date-time
+          type: string
+        name:
+          $ref: '#/components/schemas/PlaywrightExecutorName'
+        target_id:
+          description: CDP page target ID of the executor's tab, once it has one. The default executor owns no tab.
+          type: string
+        url:
+          description: Current URL of the executor's tab, when it is open
+          type: string
       required:
-      - code
+      - name
+      - busy
+      - created_at
+      - last_used_at
+      type: object
+    PlaywrightExecutorLimitError:
+      additionalProperties: false
+      description: Returned when a call would create a named executor beyond the per-browser limit
+      properties:
+        executors:
+          description: The default executor and the named executors that already exist
+          items:
+            $ref: '#/components/schemas/PlaywrightExecutor'
+          type: array
+        message:
+          description: Human-readable error description
+          type: string
+      required:
+      - message
+      - executors
+      type: object
+    PlaywrightExecutorList:
+      additionalProperties: false
+      description: The default executor followed by the named executors
+      properties:
+        executors:
+          items:
+            $ref: '#/components/schemas/PlaywrightExecutor'
+          type: array
+      required:
+      - executors
+      type: object
+    ExecutePlaywrightResult:
+      additionalProperties: false
+      description: Result of Playwright code execution
+      properties:
+        error:
+          description: Error message if execution failed
+          type: string
+        result:
+          description: The value returned by the code (if any)
+        stderr:
+          description: Standard error from the execution
+          type: string
+        stdout:
+          description: Standard output from the execution
+          type: string
+        success:
+          description: Whether the code executed successfully
+          type: boolean
+        tab:
+          $ref: '#/components/schemas/PlaywrightTab'
+      required:
+      - success
+      type: object
+    ErrorDetail:
       properties:
         code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
           type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    PlaywrightExecutorName:
+      description: 'Name of a Playwright executor. Calls with the same name run in the same executor, one at a
+
+        time; the first call with a new name creates it. Calls on different executors run
+
+        concurrently. ''default'' names the executor that runs calls without a name.
+
+        '
+      example: checkout
+      pattern: ^[A-Za-z0-9_-]{1,64}$
+      type: string
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    ExecutePlaywrightRequest:
+      additionalProperties: false
+      description: Request to execute Playwright code
+      properties:
+        code:
           description: 'TypeScript/JavaScript code to execute. The code has access to ''page'', ''context'', and ''browser'' variables.
 
             It runs within a function, so you can use a return statement at the end to return a value.
@@ -77,80 +342,96 @@ components:
             Example: "await page.goto(''https://example.com''); return await page.title();"
 
             '
+          type: string
+        executor:
+          $ref: '#/components/schemas/PlaywrightExecutorName'
         timeout_sec:
-          type: integer
-          description: Maximum execution time in seconds. Default is 60.
           default: 60
-          minimum: 1
+          description: Maximum execution time in seconds. Default is 60.
           maximum: 300
-      additionalProperties: false
-    ErrorDetail:
+          minimum: 1
+          type: integer
+      required:
+      - code
       type: object
+    PlaywrightTab:
+      additionalProperties: false
+      description: The tab 'page' was bound to for this call. Absent if the call failed before binding a tab.
+      properties:
+        created:
+          description: 'Whether this call opened the tab. For a named executor this happens on its first call and
+
+            after its previous tab was closed. For the default executor it happens only when the
+
+            browser had no open page.
+
+            '
+          type: boolean
+        target_id:
+          description: CDP page target ID of the tab
+          type: string
+      required:
+      - target_id
+      - created
+      type: object
+    InstanceProxyError:
       properties:
         code:
-          type: string
-          description: Lower-level error code providing more specific detail
-          example: invalid_input
+          $ref: '#/components/schemas/InstanceProxyErrorCode'
         message:
+          description: Human-readable error description for debugging
           type: string
-          description: Further detail about the error
-          example: Provided version string is not semver compliant
-    Error:
-      type: object
       required:
       - code
       - message
-      properties:
-        code:
-          type: string
-          description: Application-specific error code (machine-readable)
-          example: bad_request
-        message:
-          type: string
-          description: Human-readable error description for debugging
-          example: 'Missing required field: app_name'
-        details:
-          type: array
-          description: Additional error details (for multiple errors)
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        inner_error:
-          $ref: '#/components/schemas/ErrorDetail'
-    ExecutePlaywrightResult:
       type: object
-      description: Result of Playwright code execution
-      required:
-      - success
-      properties:
-        success:
-          type: boolean
-          description: Whether the code executed successfully
-        result:
-          description: The value returned by the code (if any)
-        error:
-          type: string
-          description: Error message if execution failed
-        stdout:
-          type: string
-          description: Standard output from the execution
-        stderr:
-          type: string
-          description: Standard error from the execution
-      additionalProperties: false
+    InstanceProxyErrorCode:
+      description: Canonical error code returned by browser instance API proxy routes
+      enum:
+      - invalid_request
+      - unauthorized
+      - forbidden
+      - session_not_leased
+      - not_found
+      - conflict
+      - session_gone
+      - rate_limit_exceeded
+      - internal_error
+      - browser_unavailable
+      type: string
   responses:
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
     BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
       description: Bad Request – invalid input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     InternalError:
-      description: Internal Server Error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    BrowserProxyError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InstanceProxyError'
+      description: Error returned by the browser or its proxy
   securitySchemes:
     bearerAuth:
-      type: http
       scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

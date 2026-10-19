@@ -1,0 +1,184 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Authentication API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- description: Inspect the identity and authorization context for the current request.
+  name: Authentication
+paths:
+  /auth/context:
+    get:
+      description: Returns the authenticated principal, organization, credential scope, and effective request scope. The response is derived from the verified request context and does not expose credential secrets.
+      operationId: getAuthContext
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthContext'
+          description: Authentication context for the current request
+          headers:
+            Cache-Control:
+              schema:
+                example: private, no-store
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      security:
+      - bearerAuth: []
+      summary: Get authentication context
+      tags:
+      - Authentication
+components:
+  schemas:
+    AuthContextPrincipal:
+      properties:
+        id:
+          description: The API key ID for API-key principals or user ID for user principals.
+          type: string
+        type:
+          description: The kind of principal authenticated for the request.
+          enum:
+          - api_key
+          - user
+          type: string
+      required:
+      - type
+      - id
+      type: object
+    AuthContextAuthorization:
+      description: The credential's maximum scope and the effective scope selected for this request. Future permission data can be added without changing scope semantics.
+      properties:
+        credential_scope:
+          $ref: '#/components/schemas/AuthContextScope'
+        effective_scope:
+          $ref: '#/components/schemas/AuthContextScope'
+      required:
+      - credential_scope
+      - effective_scope
+      type: object
+    AuthContextOrganization:
+      properties:
+        id:
+          description: The authenticated Kernel organization ID.
+          type: string
+      required:
+      - id
+      type: object
+    AuthContext:
+      description: The identity and authorization context resolved for the current request.
+      properties:
+        authentication:
+          $ref: '#/components/schemas/AuthContextAuthentication'
+        authorization:
+          $ref: '#/components/schemas/AuthContextAuthorization'
+        organization:
+          $ref: '#/components/schemas/AuthContextOrganization'
+        principal:
+          $ref: '#/components/schemas/AuthContextPrincipal'
+      required:
+      - authentication
+      - principal
+      - organization
+      - authorization
+      type: object
+    AuthContextScope:
+      description: A scope within the authenticated organization. A null project_id represents organization-wide scope.
+      properties:
+        project_id:
+          description: The Kernel project ID, or null when the scope is organization-wide.
+          type:
+          - string
+          - 'null'
+      required:
+      - project_id
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    AuthContextAuthentication:
+      properties:
+        credential_id:
+          description: The API key ID when authenticated with an API key; null for session credentials.
+          type:
+          - string
+          - 'null'
+        method:
+          description: The credential format used to authenticate the request.
+          enum:
+          - api_key
+          - jwt
+          type: string
+        source:
+          description: The source classification resolved by authentication middleware.
+          enum:
+          - api_key
+          - oauth
+          - dashboard
+          type: string
+      required:
+      - method
+      - source
+      - credential_id
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+  responses:
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized – missing or invalid authorization token
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

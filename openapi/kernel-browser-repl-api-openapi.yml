@@ -1,0 +1,294 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Browser REPL API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- description: Execute JavaScript in the browser instance's persistent Browser REPL.
+  name: Browser REPL
+paths:
+  /browsers/{id_or_name}/repl:
+    post:
+      description: 'Execute JavaScript in a persistent Node.js runtime inside the browser VM.
+
+        Top-level bindings, closures, mutations, and dynamically imported modules persist
+
+        across calls until the REPL is reset or replaced. Start with `repl.help()` to list
+
+        available methods, or call `repl.help("click")` for detailed help.
+
+
+        Expression values are ignored. Emit ordered text or image output with
+
+        `repl.write(...)`, console methods, or `repl.emitImage(...)`. The runtime also
+
+        exposes browser-control helpers, WebMCP, Patchright, Playwright, and raw CDP.
+
+
+        Executions are serialized. A timeout, crash, OOM, or protocol failure terminates
+
+        the REPL and changes its `repl_id`. This is unrestricted code execution inside the
+
+        browser VM and is not sandboxed.'
+      operationId: executeBrowserRepl
+      parameters:
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserReplRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserReplResult'
+          description: Code executed with either a successful result or a structured JavaScript failure.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Execute JavaScript in the persistent Browser REPL
+      tags:
+      - Browser REPL
+components:
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    BrowserProxyError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InstanceProxyError'
+      description: Error returned by the browser or its proxy
+  schemas:
+    BrowserReplImageContent:
+      additionalProperties: false
+      properties:
+        data_b64:
+          contentEncoding: base64
+          type: string
+        mime_type:
+          pattern: ^image/
+          type: string
+        type:
+          enum:
+          - image
+          type: string
+          x-enum-varnames:
+          - BrowserReplImageContentTypeImage
+      required:
+      - type
+      - mime_type
+      - data_b64
+      type: object
+    BrowserReplContent:
+      description: Ordered discriminated union of Browser REPL output items.
+      discriminator:
+        mapping:
+          image: '#/components/schemas/BrowserReplImageContent'
+          text: '#/components/schemas/BrowserReplTextContent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/BrowserReplTextContent'
+      - $ref: '#/components/schemas/BrowserReplImageContent'
+    BrowserReplRequest:
+      additionalProperties: false
+      description: Request to execute code in the persistent Browser REPL.
+      properties:
+        code:
+          description: 'JavaScript evaluated in a persistent Node.js runtime. Top-level bindings
+
+            persist until the browser VM''s API process exits, the REPL is reset, or
+
+            the REPL is terminated after a crash or timeout. Static top-level imports
+
+            are unsupported; use dynamic `import()`. Expression values are ignored;
+
+            emit output with `repl.write(...)`, console methods, or
+
+            `repl.emitImage(...)`. May be empty only when `reset` is true.
+
+            '
+          type: string
+        reset:
+          default: false
+          description: Terminate the current REPL, start a fresh one, and then evaluate code.
+          type: boolean
+        timeout_sec:
+          default: 60
+          description: Maximum execution time in seconds. Default is 60.
+          maximum: 300
+          minimum: 1
+          type: integer
+      required:
+      - code
+      type: object
+    BrowserReplResult:
+      additionalProperties: false
+      description: Result of Browser REPL code execution.
+      properties:
+        content:
+          description: Optional ordered text/image output produced by the execution.
+          items:
+            $ref: '#/components/schemas/BrowserReplContent'
+          type: array
+        content_truncated:
+          description: True if text or image output was dropped or truncated due to response limits.
+          type: boolean
+        duration_ms:
+          description: Wall-clock execution time in milliseconds.
+          type: integer
+        error:
+          description: Error message if execution failed.
+          type: string
+        repl_id:
+          description: 'CUID2 identifying the exact state-holding REPL process used for this
+
+            execution. Stable across calls and Chromium reconnects; changes after
+
+            an API restart, explicit reset, execution timeout, or REPL crash.
+
+            '
+          type: string
+        repl_terminated:
+          description: 'True if the REPL identified by `repl_id` was terminated by this request.
+
+            The next request lazily starts a fresh REPL with a new `repl_id`.
+
+            '
+          type: boolean
+        stack:
+          description: Stack trace if execution failed.
+          type: string
+        success:
+          description: Whether the code executed successfully.
+          type: boolean
+      required:
+      - success
+      - repl_id
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    BrowserReplTextContent:
+      additionalProperties: false
+      properties:
+        channel:
+          description: '`write` is emitted by `repl.write`; `stdout` and `stderr` are emitted by console methods.'
+          enum:
+          - write
+          - stdout
+          - stderr
+          type: string
+          x-enum-varnames:
+          - BrowserReplTextContentChannelWrite
+          - BrowserReplTextContentChannelStdout
+          - BrowserReplTextContentChannelStderr
+        text:
+          type: string
+        type:
+          enum:
+          - text
+          type: string
+          x-enum-varnames:
+          - BrowserReplTextContentTypeText
+      required:
+      - type
+      - channel
+      - text
+      type: object
+    InstanceProxyError:
+      properties:
+        code:
+          $ref: '#/components/schemas/InstanceProxyErrorCode'
+        message:
+          description: Human-readable error description for debugging
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    InstanceProxyErrorCode:
+      description: Canonical error code returned by browser instance API proxy routes
+      enum:
+      - invalid_request
+      - unauthorized
+      - forbidden
+      - session_not_leased
+      - not_found
+      - conflict
+      - session_gone
+      - rate_limit_exceeded
+      - internal_error
+      - browser_unavailable
+      type: string
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

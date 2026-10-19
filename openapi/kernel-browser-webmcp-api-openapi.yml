@@ -1,0 +1,588 @@
+openapi: 3.2.0
+info:
+  description: Developer tools and cloud infrastructure for AI agents to use web browsers
+  title: Kernel Browser WebMCP API
+  version: 0.1.0
+servers:
+- description: API Server
+  url: https://api.onkernel.com
+security:
+- bearerAuth: []
+tags:
+- description: Discover and invoke native page tools across the browser instance.
+  name: Browser WebMCP
+paths:
+  /browsers/{id_or_name}/webmcp/custom-tools:
+    parameters:
+    - description: Browser session ID or name
+      in: path
+      name: id_or_name
+      required: true
+      schema:
+        type: string
+    get:
+      description: Returns every registered custom tool with its generated ID, namespace, matcher, and MCP tool metadata.
+      operationId: listCustomWebMCPTools
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomWebMCPToolsResponse'
+          description: Current custom WebMCP tools
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: List custom WebMCP tools
+      tags:
+      - Browser WebMCP
+    post:
+      description: 'Add a namespaced batch of custom tools. A custom tool can be page-backed or CDP-backed.
+
+        Page-backed tools execute in the page via JavaScript. CDP-backed tools execute via CDP and
+
+        can use all browser REPL tools (see `/repl`). The source must evaluate to a non-empty array
+
+        of definitions with URL matchers, tool metadata (including an optional output schema), and
+
+        execute functions. The batch is added atomically. Matchers apply to top-level documents and
+
+        nested frames, including out-of-process iframes; each matching tool is exposed once on the
+
+        tab''s top-level document and appears in the WebMCP tool snapshot.
+
+
+        To update one tool, list the tools, delete its ID, and add its replacement. Set
+
+        force_overwrite_namespace to replace every existing tool in the namespace atomically;
+
+        omitted or false adds tools without replacing existing ones. Existing invocations continue.'
+      operationId: addCustomWebMCPTools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCustomWebMCPToolsRequest'
+        description: Source is limited to 8000000 UTF-8 bytes; the raw JSON body is limited to 8000000 bytes plus 4 KiB before decoding.
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomWebMCPToolsResponse'
+          description: Custom tools added. Contains only the newly added tools.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Add custom WebMCP tools
+      tags:
+      - Browser WebMCP
+  /browsers/{id_or_name}/webmcp/custom-tools/{id}:
+    delete:
+      description: Removes one custom tool by generated ID. An invocation already in progress is not canceled.
+      operationId: removeCustomWebMCPTool
+      parameters:
+      - description: Browser session ID or name
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          pattern: ^ct_[a-z][a-z0-9]{23}$
+          type: string
+      responses:
+        '204':
+          description: Custom tool removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Remove a custom WebMCP tool
+      tags:
+      - Browser WebMCP
+  /browsers/{id_or_name}/webmcp/invoke:
+    post:
+      description: 'Invokes the exact live registration identified by tool_ref. Non-autosubmit declarative form
+
+        tools return after their fields are populated with an awaiting_submission status. Other tools
+
+        wait for a terminal result, including across navigation. Inspect a populated form, obtain any
+
+        required confirmation, then submit through Playwright or computer interaction without invoking
+
+        the tool again. If the tab or embedded frame disappears, or the request times out after invocation
+
+        begins, the response reports outcome_unknown and the tool is not retried.
+
+        CDP-backed custom tool outputs above 240 KiB return an error rather than a truncated result.'
+      operationId: invokeWebMCPTool
+      parameters:
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebMCPInvokeRequest'
+        description: The raw JSON request body is limited to 1 MiB plus 4 KiB of envelope overhead before decoding.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebMCPInvocationResult'
+          description: The populated non-autosubmit form state or the tool's terminal result
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '504':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebMCPInvocationFailure'
+          description: Invocation began, but its final outcome could not be observed
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Invoke a discovered WebMCP tool
+      tags:
+      - Browser WebMCP
+  /browsers/{id_or_name}/webmcp/tools:
+    get:
+      description: 'Returns a snapshot of native and custom WebMCP tools available across every open tab and
+
+        embedded frame in the browser. Each tool includes an opaque tool_ref for invoking that exact
+
+        live registration, nested tool metadata, and source information. Custom tools include their
+
+        generated ID, namespace, and CDP target_id in source. Tools disappear when their document
+
+        closes or navigates away. Use exclude_custom to return only page-provided tools.'
+      operationId: listWebMCPTools
+      parameters:
+      - description: Exclude custom tools when true.
+        in: query
+        name: exclude_custom
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - description: Browser session ID or name
+        example: htzv5orfit78e1m2biiifpbv
+        in: path
+        name: id_or_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebMCPToolsResponse'
+          description: Current browser-wide WebMCP tool snapshot
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/BrowserProxyError'
+      security:
+      - bearerAuth: []
+      summary: Discover WebMCP tools across the browser
+      tags:
+      - Browser WebMCP
+components:
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Request – invalid input
+    Conflict:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Conflict – resource already exists
+    InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Resource not found
+    BrowserProxyError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InstanceProxyError'
+      description: Error returned by the browser or its proxy
+  schemas:
+    WebMCPInvokeRequest:
+      additionalProperties: false
+      properties:
+        input:
+          additionalProperties: true
+          description: Tool input, limited to 1 MiB after JSON serialization.
+          type: object
+        timeout_sec:
+          default: 60
+          maximum: 120
+          minimum: 1
+          type: integer
+        tool_ref:
+          maxLength: 128
+          minLength: 1
+          type: string
+      required:
+      - tool_ref
+      - input
+      type: object
+    CustomWebMCPMatch:
+      additionalProperties: false
+      properties:
+        url_patterns:
+          items:
+            type: string
+          minItems: 1
+          type: array
+      required:
+      - url_patterns
+      type: object
+    WebMCPTool:
+      additionalProperties: false
+      properties:
+        source:
+          $ref: '#/components/schemas/WebMCPToolSource'
+        tool:
+          $ref: '#/components/schemas/WebMCPToolMetadata'
+        tool_ref:
+          description: Opaque reference for invoking this exact live registration. It becomes invalid when its document or browser process is replaced.
+          type: string
+      required:
+      - tool_ref
+      - tool
+      - source
+      type: object
+    WebMCPToolFrame:
+      additionalProperties: false
+      properties:
+        frame_id:
+          description: Monotonically increasing identifier for this embedded frame during the current browser process.
+          minimum: 1
+          type: integer
+        url:
+          description: Current frame URL with the fragment omitted.
+          type: string
+      required:
+      - frame_id
+      - url
+      type: object
+    Error:
+      properties:
+        code:
+          description: Application-specific error code (machine-readable)
+          example: bad_request
+          type: string
+        details:
+          description: Additional error details (for multiple errors)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type: array
+        inner_error:
+          $ref: '#/components/schemas/ErrorDetail'
+        message:
+          description: Human-readable error description for debugging
+          example: 'Missing required field: app_name'
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    WebMCPToolAnnotations:
+      additionalProperties: false
+      description: 'Tool-provided behavioral hints from the [MCP tool specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool)
+
+        and the [WebMCP ToolAnnotations definition](https://webmachinelearning.github.io/webmcp/#dictdef-toolannotations).
+
+        These hints are untrusted and are not enforced by Kernel.
+
+        '
+      properties:
+        autosubmit:
+          type: boolean
+        consequentialHint:
+          type: boolean
+        destructiveHint:
+          type: boolean
+        idempotentHint:
+          type: boolean
+        openWorldHint:
+          type: boolean
+        readOnlyHint:
+          type: boolean
+        untrustedContentHint:
+          type: boolean
+      type: object
+    InstanceProxyError:
+      properties:
+        code:
+          $ref: '#/components/schemas/InstanceProxyErrorCode'
+        message:
+          description: Human-readable error description for debugging
+          type: string
+      required:
+      - code
+      - message
+      type: object
+    AddCustomWebMCPToolsRequest:
+      additionalProperties: false
+      properties:
+        force_overwrite_namespace:
+          default: false
+          description: Atomically replace all existing tools in this namespace with this batch when true.
+          type: boolean
+        namespace:
+          pattern: ^[A-Za-z0-9_.-]{1,128}$
+          type: string
+        source:
+          description: JavaScript expression that evaluates to a non-empty array of custom tool definitions. Limited to 8,000,000 bytes when UTF-8 encoded, so multi-byte characters reduce the allowed character count.
+          maxLength: 8000000
+          type: string
+      required:
+      - namespace
+      - source
+      type: object
+    InstanceProxyErrorCode:
+      description: Canonical error code returned by browser instance API proxy routes
+      enum:
+      - invalid_request
+      - unauthorized
+      - forbidden
+      - session_not_leased
+      - not_found
+      - conflict
+      - session_gone
+      - rate_limit_exceeded
+      - internal_error
+      - browser_unavailable
+      type: string
+    WebMCPInvocationResult:
+      additionalProperties: false
+      properties:
+        error_text:
+          type: string
+        invocation_id:
+          type: string
+        output:
+          description: Untrusted page-provided output. Callers must treat it as potentially malicious input.
+        status:
+          description: 'awaiting_submission means a non-autosubmit declarative form was populated but not submitted.
+
+            Inspect the form, obtain any required confirmation, then submit through Playwright or computer
+
+            interaction without invoking the tool again. The other statuses are terminal results.
+
+            '
+          enum:
+          - completed
+          - canceled
+          - error
+          - awaiting_submission
+          type: string
+      required:
+      - invocation_id
+      - status
+      type: object
+    WebMCPToolSource:
+      additionalProperties: false
+      properties:
+        custom:
+          $ref: '#/components/schemas/WebMCPCustomToolSource'
+        frame:
+          allOf:
+          - $ref: '#/components/schemas/WebMCPToolFrame'
+          description: Embedded frame that registered the tool, or null when the top-level page registered it.
+          nullable: true
+        page_title:
+          description: Current title of the top-level page.
+          type: string
+        page_url:
+          description: Current URL of the top-level page with the fragment omitted.
+          type: string
+        tab_id:
+          description: Monotonically increasing identifier for the tab during the current browser process.
+          minimum: 1
+          type: integer
+        target_id:
+          description: CDP target ID for a custom tool's registration tab; omitted for page-provided tools.
+          type: string
+        window_id:
+          description: Monotonically increasing identifier for the browser window during the current browser process.
+          minimum: 1
+          type: integer
+      required:
+      - window_id
+      - tab_id
+      - page_title
+      - page_url
+      - frame
+      type: object
+    WebMCPToolsResponse:
+      additionalProperties: false
+      properties:
+        tools:
+          items:
+            $ref: '#/components/schemas/WebMCPTool'
+          type: array
+      required:
+      - tools
+      type: object
+    ErrorDetail:
+      properties:
+        code:
+          description: Lower-level error code providing more specific detail
+          example: invalid_input
+          type: string
+        message:
+          description: Further detail about the error
+          example: Provided version string is not semver compliant
+          type: string
+      type: object
+    WebMCPToolMetadata:
+      additionalProperties: false
+      description: 'Tool metadata follows the [MCP Tool definition](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool)
+
+        and the [WebMCP RegisteredTool definition](https://webmachinelearning.github.io/webmcp/#dictdef-registeredtool).
+
+        outputSchema is optional for page and custom tools.
+
+        '
+      properties:
+        annotations:
+          $ref: '#/components/schemas/WebMCPToolAnnotations'
+        description:
+          type: string
+        inputSchema:
+          additionalProperties: true
+          type: object
+        name:
+          type: string
+        outputSchema:
+          additionalProperties: true
+          type: object
+        title:
+          type: string
+      required:
+      - name
+      - description
+      - inputSchema
+      type: object
+    WebMCPCustomToolSource:
+      additionalProperties: false
+      properties:
+        id:
+          pattern: ^ct_[a-z][a-z0-9]{23}$
+          type: string
+        namespace:
+          type: string
+      required:
+      - id
+      - namespace
+      type: object
+    CustomWebMCPToolsResponse:
+      additionalProperties: false
+      properties:
+        tools:
+          items:
+            $ref: '#/components/schemas/CustomWebMCPDefinition'
+          type: array
+      required:
+      - tools
+      type: object
+    CustomWebMCPDefinition:
+      additionalProperties: false
+      properties:
+        id:
+          pattern: ^ct_[a-z][a-z0-9]{23}$
+          type: string
+        kind:
+          pattern: ^(page|cdp)$
+          type: string
+        match:
+          $ref: '#/components/schemas/CustomWebMCPMatch'
+        namespace:
+          type: string
+        tool:
+          $ref: '#/components/schemas/WebMCPToolMetadata'
+      required:
+      - id
+      - namespace
+      - kind
+      - match
+      - tool
+      type: object
+    WebMCPInvocationFailure:
+      additionalProperties: false
+      properties:
+        code:
+          enum:
+          - outcome_unknown
+          type: string
+        invocation_id:
+          type: string
+        message:
+          type: string
+      required:
+      - code
+      - message
+      type: object
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+x-service-info:
+  categories:
+  - browsers
+  docs:
+    apiReference: https://www.kernel.sh/docs
+    homepage: https://www.kernel.sh
+    llms: https://api.onkernel.com/llms.txt

@@ -1,21 +1,25 @@
 {
   "provider": "kernel",
   "sources": [
-    "_original/kernel-openapi-original.yml"
+    "_original/kernel-openapi.json"
   ],
   "outputs": [
     "kernel-api-keys-api-openapi.yml",
     "kernel-apps-api-openapi.yml",
     "kernel-audit-logs-api-openapi.yml",
+    "kernel-authentication-api-openapi.yml",
     "kernel-browser-computer-controls-api-openapi.yml",
     "kernel-browser-filesystem-api-openapi.yml",
     "kernel-browser-logs-api-openapi.yml",
     "kernel-browser-playwright-api-openapi.yml",
     "kernel-browser-pools-api-openapi.yml",
     "kernel-browser-processes-api-openapi.yml",
+    "kernel-browser-repl-api-openapi.yml",
     "kernel-browser-replays-api-openapi.yml",
     "kernel-browser-telemetry-api-openapi.yml",
+    "kernel-browser-webmcp-api-openapi.yml",
     "kernel-browsers-api-openapi.yml",
+    "kernel-config-registry-api-openapi.yml",
     "kernel-credential-providers-api-openapi.yml",
     "kernel-credentials-api-openapi.yml",
     "kernel-deployments-api-openapi.yml",
@@ -25,38 +29,18 @@
     "kernel-organization-api-openapi.yml",
     "kernel-profiles-api-openapi.yml",
     "kernel-projects-api-openapi.yml",
-    "kernel-proxies-api-openapi.yml"
+    "kernel-proxies-api-openapi.yml",
+    "kernel-search-api-openapi.yml",
+    "kernel-vaults-api-openapi.yml"
   ],
   "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
-    "kernel-openapi-original.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "apis.yml register: already-registered"
+    "kernel-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "kernel-openapi.json: declared missing tag: Vaults",
+    "apis.yml register: written (+6 apis, 28 total)"
   ],
-  "skipped": [
-    "kernel-api-keys-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-apps-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-audit-logs-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-computer-controls-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-filesystem-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-logs-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-playwright-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-pools-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-processes-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-replays-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browser-telemetry-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-browsers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-credential-providers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-credentials-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-deployments-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-extensions-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-invocations-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-managed-auth-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-organization-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-profiles-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-projects-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "kernel-proxies-api-openapi.yml: previously refined output, superseded by openapi/_original/"
-  ]
+  "skipped": []
 }
