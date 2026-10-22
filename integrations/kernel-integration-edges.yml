@@ -21,6 +21,7 @@ checked:
 - https://skillsmp.com/sitemap.xml
 - https://www.skills.sh/sitemap.xml
 - terraform/integrations/terraform-integration-edges.yml
+- vercel/integrations/vercel-integration-edges.yml
 source:
 - stripe/integrations/stripe-integration-edges.yml
 edges:
@@ -221,3 +222,21 @@ edges:
   detected: '2026-10-21'
   detected_by: mirror-platform-listings.py
   category: infrastructure-as-code provider registry listing
+- partner_name: Vercel (own)
+  partner: vercel
+  partner_match: mirror
+  mirror_match: domain
+  type: marketplace
+  relationship: platform-app
+  direction: third-party
+  channel: partner-built
+  marketplace: own
+  evidence: https://vercel.com/marketplace/kernel
+  mirror_of: vercel/integrations/vercel-integration-edges.yml
+  apps:
+  - KERNEL
+  listing_count: 1
+  detected: '2026-10-22'
+  detected_by: mirror-platform-listings.py
+  category: Agents Web Automation
+  partner_tier: native

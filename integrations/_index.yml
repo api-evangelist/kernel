@@ -142,3 +142,16 @@
   relationship: platform-app
   status: not-a-workflow
   arazzo: null
+- slug: kernel-vercel-own
+  label: Vercel (own)
+  partner: vercel
+  partner_name: Vercel (own)
+  category: Agents Web Automation
+  type: marketplace
+  marketplace: own
+  channel: partner-built
+  evidence: https://vercel.com/marketplace/kernel
+  source: edge
+  relationship: platform-app
+  status: not-a-workflow
+  arazzo: null
