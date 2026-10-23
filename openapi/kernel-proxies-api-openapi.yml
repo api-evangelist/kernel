@@ -630,3 +630,9 @@ x-service-info:
     apiReference: https://www.kernel.sh/docs
     homepage: https://www.kernel.sh
     llms: https://api.onkernel.com/llms.txt
+x-provenance:
+  method: harvested
+  publisher: Kernel
+  source: https://api.onkernel.com/openapi.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
