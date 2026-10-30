@@ -64,6 +64,176 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Kernel is a company surfaced as a portfolio company of general-catalyst and added to the API Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+Kernel is browser infrastructure for AI agents and automations. It runs sandboxed cloud Chromium browsers that spin up in under 30ms, with Playwright execution, computer-use controls, managed authentication into third-party sites, reusable browser profiles, proxies, pre-warmed browser pools, session replays, live telemetry, and a serverless App platform for deploying and invoking agent actions. Kernel exposes a REST API (OpenAPI 3.1, 135 operations across 22 tags), first-party TypeScript, Python and Go SDKs, a CLI, and a centrally hosted MCP server so agents can drive real browsers. Backed by General Catalyst.
 
-Backed by: general-catalyst
+**Areas:** Company · Browser Automation · Web Agents · Browser Infrastructure · AI Agents · Playwright · Cloud Browser · Computer Use · MCP · Managed Auth
+
+## Kernel on APIs.io
+
+Everything profiled for Kernel is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/kernel/](https://apis.io/providers/kernel/)** — or go straight to one of the APIs or properties below.
+
+### APIs (22)
+
+- [Kernel API Keys API](https://apis.io/apis/kernel/kernel-api-keys-api/) — Create and manage API keys for organization and project-scoped access.
+- [Kernel Apps API](https://apis.io/apis/kernel/kernel-apps-api/) — List applications and versions.
+- [Kernel Audit Logs API](https://apis.io/apis/kernel/kernel-audit-logs-api/) — Read audit log records for the authenticated organization.
+- [Kernel Browser Computer Controls API](https://apis.io/apis/kernel/kernel-browser-computer-controls-api/) — Control mouse, keyboard, and screen on the browser instance.
+- [Kernel Browser Filesystem API](https://apis.io/apis/kernel/kernel-browser-filesystem-api/) — Read, write, and manage files on the browser instance.
+- [Kernel Browser Logs API](https://apis.io/apis/kernel/kernel-browser-logs-api/) — Stream logs from the browser instance.
+- [Kernel Browser Playwright API](https://apis.io/apis/kernel/kernel-browser-playwright-api/) — Execute Playwright code against the browser instance.
+- [Kernel Browser Pools API](https://apis.io/apis/kernel/kernel-browser-pools-api/) — Create and manage browser pools for acquiring and releasing browsers.
+- [Kernel Browser Processes API](https://apis.io/apis/kernel/kernel-browser-processes-api/) — Execute and manage processes on the browser instance.
+- [Kernel Browser Replays API](https://apis.io/apis/kernel/kernel-browser-replays-api/) — Record and manage browser session video replays.
+- [Kernel Browser Telemetry API](https://apis.io/apis/kernel/kernel-browser-telemetry-api/) — Stream live telemetry events from a browser session.
+- [Kernel Browsers API](https://apis.io/apis/kernel/kernel-browsers-api/) — Create and manage browser sessions.
+- [Kernel Credential Providers API](https://apis.io/apis/kernel/kernel-credential-providers-api/) — Configure external credential providers like 1Password.
+- [Kernel Credentials API](https://apis.io/apis/kernel/kernel-credentials-api/) — Create and manage credentials for authentication.
+- [Kernel Deployments API](https://apis.io/apis/kernel/kernel-deployments-api/) — Create and manage app deployments and stream deployment events.
+- [Kernel Extensions API](https://apis.io/apis/kernel/kernel-extensions-api/) — Create, list, retrieve, and delete browser extensions.
+- [Kernel Invocations API](https://apis.io/apis/kernel/kernel-invocations-api/) — Invoke actions and stream or query invocation status and events.
+- [Kernel Managed Auth API](https://apis.io/apis/kernel/kernel-managed-auth-api/) — Create and manage auth connections for automated credential capture and login.
+- [Kernel Organization API](https://apis.io/apis/kernel/kernel-organization-api/) — Read and manage organization-level limits.
+- [Kernel Profiles API](https://apis.io/apis/kernel/kernel-profiles-api/) — Create, list, retrieve, and delete browser profiles.
+- [Kernel Projects API](https://apis.io/apis/kernel/kernel-projects-api/) — Create and manage projects for resource isolation within an organization.
+- [Kernel Proxies API](https://apis.io/apis/kernel/kernel-proxies-api/) — Create and manage proxy configurations for routing browser traffic.
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### Arazzo workflows (1)
+
+Multi-step workflows that chain operations into a business task.
+
+- [Kernel - create a browser, run Playwright, screenshot, tear down](https://apis.io/arazzos/kernel/kernel-browser-automate/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [kernel](https://apis.io/servers/kernel/kernel/)
+
+#### Agentic access (1)
+
+Which operations an agent can call, which act, and which need a human in the loop.
+
+- [Kernel Agentic Access](https://apis.io/agentic-access/kernel/kernel-agentic-access/)
+
+#### Collections (22)
+
+Postman and Open Collection request collections.
+
+- [Kernel API Keys API](https://apis.io/collections/kernel/open-kernel-api-keys-api/)
+- [Kernel API Keys Apps API](https://apis.io/collections/kernel/open-kernel-apps-api/)
+- [Kernel API Keys Audit Logs API](https://apis.io/collections/kernel/open-kernel-audit-logs-api/)
+- [Kernel API Keys Browser Computer Controls API](https://apis.io/collections/kernel/open-kernel-browser-computer-controls-api/)
+- [Kernel API Keys Browser Filesystem API](https://apis.io/collections/kernel/open-kernel-browser-filesystem-api/)
+- [Kernel API Keys Browser Logs API](https://apis.io/collections/kernel/open-kernel-browser-logs-api/)
+- [Kernel API Keys Browser Playwright API](https://apis.io/collections/kernel/open-kernel-browser-playwright-api/)
+- [Kernel API Keys Browser Pools API](https://apis.io/collections/kernel/open-kernel-browser-pools-api/)
+- [Kernel API Keys Browser Processes API](https://apis.io/collections/kernel/open-kernel-browser-processes-api/)
+- [Kernel API Keys Browser Replays API](https://apis.io/collections/kernel/open-kernel-browser-replays-api/)
+- [Kernel API Keys Browser Telemetry API](https://apis.io/collections/kernel/open-kernel-browser-telemetry-api/)
+- [Kernel API Keys Browsers API](https://apis.io/collections/kernel/open-kernel-browsers-api/)
+- [Kernel API Keys Credential Providers API](https://apis.io/collections/kernel/open-kernel-credential-providers-api/)
+- [Kernel API Keys Credentials API](https://apis.io/collections/kernel/open-kernel-credentials-api/)
+- [Kernel API Keys Deployments API](https://apis.io/collections/kernel/open-kernel-deployments-api/)
+- [Kernel API Keys Extensions API](https://apis.io/collections/kernel/open-kernel-extensions-api/)
+- [Kernel API Keys Invocations API](https://apis.io/collections/kernel/open-kernel-invocations-api/)
+- [Kernel API Keys Managed Auth API](https://apis.io/collections/kernel/open-kernel-managed-auth-api/)
+- [Kernel API Keys Organization API](https://apis.io/collections/kernel/open-kernel-organization-api/)
+- [Kernel API Keys Profiles API](https://apis.io/collections/kernel/open-kernel-profiles-api/)
+- [Kernel API Keys Projects API](https://apis.io/collections/kernel/open-kernel-projects-api/)
+- [Kernel API Keys Proxies API](https://apis.io/collections/kernel/open-kernel-proxies-api/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Kernel Openapi Overlay](https://apis.io/overlays/kernel/kernel-openapi-overlay/)
+
+#### Security (3)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Kernel Authentication](https://apis.io/security/kernel/kernel-authentication/)
+- [Kernel Domain Security](https://apis.io/security/kernel/kernel-domain-security/)
+- [Kernel Trust Center](https://apis.io/security/kernel/kernel-trust-center/)
+
+#### OAuth scopes (1)
+
+The permissions the API asks for.
+
+- [Kernel Scopes](https://apis.io/scopes/kernel/kernel-scopes/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://www.kernel.sh)
+- [Documentation](https://kernel.sh/docs/)
+- [Getting started](https://kernel.sh/docs/introduction/)
+- [API reference](https://kernel.sh/docs/api-reference/)
+- [Pricing](https://www.kernel.sh/pricing)
+- [Sign up](https://dashboard.onkernel.com)
+- [Support](https://kernel.sh/docs/info/support)
+- [Blog](https://www.kernel.sh/blog)
+- [Compliance](https://www.kernel.sh/security)
+- [Trust centre](https://trust.kernel.sh)
+- [GitHub](https://github.com/kernel)
+- [Status](https://status.kernel.sh)
+
+## API Evangelist rating
+
+**Kin Score 50.0** — developing · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 75.0 |
+| Contract quality | 54.5 |
+| Contract governance | 18.2 |
+| Operational transparency | 42.1 |
+| Developer ergonomics | 73.2 |
+| Access clarity | 18.4 |
+
+**Agent readiness 39.5** — agent-ready (gated down from agent-native)
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | — |
+| MCP Server | documented (partial credit) |
+| Auth Clarity | served (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | verified |
+| Event Surface Described | — |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | partial |
+| Operation Distinctiveness | mostly |
+
+**Regulatory alignment 31.4** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/kernel/](https://apis.io/providers/kernel/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Kernel: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/kernel/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
